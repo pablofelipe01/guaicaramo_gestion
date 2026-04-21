@@ -1,21 +1,61 @@
 @import "tailwindcss";
 
 :root {
+  /* Paleta de Colores Profesional */
+  --primary: #2563eb;        /* Azul profesional */
+  --primary-dark: #1d4ed8;   /* Azul oscuro */
+  --primary-light: #3b82f6;  /* Azul claro */
+  --secondary: #7c3aed;      /* Púrpura */
+  --success: #10b981;        /* Verde */
+  --error: #ef4444;          /* Rojo */
+  --warning: #f59e0b;        /* Ámbar */
+  --info: #06b6d4;           /* Cian */
+  
+  /* Grises Neutros */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-light: var(--primary-light);
+  --color-secondary: var(--secondary);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f172a;
+    --foreground: #f1f5f9;
   }
 }
 
@@ -23,4 +63,37 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Estilos personalizados */
+.btn-primary {
+  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+}
+
+.btn-primary:disabled {
+  @apply bg-gray-300 cursor-not-allowed;
+}
+
+.input-field {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200;
+}
+
+.input-field:disabled {
+  @apply bg-gray-100 cursor-not-allowed;
+}
+
+.input-error {
+  @apply border-red-500 focus:ring-red-500;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-lg;
+}
+
+.text-error {
+  @apply text-red-600 text-sm mt-1;
+}
+
+.text-success {
+  @apply text-green-600 text-sm;
 }
