@@ -6,10 +6,9 @@ import { signToken } from '@/lib/auth'
 interface UserFields {
   Email: string
   'Password Hash': string
-  Name?: string
-  Status?: string
-  Role?: string
-  CreatedAt?: string
+  'Nombre Completo'?: string
+  Estado?: string
+  'Fecha Creacion'?: string
 }
 
 export async function POST(request: NextRequest) {
@@ -23,10 +22,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const table = process.env.AIRTABLE_TABLE_USERS ?? 'Usuarios'
+    const table = process.env.AIRTABLE_TABLE_USERS ?? 'USUARIOS'
 
     const { records: existing } = await listRecords<UserFields>(table, {
-      filterByFormula: `Email="${email}"`,
+      filterByFormula: `{Email}="${email}"`,
       maxRecords: 1,
     })
 
@@ -44,10 +43,9 @@ export async function POST(request: NextRequest) {
         fields: {
           Email: email,
           'Password Hash': hashedPassword,
-          Name: name,
-          Status: 'active',
-          Role: 'trabajador',
-          CreatedAt: new Date().toISOString(),
+          'Nombre Completo': name,
+          Estado: 'activo',
+          'Fecha Creacion': new Date().toISOString().split('T')[0],
         },
       },
     ])
@@ -55,8 +53,8 @@ export async function POST(request: NextRequest) {
     const token = await signToken({
       id: newUser.id,
       email: newUser.fields.Email,
-      name: newUser.fields.Name ?? name,
-      role: newUser.fields.Role ?? 'trabajador',
+      name: newUser.fields['Nombre Completo'] ?? name,
+      role: 'coordinador_sst',
     })
 
     return NextResponse.json(
@@ -67,8 +65,7 @@ export async function POST(request: NextRequest) {
         user: {
           id: newUser.id,
           email: newUser.fields.Email,
-          name: newUser.fields.Name,
-          role: newUser.fields.Role,
+          name: newUser.fields['Nombre Completo'],
         },
       },
       { status: 201 }

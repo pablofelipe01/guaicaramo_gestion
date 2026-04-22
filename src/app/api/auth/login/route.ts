@@ -6,9 +6,9 @@ import { signToken } from '@/lib/auth'
 interface UserFields {
   Email: string
   'Password Hash': string
-  Name?: string
-  Status?: string
-  Role?: string
+  'Nombre Completo'?: string
+  Estado?: string
+  Rol?: string[]
 }
 
 export async function POST(request: NextRequest) {
@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const table = process.env.AIRTABLE_TABLE_USERS ?? 'Usuarios'
+    const table = process.env.AIRTABLE_TABLE_USERS ?? 'USUARIOS'
     const { records } = await listRecords<UserFields>(table, {
-      filterByFormula: `Email="${email}"`,
+      filterByFormula: `{Email}="${email}"`,
       maxRecords: 1,
     })
 
@@ -53,30 +53,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (user.fields.Status === 'inactive') {
+    if (user.fields.Estado?.toLowerCase() === 'inactivo') {
       return NextResponse.json(
         { success: false, message: 'La cuenta está desactivada' },
         { status: 403 }
       )
     }
 
+    const nombre = user.fields['Nombre Completo'] ?? 'Usuario'
+
     const token = await signToken({
       id: user.id,
       email: user.fields.Email,
-      name: user.fields.Name ?? 'Usuario',
-      role: user.fields.Role ?? 'trabajador',
+      name: nombre,
+      role: 'coordinador_sst',
     })
 
     return NextResponse.json({
       success: true,
       message: 'Autenticación exitosa',
       token,
-      user: {
-        id: user.id,
-        email: user.fields.Email,
-        name: user.fields.Name,
-        role: user.fields.Role,
-      },
+      user: { id: user.id, email: user.fields.Email, name: nombre },
     })
   } catch (error) {
     console.error('Error en login:', error)
