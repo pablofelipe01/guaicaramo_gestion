@@ -12,7 +12,7 @@ export async function listarIncidentes(tipo?: string) {
 
 export async function crearIncidente(fields: Omit<IncIncidenteFields, 'Creado En'>) {
   const records = await createRecords<IncIncidenteFields>(T_INCIDENTES, [
-    { ...fields, Estado: 'reportado', 'Creado En': new Date().toISOString() },
+    { fields: { ...fields, Estado: 'reportado', 'Creado En': new Date().toISOString() } },
   ])
   return records[0]
 }
@@ -27,7 +27,7 @@ export async function listarInvestigaciones(incidenteId: string) {
 
 export async function crearInvestigacion(fields: Omit<IncInvestigacionFields, 'Creado En'>) {
   const records = await createRecords<IncInvestigacionFields>(T_INVESTIGACIONES, [
-    { ...fields, Estado: 'en_proceso', 'Creado En': new Date().toISOString() },
+    { fields: { ...fields, Estado: 'en_proceso', 'Creado En': new Date().toISOString() } },
   ])
   return records[0]
 }
@@ -39,7 +39,7 @@ export async function actualizarInvestigacion(id: string, fields: Partial<IncInv
 export async function estadisticasIncidentes(anio: number) {
   const inicio = `${anio}-01-01`
   const fin = `${anio}-12-31`
-  const todos = await listRecords<IncIncidenteFields>(T_INCIDENTES, {
+  const { records: todos } = await listRecords<IncIncidenteFields>(T_INCIDENTES, {
     filterByFormula: `AND(IS_AFTER({Fecha Ocurrencia},'${inicio}'),IS_BEFORE({Fecha Ocurrencia},'${fin}'))`,
   })
   const ats = todos.filter(r => r.fields.Tipo === 'accidente_trabajo')

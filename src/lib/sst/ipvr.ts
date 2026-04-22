@@ -21,12 +21,14 @@ export async function crearRegistro(fields: Omit<IpvrRegistroFields, 'Creado En'
   const NR = NP * fields.NC
   const records = await createRecords<IpvrRegistroFields>(T_REGISTROS, [
     {
-      ...fields,
-      NP,
-      NR,
-      'Nivel Intervencion': nivelIntervencion(NR),
-      Estado: 'activo',
-      'Creado En': new Date().toISOString(),
+      fields: {
+        ...fields,
+        NP,
+        NR,
+        'Nivel Intervencion': nivelIntervencion(NR),
+        Estado: 'activo',
+        'Creado En': new Date().toISOString(),
+      },
     },
   ])
   return records[0]

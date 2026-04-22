@@ -17,7 +17,7 @@ export async function listarPermisos(estado?: string) {
 
 export async function crearPermiso(fields: Omit<PermPermisoFields, 'Creado En'>) {
   const records = await createRecords<PermPermisoFields>(T_PERMISOS, [
-    { ...fields, Estado: 'borrador', 'Creado En': new Date().toISOString() },
+    { fields: { ...fields, Estado: 'borrador', 'Creado En': new Date().toISOString() } },
   ])
   return records[0]
 }
@@ -31,12 +31,12 @@ export async function listarTrabajadoresPermiso(permisoId: string) {
 }
 
 export async function agregarTrabajadorPermiso(fields: PermTrabajadorFields) {
-  const records = await createRecords<PermTrabajadorFields>(T_TRABAJADORES, [fields])
+  const records = await createRecords<PermTrabajadorFields>(T_TRABAJADORES, [{ fields }])
   return records[0]
 }
 
 export async function verificarPrerrequisitos(permisoId: string): Promise<{ habilitado: boolean; bloqueos: string[] }> {
-  const trabajadores = await listarTrabajadoresPermiso(permisoId)
+  const { records: trabajadores } = await listarTrabajadoresPermiso(permisoId)
   const bloqueos: string[] = []
   for (const t of trabajadores) {
     if (!t.fields['EPPs Verificados']) bloqueos.push(`${t.fields['Trabajador Nombre']}: EPPs no verificados`)

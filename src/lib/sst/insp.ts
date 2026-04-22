@@ -12,7 +12,7 @@ export async function listarTipos() {
 }
 
 export async function crearTipo(fields: InspTipoFields) {
-  const records = await createRecords<InspTipoFields>(T_TIPOS, [fields])
+  const records = await createRecords<InspTipoFields>(T_TIPOS, [{ fields }])
   return records[0]
 }
 
@@ -30,7 +30,7 @@ export async function listarInspecciones(estado?: string) {
 
 export async function crearInspeccion(fields: Omit<InspInspeccionFields, 'Creado En'>) {
   const records = await createRecords<InspInspeccionFields>(T_INSPECCIONES, [
-    { ...fields, Estado: 'programada', 'Creado En': new Date().toISOString() },
+    { fields: { ...fields, Estado: 'programada', 'Creado En': new Date().toISOString() } },
   ])
   return records[0]
 }
@@ -45,7 +45,7 @@ export async function listarHallazgos(inspeccionId: string) {
 
 export async function crearHallazgo(fields: Omit<InspHallazgoFields, 'Creado En'>) {
   const records = await createRecords<InspHallazgoFields>(T_HALLAZGOS, [
-    { ...fields, Estado: 'abierto', 'Creado En': new Date().toISOString() },
+    { fields: { ...fields, Estado: 'abierto', 'Creado En': new Date().toISOString() } },
   ])
   return records[0]
 }

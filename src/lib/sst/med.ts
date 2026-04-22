@@ -12,7 +12,7 @@ export async function listarEvaluaciones(trabajadorId?: string) {
 
 export async function crearEvaluacion(fields: Omit<MedEvaluacionFields, 'Creado En'>) {
   const records = await createRecords<MedEvaluacionFields>(T_EVALUACIONES, [
-    { ...fields, 'Creado En': new Date().toISOString() },
+    { fields: { ...fields, 'Creado En': new Date().toISOString() } },
   ])
   return records[0]
 }
@@ -25,7 +25,7 @@ export async function alertasEvaluaciones(): Promise<{ mensaje: string; evaluaci
   const hoy = new Date()
   const limite = new Date(hoy)
   limite.setDate(hoy.getDate() + 30)
-  const records = await listRecords<MedEvaluacionFields>(T_EVALUACIONES, {
+  const { records } = await listRecords<MedEvaluacionFields>(T_EVALUACIONES, {
     filterByFormula: `AND({Proxima Evaluacion}!='', IS_BEFORE({Proxima Evaluacion}, '${limite.toISOString().split('T')[0]}'))`,
   })
   return records.map(r => ({
