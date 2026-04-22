@@ -77,3 +77,33 @@ export async function crearEntradaTrd(
   const [record] = await createRecords<DocTrdFields>(T_TRD, [{ fields }])
   return record
 }
+
+export async function alertasRetencion() {
+  const documentos = await listarDocumentos({ estado: 'vigente' })
+  const trd = await listarTrd()
+  const hoy = new Date()
+  const hace30Dias = new Date(hoy.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+  return documentos
+    .filter(doc => {
+      const entrada = trd.find(t => t.fields.Serie === doc.fields['Tipo Documental'])
+      if (!entrada || !doc.fields['Fecha Carga']) return false
+      const fechaCarga = new Date(doc.fields['Fecha Carga'])
+      const diasRetencion = (entrada.fields['Anos Archivo Gestion'] + entrada.fields['Anos Archivo Central']) * 365
+      const fechaVencimiento = new Date(fechaCarga.getTime() + diasRetencion * 24 * 60 * 60 * 1000)
+      return fechaVencimiento <= hoy && fechaVencimiento >= hace30Dias
+    })
+    .map(doc => {
+      const entrada = trd.find(t => t.fields.Serie === doc.fields['Tipo Documental'])
+      const diasRetencion = (entrada?.fields['Anos Archivo Gestion'] ?? 0) + (entrada?.fields['Anos Archivo Central'] ?? 0)
+      const fechaCarga = new Date(doc.fields['Fecha Carga']!)
+      const proximoVencimiento = new Date(fechaCarga.getTime() + diasRetencion * 365 * 24 * 60 * 60 * 1000)
+      return {
+        id: doc.id,
+        nombre: doc.fields.Nombre,
+        modulo: doc.fields['Modulo Origen'],
+        fechaCarga: doc.fields['Fecha Carga']!,
+        proximoVencimiento: proximoVencimiento.toISOString().split('T')[0],
+      }
+    })
+}

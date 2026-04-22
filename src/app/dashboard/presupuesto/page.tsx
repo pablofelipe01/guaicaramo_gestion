@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Wallet, Plus, AlertTriangle, TrendingUp, TrendingDown } from 'lucide-react'
+import { Wallet, Plus, AlertTriangle, TrendingUp, TrendingDown, Trash2 } from 'lucide-react'
 import type { PptoPresupuestoFields, PptoRubroFields, PptoEjecucionFields } from '@/types/sst/ppto'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -52,11 +52,15 @@ export default function PresupuestoPage() {
   const [loadingDetalle, setLoadingDetalle] = useState(false)
   const [loadingEj, setLoadingEj] = useState(false)
   const [modalPpto, setModalPpto] = useState(false)
+  const [modalEditPpto, setModalEditPpto] = useState(false)
   const [modalRubro, setModalRubro] = useState(false)
+  const [modalEditRubro, setModalEditRubro] = useState(false)
   const [modalEjecucion, setModalEjecucion] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [formPpto, setFormPpto] = useState({ Titulo: '', 'Año': new Date().getFullYear(), 'Total Presupuestado': '' })
+  const [formEditPpto, setFormEditPpto] = useState({ Titulo: '', 'Total Presupuestado': '' })
   const [formRubro, setFormRubro] = useState({ 'Nombre Rubro': '', Categoria: 'epps', 'Valor Presupuestado': '', Observaciones: '' })
+  const [formEditRubro, setFormEditRubro] = useState({ 'Nombre Rubro': '', 'Valor Presupuestado': '' })
   const [formEj, setFormEj] = useState({ Descripcion: '', Valor: '', Fecha: '', Proveedor: '' })
 
   const cargar = useCallback(async () => {
@@ -74,21 +78,37 @@ export default function PresupuestoPage() {
     setRubroActivo(null)
     setEjecuciones([])
     setLoadingDetalle(true)
-    const [rubs, alts] = await Promise.all([
-      fetch(`/api/sst/presupuestos/${p.id}/rubros`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/presupuestos/${p.id}/rubros?alertas=true`, { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setRubros(rubs.records ?? [])
-    setAlertas(alts.alertas ?? [])
+    try {
+      const [rubsRes, altsRes] = await Promise.all([
+        fetch(`/api/sst/presupuestos/${p.id}/rubros`, { headers: authHeaders() }),
+        fetch(`/api/sst/presupuestos/${p.id}/rubros?alertas=true`, { headers: authHeaders() }),
+      ])
+      if (rubsRes.ok) {
+        const rubs = await rubsRes.json()
+        setRubros(rubs.records ?? [])
+      }
+      if (altsRes.ok) {
+        const alts = await altsRes.json()
+        setAlertas(alts.alertas ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando presupuesto:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 
   const seleccionarRubro = useCallback(async (rubro: Rubro) => {
     setRubroActivo(rubro)
     setLoadingEj(true)
-    const res = await fetch(`/api/sst/rubros/${rubro.id}/ejecuciones`, { headers: authHeaders() })
-    const data = await res.json()
-    setEjecuciones(data.records ?? [])
+    try {
+      const res = await fetch(`/api/sst/rubros/${rubro.id}/ejecuciones`, { headers: authHeaders() })
+      if (res.ok) {
+        const data = await res.json()
+        setEjecuciones(data.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando ejecuciones:', error)
+    }
     setLoadingEj(false)
   }, [])
 
@@ -128,6 +148,78 @@ export default function PresupuestoPage() {
     setModalEjecucion(false)
     setFormEj({ Descripcion: '', Valor: '', Fecha: '', Proveedor: '' })
     await seleccionarRubro(rubroActivo)
+    if (seleccionado) await seleccionar(seleccionado)
+    setGuardando(false)
+  }
+
+  const abrirEditPpto = () => {
+    if (!seleccionado) return
+    setFormEditPpto({ Titulo: seleccionado.fields.Titulo, 'Total Presupuestado': seleccionado.fields['Total Presupuestado'].toString() })
+    setModalEditPpto(true)
+  }
+
+  const editarPpto = async () => {
+    if (!seleccionado || !formEditPpto.Titulo) return
+    setGuardando(true)
+    await fetch(`/api/sst/presupuestos/${seleccionado.id}`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ Titulo: formEditPpto.Titulo, 'Total Presupuestado': Number(formEditPpto['Total Presupuestado']) }),
+    })
+    setModalEditPpto(false)
+    await cargar()
+    if (seleccionado) await seleccionar(seleccionado)
+    setGuardando(false)
+  }
+
+  const cambiarEstado = async (nuevoEstado: string) => {
+    if (!seleccionado) return
+    setGuardando(true)
+    await fetch(`/api/sst/presupuestos/${seleccionado.id}/estado`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ estadoActual: seleccionado.fields.Estado, estadoNuevo: nuevoEstado }),
+    })
+    await cargar()
+    if (seleccionado.id) {
+      const res = await fetch(`/api/sst/presupuestos/${seleccionado.id}`, { headers: authHeaders() })
+      const data = await res.json()
+      setSeleccionado(data.record)
+    }
+    setGuardando(false)
+  }
+
+  const eliminarRubro = async (rubro: Rubro) => {
+    if (!confirm(`¿Eliminar rubro "${rubro.fields['Nombre Rubro']}"?`)) return
+    setGuardando(true)
+    try {
+      const res = await fetch(`/api/sst/rubros/${rubro.id}`, {
+        method: 'DELETE', headers: authHeaders(),
+      })
+      if (res.ok) {
+        if (seleccionado) await seleccionar(seleccionado)
+      } else {
+        alert('Error al eliminar el rubro')
+      }
+    } catch (error) {
+      console.error('Error eliminando rubro:', error)
+      alert('Error al eliminar el rubro')
+    }
+    setGuardando(false)
+  }
+
+  const abrirEditRubro = (r: Rubro) => {
+    setFormEditRubro({ 'Nombre Rubro': r.fields['Nombre Rubro'], 'Valor Presupuestado': r.fields['Valor Presupuestado'].toString() })
+    setRubroActivo(r)
+    setModalEditRubro(true)
+  }
+
+  const editarRubro = async () => {
+    if (!rubroActivo || !formEditRubro['Nombre Rubro']) return
+    setGuardando(true)
+    await fetch(`/api/sst/rubros/${rubroActivo.id}`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ 'Nombre Rubro': formEditRubro['Nombre Rubro'], 'Valor Presupuestado': Number(formEditRubro['Valor Presupuestado']) }),
+    })
+    setModalEditRubro(false)
     if (seleccionado) await seleccionar(seleccionado)
     setGuardando(false)
   }
@@ -186,22 +278,59 @@ export default function PresupuestoPage() {
             <div className="flex-1 flex flex-col gap-3">
               {/* Resumen */}
               {!loadingDetalle && (
-                <div className="grid grid-cols-3 gap-3">
-                  <Card>
-                    <div className="text-xs text-gray-500">Presupuestado</div>
-                    <div className="text-lg font-bold text-gray-800">{fmt(totalPresupuestado)}</div>
-                  </Card>
-                  <Card>
-                    <div className="text-xs text-gray-500">Ejecutado</div>
-                    <div className="text-lg font-bold text-blue-600">{fmt(totalEjecutado)}</div>
-                  </Card>
-                  <Card>
-                    <div className="text-xs text-gray-500">% Ejecución</div>
-                    <div className={`text-lg font-bold ${pctGlobal > 80 ? 'text-red-500' : pctGlobal < 50 ? 'text-yellow-500' : 'text-green-600'}`}>
-                      {pctGlobal.toFixed(1)}%
-                    </div>
-                  </Card>
-                </div>
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-700">{seleccionado.fields.Titulo}</h3>
+                    <button onClick={abrirEditPpto} className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">Editar</button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <Card>
+                      <div className="text-xs text-gray-500">Presupuestado</div>
+                      <div className="text-lg font-bold text-gray-800">{fmt(totalPresupuestado)}</div>
+                    </Card>
+                    <Card>
+                      <div className="text-xs text-gray-500">Ejecutado</div>
+                      <div className="text-lg font-bold text-blue-600">{fmt(totalEjecutado)}</div>
+                    </Card>
+                    <Card>
+                      <div className="text-xs text-gray-500">% Ejecución</div>
+                      <div className={`text-lg font-bold ${pctGlobal > 80 ? 'text-red-500' : pctGlobal < 50 ? 'text-yellow-500' : 'text-green-600'}`}>
+                        {pctGlobal.toFixed(1)}%
+                      </div>
+                    </Card>
+                  </div>
+                  {seleccionado.fields.Estado !== 'cerrado' && (
+                    <Card className="bg-blue-50 border-l-4 border-l-blue-400">
+                      <div className="text-xs font-semibold text-gray-700 mb-2">Cambiar estado: {seleccionado.fields.Estado}</div>
+                      <div className="flex flex-wrap gap-2">
+                        {seleccionado.fields.Estado === 'borrador' && (
+                          <>
+                            <button onClick={() => cambiarEstado('aprobado')} disabled={guardando}
+                              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">→ Aprobado</button>
+                            <button onClick={() => cambiarEstado('cancelado')} disabled={guardando}
+                              className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50">→ Cancelado</button>
+                          </>
+                        )}
+                        {seleccionado.fields.Estado === 'aprobado' && (
+                          <>
+                            <button onClick={() => cambiarEstado('ejecutando')} disabled={guardando}
+                              className="text-xs px-3 py-1 bg-orange-600 text-white rounded hover:bg-orange-700 disabled:opacity-50">→ Ejecutando</button>
+                            <button onClick={() => cambiarEstado('borrador')} disabled={guardando}
+                              className="text-xs px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50">← Borrador</button>
+                          </>
+                        )}
+                        {seleccionado.fields.Estado === 'ejecutando' && (
+                          <>
+                            <button onClick={() => cambiarEstado('cerrado')} disabled={guardando}
+                              className="text-xs px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50">→ Cerrado</button>
+                            <button onClick={() => cambiarEstado('aprobado')} disabled={guardando}
+                              className="text-xs px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 disabled:opacity-50">← Aprobado</button>
+                          </>
+                        )}
+                      </div>
+                    </Card>
+                  )}
+                </>
               )}
 
               {/* Alertas */}
@@ -239,22 +368,28 @@ export default function PresupuestoPage() {
                       const p = pct(r.fields['Valor Ejecutado'], r.fields['Valor Presupuestado'])
                       const color = p > 80 ? 'bg-red-500' : p < 50 && p > 0 ? 'bg-yellow-400' : 'bg-blue-500'
                       return (
-                        <li key={r.id} onClick={() => seleccionarRubro(r)}
-                          className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${rubroActivo?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="font-medium text-sm text-gray-800">{r.fields['Nombre Rubro']}</div>
-                              <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded mt-0.5 inline-block">{CAT_LABEL[r.fields.Categoria]}</span>
+                        <li key={r.id}
+                          className={`p-4 border-b hover:bg-gray-50 transition-colors flex items-start justify-between gap-2 ${rubroActivo?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                          <div onClick={() => seleccionarRubro(r)} className="flex-1 cursor-pointer">
+                            <div className="font-medium text-sm text-gray-800">{r.fields['Nombre Rubro']}</div>
+                            <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded mt-0.5 inline-block">{CAT_LABEL[r.fields.Categoria]}</span>
+                            <div className="flex items-center justify-between mt-1">
+                              <div className="text-right text-xs text-gray-500">{fmt(r.fields['Valor Ejecutado'])} / {fmt(r.fields['Valor Presupuestado'])}</div>
                             </div>
-                            <div className="text-right text-xs">
-                              <div className="text-gray-500">{fmt(r.fields['Valor Ejecutado'])} / {fmt(r.fields['Valor Presupuestado'])}</div>
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="flex-1 bg-gray-200 rounded-full h-1.5">
+                                <div className={`${color} h-1.5 rounded-full`} style={{ width: `${Math.min(p, 100)}%` }} />
+                              </div>
+                              <span className="text-xs text-gray-500 w-10 text-right">{p.toFixed(0)}%</span>
                             </div>
                           </div>
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                              <div className={`${color} h-1.5 rounded-full`} style={{ width: `${Math.min(p, 100)}%` }} />
-                            </div>
-                            <span className="text-xs text-gray-500 w-10 text-right">{p.toFixed(0)}%</span>
+                          <div className="flex gap-1 flex-shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); abrirEditRubro(r) }}
+                              className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded">Editar</button>
+                            <button onClick={(e) => { e.stopPropagation(); eliminarRubro(r) }}
+                              className="text-xs text-red-600 hover:bg-red-50 px-1.5 py-1 rounded" title="Eliminar rubro">
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </li>
                       )
@@ -308,19 +443,19 @@ export default function PresupuestoPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
             <input type="text" value={formPpto.Titulo} onChange={e => setFormPpto(f => ({ ...f, Titulo: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field"
               placeholder="Ej. Presupuesto SST 2026" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Año</label>
               <input type="number" value={formPpto['Año']} onChange={e => setFormPpto(f => ({ ...f, 'Año': Number(e.target.value) }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Total presupuestado *</label>
               <input type="number" value={formPpto['Total Presupuestado']} onChange={e => setFormPpto(f => ({ ...f, 'Total Presupuestado': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -339,20 +474,20 @@ export default function PresupuestoPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
             <input type="text" value={formRubro['Nombre Rubro']} onChange={e => setFormRubro(f => ({ ...f, 'Nombre Rubro': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
               <select value={formRubro.Categoria} onChange={e => setFormRubro(f => ({ ...f, Categoria: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {CATEGORIAS.map(c => <option key={c} value={c}>{CAT_LABEL[c]}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Valor presupuestado *</label>
               <input type="number" value={formRubro['Valor Presupuestado']} onChange={e => setFormRubro(f => ({ ...f, 'Valor Presupuestado': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
@@ -371,30 +506,76 @@ export default function PresupuestoPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
             <input type="text" value={formEj.Descripcion} onChange={e => setFormEj(f => ({ ...f, Descripcion: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Valor *</label>
               <input type="number" value={formEj.Valor} onChange={e => setFormEj(f => ({ ...f, Valor: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
               <input type="date" value={formEj.Fecha} onChange={e => setFormEj(f => ({ ...f, Fecha: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
             <input type="text" value={formEj.Proveedor} onChange={e => setFormEj(f => ({ ...f, Proveedor: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalEjecucion(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={registrarEjecucion} disabled={guardando || !formEj.Descripcion || !formEj.Valor}
               className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Registrar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal editar presupuesto */}
+      <Modal open={modalEditPpto} onClose={() => setModalEditPpto(false)} title="Editar presupuesto" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <input type="text" value={formEditPpto.Titulo} onChange={e => setFormEditPpto(f => ({ ...f, Titulo: e.target.value }))}
+              className="input-field" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Total presupuestado *</label>
+            <input type="number" value={formEditPpto['Total Presupuestado']} onChange={e => setFormEditPpto(f => ({ ...f, 'Total Presupuestado': e.target.value }))}
+              className="input-field" />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setModalEditPpto(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={editarPpto} disabled={guardando || !formEditPpto.Titulo}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {guardando ? 'Guardando...' : 'Actualizar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal editar rubro */}
+      <Modal open={modalEditRubro} onClose={() => setModalEditRubro(false)} title="Editar rubro" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+            <input type="text" value={formEditRubro['Nombre Rubro']} onChange={e => setFormEditRubro(f => ({ ...f, 'Nombre Rubro': e.target.value }))}
+              className="input-field" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Valor presupuestado *</label>
+            <input type="number" value={formEditRubro['Valor Presupuestado']} onChange={e => setFormEditRubro(f => ({ ...f, 'Valor Presupuestado': e.target.value }))}
+              className="input-field" />
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setModalEditRubro(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={editarRubro} disabled={guardando || !formEditRubro['Nombre Rubro']}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {guardando ? 'Guardando...' : 'Actualizar'}
             </button>
           </div>
         </div>

@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { GraduationCap, Plus, BarChart2, CheckCircle2, XCircle } from 'lucide-react'
+import { GraduationCap, Plus, BarChart2, CheckCircle2, XCircle, Trash2 } from 'lucide-react'
 import type { CapProgramaFields, CapCapacitacionFields, CapAsistenciaFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -47,12 +47,23 @@ export default function CapacitacionesPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const [progs, cob] = await Promise.all([
-      fetch('/api/sst/capacitaciones/programas', { headers: authHeaders() }).then(r => r.json()),
-      fetch('/api/sst/capacitaciones?cobertura=true', { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setProgramas(progs.records ?? [])
-    setCobertura(cob)
+    try {
+      const [progRes, cobRes] = await Promise.all([
+        fetch('/api/sst/capacitaciones/programas', { headers: authHeaders() }),
+        fetch('/api/sst/capacitaciones?cobertura=true', { headers: authHeaders() }),
+      ])
+      
+      if (progRes.ok) {
+        const progs = await progRes.json()
+        setProgramas(progs.records ?? [])
+      }
+      if (cobRes.ok) {
+        const cob = await cobRes.json()
+        setCobertura(cob)
+      }
+    } catch (error) {
+      console.error('Error cargando capacitaciones:', error)
+    }
     setLoading(false)
   }, [])
 
@@ -62,59 +73,103 @@ export default function CapacitacionesPage() {
     setProgramaActivo(p)
     setCapActiva(null)
     setAsistencias([])
-    const res = await fetch(`/api/sst/capacitaciones?programaId=${p.id}`, { headers: authHeaders() })
-    const data = await res.json()
-    setCapacitaciones(data.records ?? [])
+    try {
+      const res = await fetch(`/api/sst/capacitaciones?programaId=${p.id}`, { headers: authHeaders() })
+      if (res.ok) {
+        const data = await res.json()
+        setCapacitaciones(data.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando capacitaciones del programa:', error)
+    }
   }, [])
 
   const seleccionarCap = useCallback(async (c: Capacitacion) => {
     setCapActiva(c)
-    const res = await fetch(`/api/sst/capacitaciones/${c.id}/asistencias`, { headers: authHeaders() })
-    const data = await res.json()
-    setAsistencias(data.records ?? [])
+    try {
+      const res = await fetch(`/api/sst/capacitaciones/${c.id}/asistencias`, { headers: authHeaders() })
+      if (res.ok) {
+        const data = await res.json()
+        setAsistencias(data.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando asistencias:', error)
+    }
   }, [])
 
   const crearPrograma = async () => {
     if (!formProg.Titulo) return
     setGuardando(true)
-    await fetch('/api/sst/capacitaciones/programas', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ ...formProg, Responsable: user?.name }),
-    })
-    setModalPrograma(false)
-    await cargar()
+    try {
+      await fetch('/api/sst/capacitaciones/programas', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ ...formProg, Responsable: user?.name }),
+      })
+      setModalPrograma(false)
+      await cargar()
+    } catch (error) {
+      console.error('Error creando programa:', error)
+    }
     setGuardando(false)
   }
 
   const crearCapacitacion = async () => {
     if (!programaActivo || !formCap.Tema) return
     setGuardando(true)
-    await fetch('/api/sst/capacitaciones', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({
-        ...formCap,
-        'Programa ID': programaActivo.id,
-        'Programa Titulo': programaActivo.fields.Titulo,
-        Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
-      }),
-    })
-    setModalCap(false)
-    setFormCap({ Tema: '', Tipo: 'induccion', Modalidad: 'presencial', Instructor: '', 'Fecha Programada': '', Duracion: '' })
-    await seleccionarPrograma(programaActivo)
+    try {
+      await fetch('/api/sst/capacitaciones', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({
+          ...formCap,
+          'Programa ID': programaActivo.id,
+          'Programa Titulo': programaActivo.fields.Titulo,
+          Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
+        }),
+      })
+      setModalCap(false)
+      setFormCap({ Tema: '', Tipo: 'induccion', Modalidad: 'presencial', Instructor: '', 'Fecha Programada': '', Duracion: '' })
+      await seleccionarPrograma(programaActivo)
+    } catch (error) {
+      console.error('Error creando capacitación:', error)
+    }
     setGuardando(false)
   }
 
   const registrarAsistencia = async () => {
     if (!capActiva || !formAsist['Nombre Trabajador']) return
     setGuardando(true)
-    await fetch(`/api/sst/capacitaciones/${capActiva.id}/asistencias`, {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify(formAsist),
-    })
-    setModalAsistencia(false)
-    setFormAsist({ 'Nombre Trabajador': '', 'Cargo Trabajador': '', Asistio: true })
-    await seleccionarCap(capActiva)
-    await cargar()
+    try {
+      await fetch(`/api/sst/capacitaciones/${capActiva.id}/asistencias`, {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify(formAsist),
+      })
+      setModalAsistencia(false)
+      setFormAsist({ 'Nombre Trabajador': '', 'Cargo Trabajador': '', Asistio: true })
+      await seleccionarCap(capActiva)
+      await cargar()
+    } catch (error) {
+      console.error('Error registrando asistencia:', error)
+    }
+    setGuardando(false)
+  }
+
+  const eliminarCapacitacion = async (cap: Capacitacion) => {
+    if (!confirm(`¿Eliminar capacitación "${cap.fields.Tema}"?`)) return
+    setGuardando(true)
+    try {
+      const res = await fetch(`/api/sst/capacitaciones/${cap.id}`, {
+        method: 'DELETE', headers: authHeaders(),
+      })
+      if (res.ok) {
+        if (programaActivo) await seleccionarPrograma(programaActivo)
+        await cargar()
+      } else {
+        alert('Error al eliminar la capacitación')
+      }
+    } catch (error) {
+      console.error('Error eliminando capacitación:', error)
+      alert('Error al eliminar la capacitación')
+    }
     setGuardando(false)
   }
 
@@ -219,14 +274,22 @@ export default function CapacitacionesPage() {
                 : capacitaciones.length === 0 ? <EmptyState icon={GraduationCap} title="Sin capacitaciones" description="Agrega la primera capacitación" />
                 : <ul>
                     {capacitaciones.map(c => (
-                      <li key={c.id} onClick={() => seleccionarCap(c)}
-                        className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${capActiva?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
-                        <div className="font-medium text-sm text-gray-800 truncate">{c.fields.Tema}</div>
-                        <div className="flex items-center gap-2 mt-1">
-                          <StatusBadge variant={CAP_ESTADO_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
-                          <span className="text-xs text-gray-400 capitalize">{c.fields.Tipo}</span>
+                      <li key={c.id}
+                        className={`p-3 border-b hover:bg-gray-50 flex items-center justify-between gap-2 ${capActiva?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                        <div onClick={() => seleccionarCap(c)} className="flex-1 cursor-pointer">
+                          <div className="font-medium text-sm text-gray-800 truncate">{c.fields.Tema}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge variant={CAP_ESTADO_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
+                            <span className="text-xs text-gray-400 capitalize">{c.fields.Tipo}</span>
+                          </div>
+                          {c.fields['Fecha Programada'] && <div className="text-xs text-gray-400 mt-0.5">{c.fields['Fecha Programada']}</div>}
                         </div>
-                        {c.fields['Fecha Programada'] && <div className="text-xs text-gray-400 mt-0.5">{c.fields['Fecha Programada']}</div>}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); eliminarCapacitacion(c) }}
+                          className="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Eliminar capacitación">
+                          <Trash2 size={16} />
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -281,13 +344,13 @@ export default function CapacitacionesPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
             <input type="text" value={formProg.Titulo} onChange={e => setFormProg(f => ({ ...f, Titulo: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field"
               placeholder="Programa de Capacitaciones SST 2026" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Año</label>
             <input type="number" value={formProg['Año']} onChange={e => setFormProg(f => ({ ...f, 'Año': Number(e.target.value) }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalPrograma(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -304,38 +367,38 @@ export default function CapacitacionesPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tema *</label>
             <input type="text" value={formCap.Tema} onChange={e => setFormCap(f => ({ ...f, Tema: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
               <select value={formCap.Tipo} onChange={e => setFormCap(f => ({ ...f, Tipo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {TIPOS_CAP.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
               <select value={formCap.Modalidad} onChange={e => setFormCap(f => ({ ...f, Modalidad: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha programada</label>
               <input type="date" value={formCap['Fecha Programada']} onChange={e => setFormCap(f => ({ ...f, 'Fecha Programada': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Duración (horas)</label>
               <input type="number" value={formCap.Duracion} onChange={e => setFormCap(f => ({ ...f, Duracion: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Instructor</label>
             <input type="text" value={formCap.Instructor} onChange={e => setFormCap(f => ({ ...f, Instructor: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalCap(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -352,12 +415,12 @@ export default function CapacitacionesPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre trabajador *</label>
             <input type="text" value={formAsist['Nombre Trabajador']} onChange={e => setFormAsist(f => ({ ...f, 'Nombre Trabajador': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
             <input type="text" value={formAsist['Cargo Trabajador']} onChange={e => setFormAsist(f => ({ ...f, 'Cargo Trabajador': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="asistio" checked={formAsist.Asistio} onChange={e => setFormAsist(f => ({ ...f, Asistio: e.target.checked }))}

@@ -56,12 +56,19 @@ export default function PerfilesCargoPage() {
   const seleccionarPerfil = useCallback(async (perfil: Perfil) => {
     setSeleccionado(perfil)
     setLoadingDetalle(true)
-    const [p, e, ex] = await Promise.all([
-      fetch(`/api/sst/cargo/perfiles/${perfil.id}/peligros`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/cargo/perfiles/${perfil.id}/epps`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/cargo/perfiles/${perfil.id}/examenes`, { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setDetalle({ peligros: p.records ?? [], epps: e.records ?? [], examenes: ex.records ?? [] })
+    try {
+      const [pRes, eRes, exRes] = await Promise.all([
+        fetch(`/api/sst/cargo/perfiles/${perfil.id}/peligros`, { headers: authHeaders() }),
+        fetch(`/api/sst/cargo/perfiles/${perfil.id}/epps`, { headers: authHeaders() }),
+        fetch(`/api/sst/cargo/perfiles/${perfil.id}/examenes`, { headers: authHeaders() }),
+      ])
+      const pData = pRes.ok ? await pRes.json() : { records: [] }
+      const eData = eRes.ok ? await eRes.json() : { records: [] }
+      const exData = exRes.ok ? await exRes.json() : { records: [] }
+      setDetalle({ peligros: pData.records ?? [], epps: eData.records ?? [], examenes: exData.records ?? [] })
+    } catch (error) {
+      console.error('Error cargando perfil:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 

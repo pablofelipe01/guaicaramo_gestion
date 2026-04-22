@@ -54,14 +54,27 @@ export default function MatrizLegalPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const [reqs, alts, res] = await Promise.all([
-      fetch(`/api/sst/legal/requisitos${filtroTodos ? '?todos=true' : ''}`, { headers: authHeaders() }).then(r => r.json()),
-      fetch('/api/sst/legal/requisitos?alertas=true', { headers: authHeaders() }).then(r => r.json()),
-      fetch('/api/sst/legal/requisitos?resumen=true', { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setRequisitos(reqs.records ?? [])
-    setAlertas(alts.alertas ?? [])
-    setResumen(res)
+    try {
+      const [reqsRes, altsRes, resRes] = await Promise.all([
+        fetch(`/api/sst/legal/requisitos${filtroTodos ? '?todos=true' : ''}`, { headers: authHeaders() }),
+        fetch('/api/sst/legal/requisitos?alertas=true', { headers: authHeaders() }),
+        fetch('/api/sst/legal/requisitos?resumen=true', { headers: authHeaders() }),
+      ])
+      if (reqsRes.ok) {
+        const reqs = await reqsRes.json()
+        setRequisitos(reqs.records ?? [])
+      }
+      if (altsRes.ok) {
+        const alts = await altsRes.json()
+        setAlertas(alts.alertas ?? [])
+      }
+      if (resRes.ok) {
+        const res = await resRes.json()
+        setResumen(res)
+      }
+    } catch (error) {
+      console.error('Error cargando requisitos legales:', error)
+    }
     setLoading(false)
   }, [filtroTodos])
 
@@ -70,9 +83,15 @@ export default function MatrizLegalPage() {
   const seleccionar = useCallback(async (req: Requisito) => {
     setSeleccionado(req)
     setLoadingDetalle(true)
-    const res = await fetch(`/api/sst/legal/requisitos/${req.id}/cumplimientos`, { headers: authHeaders() })
-    const data = await res.json()
-    setCumplimientos(data.records ?? [])
+    try {
+      const res = await fetch(`/api/sst/legal/requisitos/${req.id}/cumplimientos`, { headers: authHeaders() })
+      if (res.ok) {
+        const data = await res.json()
+        setCumplimientos(data.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando cumplimientos:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 
@@ -294,26 +313,26 @@ export default function MatrizLegalPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Norma *</label>
             <input type="text" value={formReq.Norma} onChange={e => setFormReq(f => ({ ...f, Norma: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field"
               placeholder="Ej. Decreto 1072 de 2015" />
           </div>
           <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Artículo</label>
               <input type="text" value={formReq.Articulo} onChange={e => setFormReq(f => ({ ...f, Articulo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
               <select value={formReq.Tipo} onChange={e => setFormReq(f => ({ ...f, Tipo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {TIPOS.map(t => <option key={t} value={t} className="capitalize">{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ámbito</label>
               <select value={formReq.Ambito} onChange={e => setFormReq(f => ({ ...f, Ambito: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {AMBITOS.map(a => <option key={a} value={a} className="capitalize">{a}</option>)}
               </select>
             </div>
@@ -326,7 +345,7 @@ export default function MatrizLegalPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de vigencia</label>
             <input type="date" value={formReq['Fecha Vigencia']} onChange={e => setFormReq(f => ({ ...f, 'Fecha Vigencia': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalRequisito(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -344,7 +363,7 @@ export default function MatrizLegalPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Estado *</label>
             <select value={formCumpl.Estado} onChange={e => setFormCumpl(f => ({ ...f, Estado: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+              className="input-field">
               {ESTADOS_CUMPL.map(e => <option key={e} value={e}>{e.replace('_', ' ')}</option>)}
             </select>
           </div>
@@ -353,12 +372,12 @@ export default function MatrizLegalPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
               <input type="text" value={formCumpl.Responsable} onChange={e => setFormCumpl(f => ({ ...f, Responsable: e.target.value }))}
                 placeholder={user?.name}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Próxima revisión</label>
               <input type="date" value={formCumpl['Proxima Revision']} onChange={e => setFormCumpl(f => ({ ...f, 'Proxima Revision': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
@@ -369,7 +388,7 @@ export default function MatrizLegalPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">URL de evidencia</label>
             <input type="url" value={formCumpl['Evidencia URL']} onChange={e => setFormCumpl(f => ({ ...f, 'Evidencia URL': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field"
               placeholder="https://..." />
           </div>
           <div className="flex justify-end gap-3 pt-2">

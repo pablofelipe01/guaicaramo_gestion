@@ -56,12 +56,22 @@ export default function GestionCambioPage() {
   const seleccionar = useCallback(async (c: Cambio) => {
     setSeleccionado(c)
     setLoadingDetalle(true)
-    const [aprs, ctrls] = await Promise.all([
-      fetch(`/api/sst/cambios/${c.id}/aprobaciones`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/cambios/${c.id}/controles`, { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setAprobaciones(aprs.records ?? [])
-    setControles(ctrls.records ?? [])
+    try {
+      const [aprsRes, ctrlsRes] = await Promise.all([
+        fetch(`/api/sst/cambios/${c.id}/aprobaciones`, { headers: authHeaders() }),
+        fetch(`/api/sst/cambios/${c.id}/controles`, { headers: authHeaders() }),
+      ])
+      if (aprsRes.ok) {
+        const aprs = await aprsRes.json()
+        setAprobaciones(aprs.records ?? [])
+      }
+      if (ctrlsRes.ok) {
+        const ctrls = await ctrlsRes.json()
+        setControles(ctrls.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando cambio:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 
@@ -262,20 +272,20 @@ export default function GestionCambioPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
             <input type="text" value={formCambio.Titulo} onChange={e => setFormCambio(f => ({ ...f, Titulo: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
               <select value={formCambio.Tipo} onChange={e => setFormCambio(f => ({ ...f, Tipo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {TIPOS_CAMBIO.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Área afectada</label>
               <input type="text" value={formCambio['Area Afectada']} onChange={e => setFormCambio(f => ({ ...f, 'Area Afectada': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
@@ -309,7 +319,7 @@ export default function GestionCambioPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Decisión</label>
               <select value={formAprob.Decision} onChange={e => setFormAprob(f => ({ ...f, Decision: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 <option value="aprobado">Aprobado</option>
                 <option value="rechazado">Rechazado</option>
                 <option value="devuelto">Devuelto</option>
@@ -318,7 +328,7 @@ export default function GestionCambioPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
               <select value={formAprob.Rol} onChange={e => setFormAprob(f => ({ ...f, Rol: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 <option value="coordinador_sst">Coordinador SST</option>
                 <option value="gerencia">Gerencia</option>
               </select>
@@ -350,20 +360,20 @@ export default function GestionCambioPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
               <select value={formControl.Tipo} onChange={e => setFormControl(f => ({ ...f, Tipo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {TIPOS_CONTROL.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
               <input type="text" value={formControl.Responsable} onChange={e => setFormControl(f => ({ ...f, Responsable: e.target.value }))}
-                placeholder={user?.name} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder={user?.name} className="input-field" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
             <input type="date" value={formControl['Fecha Limite']} onChange={e => setFormControl(f => ({ ...f, 'Fecha Limite': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalControl(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>

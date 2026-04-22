@@ -1,5 +1,5 @@
 import 'server-only'
-import { listRecords, getRecord, createRecords, updateRecord } from '@/lib/airtable-client'
+import { listRecords, getRecord, createRecords, updateRecord, type AirtableRecord } from '@/lib/airtable-client'
 import type { PptoPresupuestoFields, PptoRubroFields, PptoEjecucionFields } from '@/types/sst/ppto'
 
 const T_PPTO = 'sst_ppto_presupuestos'
@@ -40,6 +40,10 @@ export async function crearRubro(fields: PptoRubroFields) {
   return record
 }
 
+export async function actualizarRubro(id: string, fields: Partial<PptoRubroFields>) {
+  return updateRecord<PptoRubroFields>(T_RUBROS, id, fields)
+}
+
 export async function listarEjecuciones(rubroId: string) {
   const { records } = await listRecords<PptoEjecucionFields>(T_EJEC, {
     filterByFormula: `{Rubro ID}="${rubroId}"`,
@@ -65,12 +69,8 @@ export async function alertasPresupuesto(presupuestoId: string) {
     .filter(r => r.fields['Valor Presupuestado'] > 0)
     .map(r => {
       const pct = (r.fields['Valor Ejecutado'] / r.fields['Valor Presupuestado']) * 100
-      return {
-        id: r.id,
-        nombre: r.fields['Nombre Rubro'],
-        porcentaje: Math.round(pct),
-        alerta: pct > 80 ? 'sobreejecucion' : pct < 50 ? 'subejecucion' : null,
-      }
+      const tipo = pct > 80 ? 'sobreejecucion' : pct < 50 ? 'subejecucion' : null
+      return tipo ? { rubro: r, tipo: tipo as 'sobreejecucion' | 'subejecucion', porcentaje: pct } : null
     })
-    .filter(r => r.alerta !== null)
+    .filter((r): r is { rubro: AirtableRecord<PptoRubroFields>; tipo: 'sobreejecucion' | 'subejecucion'; porcentaje: number } => r !== null)
 }

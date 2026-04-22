@@ -2,14 +2,16 @@ import { NextRequest, NextResponse } from 'next/server'
 import { listarCumplimientos, crearCumplimiento, obtenerRequisito } from '@/lib/sst/legal'
 import { verifyToken } from '@/lib/auth'
 
-export async function GET(request: NextRequest, ctx: RouteContext<'/api/sst/legal/requisitos/[id]/cumplimientos'>) {
+type Ctx = { params: Promise<{ id: string }> }
+
+export async function GET(request: NextRequest, ctx: Ctx) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { id } = await ctx.params
   return NextResponse.json({ records: await listarCumplimientos(id) })
 }
 
-export async function POST(request: NextRequest, ctx: RouteContext<'/api/sst/legal/requisitos/[id]/cumplimientos'>) {
+export async function POST(request: NextRequest, ctx: Ctx) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   const usuario = token ? await verifyToken(token) : null
   if (!usuario) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })

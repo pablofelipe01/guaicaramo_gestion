@@ -43,9 +43,11 @@ export default function PlanTrabajoPage() {
   const [loadingDetalle, setLoadingDetalle] = useState(false)
   const [tab, setTab] = useState<'actividades' | 'dashboard'>('actividades')
   const [modalPlan, setModalPlan] = useState(false)
+  const [modalEditarPlan, setModalEditarPlan] = useState(false)
   const [modalActividad, setModalActividad] = useState(false)
   const [guardando, setGuardando] = useState(false)
-  const [formPlan, setFormPlan] = useState({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '' })
+  const [formPlan, setFormPlan] = useState({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
+  const [formEditarPlan, setFormEditarPlan] = useState({ Titulo: '', Descripcion: '', Estado: 'borrador' })
   const [formAct, setFormAct] = useState({
     Descripcion: '', Responsable: '', Mes: '', 'Ciclo PHVA': '', 'Costo Estimado': '', 'Fecha Limite': '',
   })
@@ -63,12 +65,22 @@ export default function PlanTrabajoPage() {
   const seleccionar = useCallback(async (plan: Plan) => {
     setSeleccionado(plan)
     setLoadingDetalle(true)
-    const [acts, dash] = await Promise.all([
-      fetch(`/api/sst/planes/${plan.id}/actividades`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/planes/${plan.id}/actividades?dashboard=true`, { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setActividades(acts.records ?? [])
-    setDashboard(dash)
+    try {
+      const [actsRes, dashRes] = await Promise.all([
+        fetch(`/api/sst/planes/${plan.id}/actividades`, { headers: authHeaders() }),
+        fetch(`/api/sst/planes/${plan.id}/actividades?dashboard=true`, { headers: authHeaders() }),
+      ])
+      if (actsRes.ok) {
+        const acts = await actsRes.json()
+        setActividades(acts.records ?? [])
+      }
+      if (dashRes.ok) {
+        const dash = await dashRes.json()
+        setDashboard(dash)
+      }
+    } catch (error) {
+      console.error('Error cargando actividades:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 
@@ -80,8 +92,34 @@ export default function PlanTrabajoPage() {
       body: JSON.stringify({ ...formPlan, Responsable: user?.name }),
     })
     setModalPlan(false)
-    setFormPlan({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '' })
+    setFormPlan({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
     await cargar()
+    setGuardando(false)
+  }
+
+  const editarPlan = async () => {
+    if (!seleccionado || !formEditarPlan.Titulo) return
+    setGuardando(true)
+    await fetch(`/api/sst/planes/${seleccionado.id}`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify(formEditarPlan),
+    })
+    setModalEditarPlan(false)
+    await cargar()
+    if (seleccionado) await seleccionar(seleccionado)
+    setGuardando(false)
+  }
+
+  const cerrarPlan = async () => {
+    if (!seleccionado) return
+    if (!confirm('¿Cerrar este plan? Se calculará el cumplimiento final.')) return
+    setGuardando(true)
+    await fetch(`/api/sst/planes/${seleccionado.id}`, {
+      method: 'PUT', headers: authHeaders(),
+      body: JSON.stringify({ Estado: 'cerrado' }),
+    })
+    await cargar()
+    setSeleccionado(null)
     setGuardando(false)
   }
 
@@ -176,6 +214,23 @@ export default function PlanTrabajoPage() {
                   <BarChart2 size={15} /> Dashboard
                 </button>
                 <div className="flex-1" />
+                <button
+                  onClick={() => {
+                    setFormEditarPlan({ Titulo: seleccionado.fields.Titulo, Descripcion: seleccionado.fields.Descripcion || '', Estado: seleccionado.fields.Estado })
+                    setModalEditarPlan(true)
+                  }}
+                  className="px-3 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Editar
+                </button>
+                {seleccionado.fields.Estado !== 'cerrado' && (
+                  <button
+                    onClick={cerrarPlan}
+                    className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    Cerrar
+                  </button>
+                )}
                 <button
                   onClick={() => setModalActividad(true)}
                   className="flex items-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700"
@@ -292,18 +347,24 @@ export default function PlanTrabajoPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
             <input type="text" value={formPlan.Titulo} onChange={e => setFormPlan(f => ({ ...f, Titulo: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              className="input-field"
               placeholder="Ej. Plan de trabajo SST 2026" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Año *</label>
             <input type="number" value={formPlan['Año']} onChange={e => setFormPlan(f => ({ ...f, 'Año': Number(e.target.value) }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
             <textarea value={formPlan.Descripcion} onChange={e => setFormPlan(f => ({ ...f, Descripcion: e.target.value }))}
               rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Vinculado a Evaluación (opcional)</label>
+            <input type="text" value={formPlan['Evaluacion ID']} onChange={e => setFormPlan(f => ({ ...f, 'Evaluacion ID': e.target.value }))}
+              placeholder="ID de la evaluación inicial"
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-xs text-gray-500" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalPlan(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -315,7 +376,37 @@ export default function PlanTrabajoPage() {
         </div>
       </Modal>
 
-      {/* Modal nueva actividad */}
+      {/* Modal editar plan */}
+      <Modal open={modalEditarPlan} onClose={() => setModalEditarPlan(false)} title="Editar plan" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <input type="text" value={formEditarPlan.Titulo} onChange={e => setFormEditarPlan(f => ({ ...f, Titulo: e.target.value }))}
+              className="input-field" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <textarea value={formEditarPlan.Descripcion} onChange={e => setFormEditarPlan(f => ({ ...f, Descripcion: e.target.value }))}
+              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+            <select value={formEditarPlan.Estado} onChange={e => setFormEditarPlan(f => ({ ...f, Estado: e.target.value as 'borrador' | 'activo' | 'cerrado' }))}
+              className="input-field">
+              <option value="borrador">Borrador</option>
+              <option value="activo">Activo</option>
+              <option value="cerrado">Cerrado</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button onClick={() => setModalEditarPlan(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={editarPlan} disabled={guardando || !formEditarPlan.Titulo}
+              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              {guardando ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
       <Modal open={modalActividad} onClose={() => setModalActividad(false)} title="Nueva actividad" size="md">
         <div className="space-y-4">
           <div>
@@ -327,12 +418,12 @@ export default function PlanTrabajoPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Responsable</label>
               <input type="text" value={formAct.Responsable} onChange={e => setFormAct(f => ({ ...f, Responsable: e.target.value }))}
-                placeholder={user?.name} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                placeholder={user?.name} className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ciclo PHVA</label>
               <select value={formAct['Ciclo PHVA']} onChange={e => setFormAct(f => ({ ...f, 'Ciclo PHVA': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 <option value="">Seleccionar</option>
                 {CICLOS.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -340,7 +431,7 @@ export default function PlanTrabajoPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Mes</label>
               <select value={formAct.Mes} onChange={e => setFormAct(f => ({ ...f, Mes: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 <option value="">Seleccionar</option>
                 {MESES.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -348,13 +439,13 @@ export default function PlanTrabajoPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Costo estimado ($)</label>
               <input type="number" value={formAct['Costo Estimado']} onChange={e => setFormAct(f => ({ ...f, 'Costo Estimado': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
             <input type="date" value={formAct['Fecha Limite']} onChange={e => setFormAct(f => ({ ...f, 'Fecha Limite': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalActividad(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>

@@ -57,12 +57,22 @@ export default function EvaluacionInicialPage() {
   const seleccionar = useCallback(async (ev: Evaluacion) => {
     setSeleccionada(ev)
     setLoadingDetalle(true)
-    const [est, resp] = await Promise.all([
-      fetch('/api/sst/estandares', { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/evaluaciones/${ev.id}/respuestas`, { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setEstandares(est.records ?? [])
-    setRespuestas(resp.records ?? [])
+    try {
+      const [estRes, respRes] = await Promise.all([
+        fetch('/api/sst/estandares', { headers: authHeaders() }),
+        fetch(`/api/sst/evaluaciones/${ev.id}/respuestas`, { headers: authHeaders() }),
+      ])
+      if (estRes.ok) {
+        const est = await estRes.json()
+        setEstandares(est.records ?? [])
+      }
+      if (respRes.ok) {
+        const resp = await respRes.json()
+        setRespuestas(resp.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando evaluación:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 
@@ -82,27 +92,39 @@ export default function EvaluacionInicialPage() {
 
   const responder = async (estandarId: string, estandarNombre: string, resultado: string) => {
     if (!seleccionada) return
-    await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ 'Estandar ID': estandarId, 'Estandar Nombre': estandarNombre, Resultado: resultado }),
-    })
-    const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, { headers: authHeaders() })
-    const data = await res.json()
-    setRespuestas(data.records ?? [])
+    try {
+      await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ 'Estandar ID': estandarId, 'Estandar Nombre': estandarNombre, Resultado: resultado }),
+      })
+      const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, { headers: authHeaders() })
+      if (res.ok) {
+        const data = await res.json()
+        setRespuestas(data.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error respondiendo:', error)
+    }
   }
 
   const cerrarEvaluacion = async () => {
     if (!seleccionada) return
     setCerrando(true)
-    const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}`, {
-      method: 'PUT',
-      headers: authHeaders(),
-      body: JSON.stringify({ accion: 'cerrar' }),
-    })
-    const data = await res.json()
-    setSeleccionada(data.record)
-    await cargar()
+    try {
+      const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ accion: 'cerrar' }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setSeleccionada(data.record)
+        await cargar()
+      }
+    } catch (error) {
+      console.error('Error cerrando evaluación:', error)
+    }
     setCerrando(false)
   }
 

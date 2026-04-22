@@ -2,9 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { obtenerDocumento, actualizarDocumento } from '@/lib/sst/doc'
 import { verifyToken } from '@/lib/auth'
 
+type Ctx = { params: Promise<{ id: string }> }
+
 export async function GET(
   request: NextRequest,
-  ctx: RouteContext<'/api/sst/documentos/[id]'>
+  ctx: Ctx
 ) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '')
@@ -22,7 +24,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  ctx: RouteContext<'/api/sst/documentos/[id]'>
+  ctx: Ctx
 ) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '')

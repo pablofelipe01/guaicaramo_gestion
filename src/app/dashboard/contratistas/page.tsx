@@ -60,14 +60,27 @@ export default function ContratistasPage() {
   const seleccionar = useCallback(async (c: Contratista) => {
     setSeleccionado(c)
     setLoadingDetalle(true)
-    const [sem, docs, trabs] = await Promise.all([
-      fetch(`/api/sst/contratistas/${c.id}/semaforo`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/contratistas/${c.id}/documentos`, { headers: authHeaders() }).then(r => r.json()),
-      fetch(`/api/sst/contratistas/${c.id}/trabajadores`, { headers: authHeaders() }).then(r => r.json()),
-    ])
-    setSemaforo(sem)
-    setDocumentos(docs.records ?? [])
-    setTrabajadores(trabs.records ?? [])
+    try {
+      const [semRes, docsRes, trabsRes] = await Promise.all([
+        fetch(`/api/sst/contratistas/${c.id}/semaforo`, { headers: authHeaders() }),
+        fetch(`/api/sst/contratistas/${c.id}/documentos`, { headers: authHeaders() }),
+        fetch(`/api/sst/contratistas/${c.id}/trabajadores`, { headers: authHeaders() }),
+      ])
+      if (semRes.ok) {
+        const sem = await semRes.json()
+        setSemaforo(sem)
+      }
+      if (docsRes.ok) {
+        const docs = await docsRes.json()
+        setDocumentos(docs.records ?? [])
+      }
+      if (trabsRes.ok) {
+        const trabs = await trabsRes.json()
+        setTrabajadores(trabs.records ?? [])
+      }
+    } catch (error) {
+      console.error('Error cargando contratista:', error)
+    }
     setLoadingDetalle(false)
   }, [])
 
@@ -250,28 +263,28 @@ export default function ContratistasPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre empresa *</label>
               <input type="text" value={formCont['Nombre Empresa']} onChange={e => setFormCont(f => ({ ...f, 'Nombre Empresa': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">NIT *</label>
               <input type="text" value={formCont.NIT} onChange={e => setFormCont(f => ({ ...f, NIT: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Representante legal</label>
               <input type="text" value={formCont['Representante Legal']} onChange={e => setFormCont(f => ({ ...f, 'Representante Legal': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input type="email" value={formCont.Email} onChange={e => setFormCont(f => ({ ...f, Email: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Actividad económica</label>
             <input type="text" value={formCont.Actividad} onChange={e => setFormCont(f => ({ ...f, Actividad: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalContratista(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -289,20 +302,20 @@ export default function ContratistasPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
               <select value={formDoc.Tipo} onChange={e => setFormDoc(f => ({ ...f, Tipo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500">
+                className="input-field">
                 {TIPOS_DOC.map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha vencimiento *</label>
               <input type="date" value={formDoc['Fecha Vencimiento']} onChange={e => setFormDoc(f => ({ ...f, 'Fecha Vencimiento': e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">URL del documento</label>
             <input type="url" value={formDoc['URL Documento']} onChange={e => setFormDoc(f => ({ ...f, 'URL Documento': e.target.value }))}
-              placeholder="https://" className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              placeholder="https://" className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalDoc(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -319,18 +332,18 @@ export default function ContratistasPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo *</label>
             <input type="text" value={formTrab['Nombre Completo']} onChange={e => setFormTrab(f => ({ ...f, 'Nombre Completo': e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+              className="input-field" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Identificación</label>
               <input type="text" value={formTrab.Identificacion} onChange={e => setFormTrab(f => ({ ...f, Identificacion: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
               <input type="text" value={formTrab.Cargo} onChange={e => setFormTrab(f => ({ ...f, Cargo: e.target.value }))}
-                className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+                className="input-field" />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
