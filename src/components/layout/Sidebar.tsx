@@ -27,6 +27,7 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronRight,
+  Database,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -100,6 +101,17 @@ const NAV: PhaseGroup[] = [
     textColor: 'text-red-700',
     modules: [
       { name: 'Acciones Correctivas', href: '/dashboard/acciones-correctivas', icon: CheckSquare },
+    ],
+  },
+  {
+    phase: 'ADMIN',
+    label: 'Administración',
+    color: 'border-gray-400',
+    bgColor: 'bg-gray-50',
+    textColor: 'text-gray-600',
+    modules: [
+      { name: 'Gestión de Usuarios', href: '/dashboard/usuarios', icon: Users },
+      { name: 'Backup', href: '/dashboard/backup', icon: Database },
     ],
   },
 ]

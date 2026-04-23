@@ -49,16 +49,15 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
 
   const actividades = actividadesRes.records
   const totalActs = actividades.length
-  const actsCerradas = actividades.filter(r => r.fields.Estado === 'cerrada').length
+  const actsCerradas = actividades.filter(r => r.fields.Estado === 'completada').length
 
   const rubros = rubrosRes.records
   const ejecuciones = ejecucionesRes.records
-  const totalPresupuestado = rubros.reduce((s, r) => s + (r.fields.Monto ?? 0), 0)
-  const totalEjecutado = ejecuciones.reduce((s, r) => s + (r.fields.Monto ?? 0), 0)
+  const totalPresupuestado = rubros.reduce((s, r) => s + (r.fields['Valor Presupuestado'] ?? 0), 0)
+  const totalEjecutado = ejecuciones.reduce((s, r) => s + (r.fields.Valor ?? 0), 0)
 
   const acciones = accionesRes.records
   const totalAcciones = acciones.length
-  const accionesHoy = new Date().toISOString().split('T')[0]
   const accionesCerradasATiempo = acciones.filter(r =>
     r.fields.Estado === 'cerrada' &&
     r.fields['Fecha Cierre'] &&
