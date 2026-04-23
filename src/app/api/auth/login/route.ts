@@ -3,12 +3,14 @@ import bcrypt from 'bcrypt'
 import { listRecords } from '@/lib/airtable-client'
 import { signToken } from '@/lib/auth'
 
+interface AirtableSelect { id: string; name: string; color?: string }
+
 interface UserFields {
   Email: string
   'Password Hash': string
   'Nombre Completo'?: string
-  Estado?: string
-  Rol?: string[]
+  Estado?: AirtableSelect | string
+  Rol?: Array<{ id: string; name: string }> | string[]
 }
 
 export async function POST(request: NextRequest) {
@@ -53,7 +55,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (user.fields.Estado?.toLowerCase() === 'inactivo') {
+    const estadoName = typeof user.fields.Estado === 'object' && user.fields.Estado !== null
+      ? user.fields.Estado.name
+      : user.fields.Estado
+
+    if (estadoName?.toLowerCase() === 'inactivo') {
       return NextResponse.json(
         { success: false, message: 'La cuenta está desactivada' },
         { status: 403 }
