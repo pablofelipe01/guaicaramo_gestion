@@ -14,7 +14,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
   const handleLogout = () => {
     logout()
-    router.push('/auth')
+    router.push('/dashboard')
   }
 
   return (

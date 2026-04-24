@@ -1,179 +1,271 @@
 'use client';
 
-import React, { useState, FormEvent } from 'react';
-import { Eye, EyeOff, AlertCircle, CheckCircle, Loader } from 'lucide-react';
-import { validateLoginForm } from '@/lib/validation';
+import React, { useState, useRef, FormEvent } from 'react';
+import {
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Loader2,
+  Mail,
+  Lock,
+  CheckCircle2,
+} from 'lucide-react';
 
 interface LoginFormProps {
   onLoginSuccess?: (token: string) => void;
-  onSwitchToRegister?: () => void;
 }
 
-export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginFormProps) {
+/** Elimina caracteres que pueden romper fórmulas de Airtable o producir XSS */
+function sanitizeField(value: string): string {
+  return value.replace(/["'<>`\\]/g, '').trim();
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]{2,}\.[^\s@]{2,}$/.test(email);
+}
+
+export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState({ email: false, password: false });
   const [isLoading, setIsLoading] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [serverError, setServerError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Previene doble envío incluso durante cambios rápidos de estado
+  const submitting = useRef(false);
+
+  // Validaciones inline
+  const emailError =
+    touched.email && !email.trim()
+      ? 'El correo electrónico es requerido'
+      : touched.email && !isValidEmail(email.trim())
+      ? 'Ingresa un correo electrónico válido'
+      : '';
+
+  const passwordError =
+    touched.password && !password ? 'La contraseña es requerida' : '';
+
+  const formValid =
+    !!email.trim() && isValidEmail(email.trim()) && !!password;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setErrors({});
-    setErrorMessage('');
-    setSuccessMessage('');
 
-    // Validar formulario
-    const validationErrors = validateLoginForm(email, password);
-    if (validationErrors.length > 0) {
-      const errorMap: Record<string, string> = {};
-      validationErrors.forEach((err) => {
-        errorMap[err.field] = err.message;
-      });
-      setErrors(errorMap);
-      return;
-    }
+    // Marcar todos los campos como tocados para mostrar errores
+    setTouched({ email: true, password: true });
 
+    if (!formValid || submitting.current) return;
+
+    submitting.current = true;
     setIsLoading(true);
+    setServerError('');
 
     try {
+      const cleanEmail = sanitizeField(email).toLowerCase();
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
-      const response = await res.json();
 
-      if (response.success && response.token) {
-        setSuccessMessage('¡Autenticación exitosa! Redirigiendo...');
-        // Guardar token en localStorage
-        localStorage.setItem('authToken', response.token);
-        
-        // Llamar callback si está definido
-        if (onLoginSuccess) {
-          onLoginSuccess(response.token);
-        }
+      const data: { success: boolean; token?: string; message?: string } =
+        await res.json();
 
-        // Redirigir después de 1.5 segundos
+      if (data.success && data.token) {
+        setSuccess(true);
+        localStorage.setItem('authToken', data.token);
+
+        if (onLoginSuccess) onLoginSuccess(data.token);
+
+        // Breve feedback visual antes de redirigir
         setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
+          window.location.replace('/dashboard');
+        }, 700);
       } else {
-        setErrorMessage(response.message || 'Error en la autenticación');
+        setServerError(
+          data.message ?? 'Credenciales incorrectas. Vuelve a intentarlo.',
+        );
+        // Liberar el lock para permitir reintentos
+        submitting.current = false;
       }
-    } catch (error) {
-      console.error('Error:', error);
-      setErrorMessage('Error de conexión. Intenta de nuevo más tarde.');
+    } catch {
+      setServerError(
+        'Error de conexión. Verifica tu red e intenta nuevamente.',
+      );
+      submitting.current = false;
     } finally {
       setIsLoading(false);
     }
   };
 
+  const blur = (field: 'email' | 'password') =>
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Mensajes de Error/Éxito */}
-      {errorMessage && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-600" />
-          <span className="text-red-700 text-sm">{errorMessage}</span>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="w-5 h-5 text-green-600" />
-          <span className="text-green-700 text-sm">{successMessage}</span>
-        </div>
-      )}
-
-      {/* Campo Email */}
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          disabled={isLoading}
-          placeholder="tu@email.com"
-          className={`input-field ${errors.email ? 'input-error' : ''}`}
-          autoComplete="email"
-        />
-        {errors.email && <p className="text-error">{errors.email}</p>}
-      </div>
-
-      {/* Campo Contraseña */}
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-          Contraseña
-        </label>
-        <div className="relative">
-          <input
-            id="password"
-            type={showPassword ? 'text' : 'password'}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isLoading}
-            placeholder="Tu contraseña"
-            className={`input-field ${errors.password ? 'input-error' : ''}`}
-            autoComplete="current-password"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            disabled={isLoading}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+    <div>
+      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+        {/* ── Error del servidor ── */}
+        {serverError && !success && (
+          <div
+            role="alert"
+            className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl"
           >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
-          </button>
-        </div>
-        {errors.password && <p className="text-error">{errors.password}</p>}
-      </div>
-
-      {/* Enlace de Recuperación de Contraseña */}
-      <div className="flex justify-end">
-        <a
-          href="/auth/forgot-password"
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-        >
-          ¿Olvidaste tu contraseña?
-        </a>
-      </div>
-
-      {/* Botón Submit */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full btn-primary flex items-center justify-center gap-2"
-      >
-        {isLoading ? (
-          <>
-            <Loader className="w-5 h-5 animate-spin" />
-            Autenticando...
-          </>
-        ) : (
-          'Iniciar Sesión'
+            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+            <p className="text-red-700 text-sm leading-relaxed">{serverError}</p>
+          </div>
         )}
-      </button>
 
-      {/* Enlace a Registro */}
-      <p className="text-center text-sm text-gray-600">
-        ¿No tienes cuenta?{' '}
+        {/* ── Éxito ── */}
+        {success && (
+          <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
+            <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+            <p className="text-green-700 text-sm font-medium">
+              ¡Acceso verificado! Redirigiendo al dashboard…
+            </p>
+          </div>
+        )}
+
+        {/* ── Campo: Correo ── */}
+        <div>
+          <label
+            htmlFor="login-email"
+            className="block text-sm font-semibold text-gray-700 mb-1.5"
+          >
+            Correo electrónico
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              id="login-email"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (serverError) setServerError('');
+              }}
+              onBlur={() => blur('email')}
+              disabled={isLoading || success}
+              placeholder="correo@empresa.com"
+              autoComplete="email"
+              autoFocus
+              maxLength={254}
+              aria-invalid={!!emailError}
+              aria-describedby={emailError ? 'email-err' : undefined}
+              className={[
+                'w-full pl-10 pr-4 py-3 border rounded-2xl text-sm transition-all duration-150 outline-none',
+                'bg-white text-gray-900 placeholder-gray-400',
+                emailError
+                  ? 'border-red-400 ring-2 ring-red-100 focus:ring-red-200 focus:border-red-500'
+                  : 'border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500',
+                'disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed',
+              ].join(' ')}
+            />
+          </div>
+          {emailError && (
+            <p
+              id="email-err"
+              role="alert"
+              className="flex items-center gap-1.5 text-red-600 text-xs mt-1.5"
+            >
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              {emailError}
+            </p>
+          )}
+        </div>
+
+        {/* ── Campo: Contraseña ── */}
+        <div>
+          <label
+            htmlFor="login-password"
+            className="block text-sm font-semibold text-gray-700 mb-1.5"
+          >
+            Contraseña
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            <input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (serverError) setServerError('');
+              }}
+              onBlur={() => blur('password')}
+              disabled={isLoading || success}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              maxLength={128}
+              aria-invalid={!!passwordError}
+              aria-describedby={passwordError ? 'pwd-err' : undefined}
+              className={[
+                'w-full pl-10 pr-12 py-3 border rounded-2xl text-sm transition-all duration-150 outline-none',
+                'bg-white text-gray-900 placeholder-gray-400',
+                passwordError
+                  ? 'border-red-400 ring-2 ring-red-100 focus:ring-red-200 focus:border-red-500'
+                  : 'border-gray-200 focus:ring-2 focus:ring-blue-100 focus:border-blue-500',
+                'disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed',
+              ].join(' ')}
+            />
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword((v) => !v)}
+              disabled={isLoading || success}
+              aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 disabled:cursor-not-allowed transition-colors"
+            >
+              {showPassword ? (
+                <EyeOff className="w-4 h-4" />
+              ) : (
+                <Eye className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+          {passwordError && (
+            <p
+              id="pwd-err"
+              role="alert"
+              className="flex items-center gap-1.5 text-red-600 text-xs mt-1.5"
+            >
+              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+              {passwordError}
+            </p>
+          )}
+        </div>
+
+        {/* ── Botón submit ── */}
         <button
-          type="button"
-          onClick={onSwitchToRegister}
-          className="text-blue-600 hover:text-blue-700 font-medium"
+          type="submit"
+          disabled={isLoading || success}
+          className={[
+            'w-full py-3 px-4 rounded-2xl font-semibold text-sm transition-all duration-200',
+            'flex items-center justify-center gap-2',
+            isLoading || success
+              ? 'bg-blue-500 text-white cursor-not-allowed opacity-80'
+              : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white shadow-sm hover:shadow-md',
+          ].join(' ')}
         >
-          Regístrate aquí
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Verificando…</span>
+            </>
+          ) : success ? (
+            <>
+              <CheckCircle2 className="w-4 h-4" />
+              <span>Acceso concedido</span>
+            </>
+          ) : (
+            'Iniciar Sesión'
+          )}
         </button>
-      </p>
-    </form>
+
+      </form>
+    </div>
   );
 }
+

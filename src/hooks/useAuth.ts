@@ -1,47 +1,21 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { decodeToken, isTokenValid, type TokenPayload } from '@/lib/token'
-
-type User = Omit<TokenPayload, 'iat' | 'exp'>
+const DEFAULT_USER = {
+  id: 'local',
+  email: 'admin@guaicaramo.com',
+  name: 'Administrador',
+  role: 'coordinador_sst',
+}
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const login = (_token: string) => {}
+  const logout = () => {}
 
-  useEffect(() => {
-    const token = localStorage.getItem('authToken')
-
-    if (token && isTokenValid(token)) {
-      const payload = decodeToken(token)
-      if (payload) {
-        setUser({ id: payload.id, email: payload.email, name: payload.name, role: payload.role })
-        setIsAuthenticated(true)
-      }
-    } else {
-      if (token) localStorage.removeItem('authToken')
-      setUser(null)
-      setIsAuthenticated(false)
-    }
-
-    setIsLoading(false)
-  }, [])
-
-  const login = (token: string) => {
-    localStorage.setItem('authToken', token)
-    const payload = decodeToken(token)
-    if (payload) {
-      setUser({ id: payload.id, email: payload.email, name: payload.name, role: payload.role })
-      setIsAuthenticated(true)
-    }
+  return {
+    user: DEFAULT_USER,
+    isLoading: false,
+    isAuthenticated: true,
+    login,
+    logout,
   }
-
-  const logout = () => {
-    localStorage.removeItem('authToken')
-    setUser(null)
-    setIsAuthenticated(false)
-  }
-
-  return { user, isLoading, isAuthenticated, login, logout }
 }
