@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
-import React, { useState, FormEvent } from 'react';
+import React, { useState, useRef, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, AlertCircle, CheckCircle, Loader } from 'lucide-react';
 import { validateLoginForm } from '@/lib/validation';
 
@@ -10,6 +11,7 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginFormProps) {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -17,6 +19,7 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const submitting = useRef(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -24,7 +27,6 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
     setErrorMessage('');
     setSuccessMessage('');
 
-    // Validar formulario
     const validationErrors = validateLoginForm(email, password);
     if (validationErrors.length > 0) {
       const errorMap: Record<string, string> = {};
@@ -35,36 +37,30 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
       return;
     }
 
+    if (submitting.current) return;
+    submitting.current = true;
     setIsLoading(true);
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
       });
       const response = await res.json();
 
       if (response.success && response.token) {
-        setSuccessMessage('¡Autenticación exitosa! Redirigiendo...');
-        // Guardar token en localStorage
         localStorage.setItem('authToken', response.token);
-        
-        // Llamar callback si está definido
-        if (onLoginSuccess) {
-          onLoginSuccess(response.token);
-        }
-
-        // Redirigir después de 1.5 segundos
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1500);
+        setSuccessMessage('¡Autenticación exitosa! Redirigiendo...');
+        if (onLoginSuccess) onLoginSuccess(response.token);
+        router.replace('/dashboard');
       } else {
-        setErrorMessage(response.message || 'Error en la autenticación');
+        setErrorMessage(response.message || 'Credenciales incorrectas. Verifica tu email y contraseña.');
+        submitting.current = false;
       }
-    } catch (error) {
-      console.error('Error:', error);
+    } catch {
       setErrorMessage('Error de conexión. Intenta de nuevo más tarde.');
+      submitting.current = false;
     } finally {
       setIsLoading(false);
     }
@@ -72,22 +68,20 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Mensajes de Error/Éxito */}
       {errorMessage && (
-        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <AlertCircle className="w-5 h-5 text-red-600" />
+        <div role="alert" className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0" />
           <span className="text-red-700 text-sm">{errorMessage}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-          <CheckCircle className="w-5 h-5 text-green-600" />
+        <div role="status" className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
           <span className="text-green-700 text-sm">{successMessage}</span>
         </div>
       )}
 
-      {/* Campo Email */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
           Email
@@ -101,11 +95,14 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
           placeholder="tu@email.com"
           className={`input-field ${errors.email ? 'input-error' : ''}`}
           autoComplete="email"
+          maxLength={254}
+          aria-describedby={errors.email ? 'email-error' : undefined}
         />
-        {errors.email && <p className="text-error">{errors.email}</p>}
+        {errors.email && (
+          <p id="email-error" role="alert" className="text-error">{errors.email}</p>
+        )}
       </div>
 
-      {/* Campo Contraseña */}
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
           Contraseña
@@ -120,34 +117,30 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
             placeholder="Tu contraseña"
             className={`input-field ${errors.password ? 'input-error' : ''}`}
             autoComplete="current-password"
+            maxLength={128}
+            aria-describedby={errors.password ? 'password-error' : undefined}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
             disabled={isLoading}
+            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
           >
-            {showPassword ? (
-              <EyeOff className="w-5 h-5" />
-            ) : (
-              <Eye className="w-5 h-5" />
-            )}
+            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
-        {errors.password && <p className="text-error">{errors.password}</p>}
+        {errors.password && (
+          <p id="password-error" role="alert" className="text-error">{errors.password}</p>
+        )}
       </div>
 
-      {/* Enlace de Recuperación de Contraseña */}
       <div className="flex justify-end">
-        <a
-          href="/auth/forgot-password"
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-        >
+        <span className="text-sm text-gray-400 font-medium cursor-not-allowed select-none">
           ¿Olvidaste tu contraseña?
-        </a>
+        </span>
       </div>
 
-      {/* Botón Submit */}
       <button
         type="submit"
         disabled={isLoading}
@@ -163,7 +156,6 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
         )}
       </button>
 
-      {/* Enlace a Registro */}
       <p className="text-center text-sm text-gray-600">
         ¿No tienes cuenta?{' '}
         <button

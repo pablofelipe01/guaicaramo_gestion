@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { decodeToken, isTokenValid, type TokenPayload } from '@/lib/token'
+import { decodeToken, type TokenPayload } from '@/lib/token'
 
 type User = Omit<TokenPayload, 'iat' | 'exp'>
 
@@ -13,14 +13,19 @@ export function useAuth() {
   useEffect(() => {
     const token = localStorage.getItem('authToken')
 
-    if (token && isTokenValid(token)) {
+    if (token) {
       const payload = decodeToken(token)
-      if (payload) {
+      if (payload && payload.exp > Math.floor(Date.now() / 1000)) {
         setUser({ id: payload.id, email: payload.email, name: payload.name, role: payload.role })
         setIsAuthenticated(true)
+      } else {
+        // Solo eliminar si el token está genuinamente expirado (payload decodificado pero exp vencido)
+        // Si payload es null (error de parseo), conservar el token para no desautenticar erróneamente
+        if (payload !== null) localStorage.removeItem('authToken')
+        setUser(null)
+        setIsAuthenticated(false)
       }
     } else {
-      if (token) localStorage.removeItem('authToken')
       setUser(null)
       setIsAuthenticated(false)
     }

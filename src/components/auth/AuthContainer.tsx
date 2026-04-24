@@ -1,12 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import { Lock, Shield } from 'lucide-react';
+import { isTokenValid } from '@/lib/token';
 
 export default function AuthContainer() {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
+
+  // Fix #3: redirigir al dashboard si ya hay sesión activa
+  useEffect(() => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
+    if (token && isTokenValid(token)) {
+      router.replace('/dashboard');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -58,27 +70,6 @@ export default function AuthContainer() {
               }}
             />
           )}
-
-          {/* Separador */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-300" />
-            <span className="text-xs text-gray-500">O continúa con</span>
-            <div className="flex-1 h-px bg-gray-300" />
-          </div>
-
-          {/* Información Adicional */}
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 text-center">
-              Al acceder, aceptas nuestros{' '}
-              <a href="#" className="text-blue-600 hover:underline">
-                Términos de Servicio
-              </a>{' '}
-              y nuestra{' '}
-              <a href="#" className="text-blue-600 hover:underline">
-                Política de Privacidad
-              </a>
-            </p>
-          </div>
         </div>
 
         {/* Pie de Página */}

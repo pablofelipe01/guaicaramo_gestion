@@ -1,8 +1,9 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
-import { Menu, LogOut, User } from 'lucide-react'
+import { Menu, LogOut, User, ChevronLeft, LayoutDashboard } from 'lucide-react'
+import Link from 'next/link'
 
 interface TopBarProps {
   onMenuClick: () => void
@@ -11,6 +12,9 @@ interface TopBarProps {
 export function TopBar({ onMenuClick }: TopBarProps) {
   const { user, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+
+  const enDashboardInicio = pathname === '/dashboard'
 
   const handleLogout = () => {
     logout()
@@ -19,16 +23,36 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
   return (
     <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0">
-      <button
-        onClick={onMenuClick}
-        className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
-        aria-label="Abrir menú"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
+      {/* Izquierda: menú móvil + botón volver o inicio */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+          aria-label="Abrir menú"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
 
-      <div className="hidden lg:block" />
+        {!enDashboardInicio ? (
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Inicio</span>
+          </button>
+        ) : (
+          <Link
+            href="/dashboard"
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 rounded-lg"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Inicio</span>
+          </Link>
+        )}
+      </div>
 
+      {/* Derecha: usuario y logout */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-sm text-gray-700">
           <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">

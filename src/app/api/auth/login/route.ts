@@ -13,20 +13,60 @@ interface UserFields {
   Rol?: Array<{ id: string; name: string }> | string[]
 }
 
+const EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/
+
+/**
+ * Escapa comillas dobles y barras para prevenir Airtable Formula Injection.
+ */
+function escapeAirtableString(value: string): string {
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    // Verificar Content-Type
+    const contentType = request.headers.get('content-type') ?? ''
+    if (!contentType.includes('application/json')) {
+      return NextResponse.json(
+        { success: false, message: 'Tipo de contenido no válido' },
+        { status: 400 },
+      )
+    }
 
-    if (!email || !password) {
+    const body = await request.json()
+    const email: unknown = body?.email
+    const password: unknown = body?.password
+
+    // Validación de tipos y longitud — Fix #2
+    if (typeof email !== 'string' || typeof password !== 'string') {
       return NextResponse.json(
         { success: false, message: 'Email y contraseña son requeridos' },
-        { status: 400 }
+        { status: 400 },
+      )
+    }
+
+    const trimmedEmail = email.trim().toLowerCase()
+
+    if (!trimmedEmail || trimmedEmail.length > 254 || !EMAIL_REGEX.test(trimmedEmail)) {
+      return NextResponse.json(
+        { success: false, message: 'Email o contraseña inválidos' },
+        { status: 401 },
+      )
+    }
+
+    if (!password || password.length > 128) {
+      return NextResponse.json(
+        { success: false, message: 'Email o contraseña inválidos' },
+        { status: 401 },
       )
     }
 
     const table = process.env.AIRTABLE_TABLE_USERS ?? 'USUARIOS'
+
+    // Escapar el email para prevenir Formula Injection — Fix #1
+    const safeEmail = escapeAirtableString(trimmedEmail)
     const { records } = await listRecords<UserFields>(table, {
-      filterByFormula: `{Email}="${email}"`,
+      filterByFormula: `{Email}="${safeEmail}"`,
       maxRecords: 1,
     })
 
