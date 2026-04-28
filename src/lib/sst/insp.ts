@@ -1,6 +1,7 @@
 import 'server-only'
 import { listRecords, createRecords, updateRecord } from '@/lib/airtable-client'
 import type { InspTipoFields, InspChecklistItemFields, InspInspeccionFields, InspHallazgoFields } from '@/types/sst/insp'
+import { crearAccion } from '@/lib/sst/ac'
 
 const T_TIPOS = 'sst_insp_tipos'
 const T_ITEMS = 'sst_insp_checklist_items'
@@ -52,4 +53,32 @@ export async function crearHallazgo(fields: Omit<InspHallazgoFields, 'Creado En'
 
 export async function cerrarHallazgo(id: string) {
   return updateRecord<InspHallazgoFields>(T_HALLAZGOS, id, { Estado: 'cerrado' })
+}
+
+/**
+ * Si el hallazgo tiene criticidad 'alta' o 'critica',
+ * crea automáticamente una acción correctiva.
+ * Se llama después de registrar el hallazgo.
+ */
+export async function crearAccionPorHallazgo(
+  hallazgoId: string,
+  hallazgo: InspHallazgoFields
+): Promise<void> {
+  if (!['alta', 'critica'].includes(hallazgo.Criticidad)) return
+
+  const dias = hallazgo.Criticidad === 'critica' ? 3 : 15
+  const fechaLimite = new Date(Date.now() + dias * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+
+  await crearAccion({
+    Titulo: `Inspección — Hallazgo ${hallazgo.Criticidad.toUpperCase()}: ${hallazgo.Descripcion.slice(0, 60)}`,
+    Tipo: 'correctiva',
+    Origen: 'inspeccion',
+    'Origen ID': hallazgoId,
+    Descripcion: `Hallazgo ${hallazgo.Criticidad.toUpperCase()} en inspección: ${hallazgo.Descripcion}`,
+    Prioridad: hallazgo.Criticidad === 'critica' ? 'critica' : 'alta',
+    Estado: 'pendiente',
+    'Fecha Limite': fechaLimite,
+  })
 }

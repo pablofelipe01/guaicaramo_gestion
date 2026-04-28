@@ -1,0 +1,95 @@
+import 'server-only'
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyToken } from '@/lib/auth'
+import type { TokenPayload } from '@/lib/token'
+
+export type RolSST =
+  | 'coordinador_sst'
+  | 'jefe_area'
+  | 'trabajador'
+  | 'gerencia'
+  | 'auditor'
+  | 'contratista'
+  | 'medico'
+  | 'admin'
+  | 'superadmin'
+  | 'usuario'
+
+/**
+ * Extrae y verifica el JWT del encabezado Authorization.
+ * Retorna el payload o null si el token es inválido o está ausente.
+ */
+export async function getUsuarioAutenticado(
+  request: NextRequest
+): Promise<TokenPayload | null> {
+  const authHeader = request.headers.get('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : authHeader
+  if (!token) return null
+  return verifyToken(token)
+}
+
+/**
+ * Verifica autenticación y autorización por rol.
+ *
+ * Retorna `{ user }` si el usuario tiene uno de los roles permitidos.
+ * Retorna `{ error: NextResponse }` con código 401 o 403 en caso contrario.
+ *
+ * Uso en routes:
+ * ```ts
+ * const auth = await requireRole(request, 'coordinador_sst', 'gerencia')
+ * if ('error' in auth) return auth.error
+ * const { user } = auth
+ * ```
+ */
+export async function requireRole(
+  request: NextRequest,
+  ...allowedRoles: RolSST[]
+): Promise<{ user: TokenPayload } | { error: NextResponse }> {
+  const user = await getUsuarioAutenticado(request)
+
+  if (!user) {
+    return {
+      error: NextResponse.json({ message: 'No autorizado' }, { status: 401 }),
+    }
+  }
+
+  const rolUsuario = (user.role ?? 'usuario') as RolSST
+
+  // superadmin y admin tienen acceso total
+  if (rolUsuario === 'superadmin' || rolUsuario === 'admin') {
+    return { user }
+  }
+
+  if (!allowedRoles.includes(rolUsuario)) {
+    return {
+      error: NextResponse.json(
+        {
+          message: 'Acceso denegado',
+          requerido: allowedRoles,
+          actual: rolUsuario,
+        },
+        { status: 403 }
+      ),
+    }
+  }
+
+  return { user }
+}
+
+/**
+ * Solo verifica que el usuario esté autenticado (cualquier rol).
+ * Equivalente a los guards actuales de los endpoints.
+ */
+export async function requireAuth(
+  request: NextRequest
+): Promise<{ user: TokenPayload } | { error: NextResponse }> {
+  const user = await getUsuarioAutenticado(request)
+  if (!user) {
+    return {
+      error: NextResponse.json({ message: 'No autorizado' }, { status: 401 }),
+    }
+  }
+  return { user }
+}

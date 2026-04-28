@@ -1,6 +1,7 @@
 import 'server-only'
 import { listRecords, createRecords, updateRecord } from '@/lib/airtable-client'
 import type { IpvrRegistroFields } from '@/types/sst/ipvr'
+import { crearAccion } from '@/lib/sst/ac'
 
 const T_REGISTROS = 'sst_ipvr_registros'
 
@@ -48,3 +49,32 @@ export async function registrosNivelI() {
     filterByFormula: `AND({Nivel Intervencion}='I',{Estado}='activo')`,
   })
 }
+
+/**
+ * Si el registro IPVR tiene Nivel de Intervención I (NR ≥ 600),
+ * crea automáticamente una acción correctiva de prioridad crítica.
+ * Se llama después de crear o actualizar un registro IPVR.
+ */
+export async function crearAccionSiNivelI(
+  registroId: string,
+  registro: IpvrRegistroFields
+): Promise<void> {
+  if (registro['Nivel Intervencion'] !== 'I') return
+
+  const en7dias = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0]
+
+  await crearAccion({
+    Titulo: `IPVR — Riesgo Nivel I: ${registro['Descripcion Peligro']?.slice(0, 60) ?? 'Sin descripción'}`,
+    Tipo: 'correctiva',
+    Origen: 'ipvr',
+    'Origen ID': registroId,
+    Descripcion: `RIESGO CRÍTICO (NR=${registro.NR}): ${registro['Descripcion Peligro']} — Área: ${registro.Area} — Proceso: ${registro['Proceso Actividad']}. Requiere intervención inmediata.`,
+    Prioridad: 'critica',
+    Estado: 'pendiente',
+    'Fecha Limite': en7dias,
+    'Responsable Nombre': registro.Area,
+  })
+}
+

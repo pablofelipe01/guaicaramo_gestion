@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listarHallazgos, crearHallazgo } from '@/lib/sst/insp'
+import { listarHallazgos, crearHallazgo, crearAccionPorHallazgo } from '@/lib/sst/insp'
 import { verifyToken } from '@/lib/auth'
 
 type Ctx = { params: Promise<{ id: string }> }
@@ -18,7 +18,10 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   const body = await request.json()
   if (!body.Descripcion || !body.Criticidad)
     return NextResponse.json({ message: 'Descripcion y Criticidad son requeridos' }, { status: 400 })
-  return NextResponse.json({
-    record: await crearHallazgo({ ...body, 'Inspeccion ID': id }),
-  }, { status: 201 })
+  const record = await crearHallazgo({ ...body, 'Inspeccion ID': id })
+  // Trigger: si es alta/crítica, crear acción correctiva automáticamente
+  crearAccionPorHallazgo(record.id, record.fields).catch(err =>
+    console.error('Error creando acción correctiva por hallazgo:', err)
+  )
+  return NextResponse.json({ record }, { status: 201 })
 }

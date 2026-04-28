@@ -54,7 +54,23 @@ export async function crearDocumento(fields: Partial<ContDocumentoFields>) {
   const [record] = await createRecords<ContDocumentoFields>(T_DOCUMENTOS, [{
     fields: { ...fields, Estado: estado },
   }])
+  // Actualizar semáforo del contratista automáticamente
+  if (fields['Contratista ID']) {
+    await actualizarSemaforoContratista(fields['Contratista ID'])
+  }
   return record
+}
+
+/**
+ * Recalcula el semáforo del contratista y lo persiste en la tabla principal.
+ * Llama a esta función cada vez que se sube o modifica un documento.
+ */
+export async function actualizarSemaforoContratista(contratistaId: string): Promise<'verde' | 'amarillo' | 'rojo'> {
+  const resultado = await semaforoContratista(contratistaId)
+  await updateRecord<ContContratistaFields>(T_CONTRATISTAS, contratistaId, {
+    Semaforo: resultado.color,
+  } as unknown as Partial<ContContratistaFields>)
+  return resultado.color
 }
 
 export async function listarTrabajadores(contratistaId: string) {

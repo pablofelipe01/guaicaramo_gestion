@@ -15,7 +15,7 @@ export interface CambioAprobacionFields {
   'Cambio ID': string
   'Cambio Titulo'?: string
   Decision: 'aprobado' | 'rechazado' | 'devuelto'
-  Rol: 'coordinador_sst' | 'gerencia'
+  Rol: 'superadmin' | 'admin' | 'usuario'
   Aprobador: string
   Observaciones?: string
   'Fecha Decision'?: string

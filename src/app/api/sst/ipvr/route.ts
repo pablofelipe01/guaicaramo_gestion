@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listarRegistros, crearRegistro, registrosNivelI } from '@/lib/sst/ipvr'
+import { listarRegistros, crearRegistro, registrosNivelI, crearAccionSiNivelI } from '@/lib/sst/ipvr'
 import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
@@ -18,5 +18,10 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   if (!body.Area || !body['Proceso Actividad'] || !body['Descripcion Peligro'] || body.ND == null || body.NE == null || body.NC == null)
     return NextResponse.json({ message: 'Faltan campos requeridos: Area, Proceso Actividad, Descripcion Peligro, ND, NE, NC' }, { status: 400 })
-  return NextResponse.json({ record: await crearRegistro(body) }, { status: 201 })
+  const record = await crearRegistro(body)
+  // Trigger: si es Nivel I, crear acción correctiva automáticamente
+  crearAccionSiNivelI(record.id, record.fields).catch(err =>
+    console.error('Error creando acción correctiva automática IPVR:', err)
+  )
+  return NextResponse.json({ record }, { status: 201 })
 }

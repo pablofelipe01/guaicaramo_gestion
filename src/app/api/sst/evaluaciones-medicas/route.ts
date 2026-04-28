@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listarEvaluaciones, crearEvaluacion, alertasEvaluaciones } from '@/lib/sst/med'
+import { listarEvaluaciones, crearEvaluacion, alertasEvaluaciones, procesarEvaluacionMedica } from '@/lib/sst/med'
 import { verifyToken } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
@@ -18,5 +18,10 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   if (!body['Trabajador ID'] || !body.Tipo || !body.Fecha || !body.Aptitud)
     return NextResponse.json({ message: 'Trabajador ID, Tipo, Fecha y Aptitud son requeridos' }, { status: 400 })
-  return NextResponse.json({ record: await crearEvaluacion(body) }, { status: 201 })
+  const record = await crearEvaluacion(body)
+  // Trigger: si aptitud con restricciones, crear caso médico automáticamente
+  procesarEvaluacionMedica(record.id, record.fields).catch(err =>
+    console.error('Error creando caso médico automático por evaluación:', err)
+  )
+  return NextResponse.json({ record }, { status: 201 })
 }

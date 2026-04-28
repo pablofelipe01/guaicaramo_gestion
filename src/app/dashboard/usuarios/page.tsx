@@ -29,13 +29,9 @@ interface Usuario {
 type ModalTipo = 'crear' | 'editar' | 'reset' | null
 
 const ROLES: { value: string; label: string }[] = [
-  { value: 'coordinador_sst', label: 'Coordinador SST' },
-  { value: 'jefe_area', label: 'Jefe de Área' },
-  { value: 'trabajador', label: 'Trabajador' },
-  { value: 'gerencia', label: 'Gerencia' },
-  { value: 'auditor', label: 'Auditor' },
-  { value: 'contratista', label: 'Contratista' },
-  { value: 'medico_ocupacional', label: 'Médico Ocupacional' },
+  { value: 'superadmin', label: 'Super Administrador' },
+  { value: 'admin', label: 'Administrador' },
+  { value: 'usuario', label: 'Usuario' },
 ]
 
 const ROL_LABELS: Record<string, string> = Object.fromEntries(
@@ -61,13 +57,9 @@ function EstadoBadge({ estado }: { estado: string }) {
 
 function RolBadge({ rol }: { rol: string }) {
   const colors: Record<string, string> = {
-    coordinador_sst: 'bg-blue-100 text-blue-700',
-    jefe_area: 'bg-purple-100 text-purple-700',
-    gerencia: 'bg-indigo-100 text-indigo-700',
-    auditor: 'bg-yellow-100 text-yellow-700',
-    medico_ocupacional: 'bg-teal-100 text-teal-700',
-    trabajador: 'bg-gray-100 text-gray-600',
-    contratista: 'bg-orange-100 text-orange-700',
+    superadmin: 'bg-red-100 text-red-700',
+    admin: 'bg-blue-100 text-blue-700',
+    usuario: 'bg-gray-100 text-gray-600',
   }
   return (
     <span className={['inline-block px-2 py-0.5 rounded text-xs font-medium', colors[rol] ?? 'bg-gray-100 text-gray-600'].join(' ')}>
@@ -123,7 +115,7 @@ export default function UsuariosPage() {
   const [alerta, setAlerta] = useState<{ tipo: 'ok' | 'error'; mensaje: string } | null>(null)
 
   // Formulario crear
-  const [crearForm, setCrearForm] = useState({ name: '', email: '', password: '', rol: 'coordinador_sst' })
+  const [crearForm, setCrearForm] = useState({ name: '', email: '', password: '', rol: 'usuario' })
   const [crearLoading, setCrearLoading] = useState(false)
 
   // Formulario editar
@@ -186,7 +178,7 @@ export default function UsuariosPage() {
       if (data.success) {
         setUsuarios((prev) => [...prev, data.user])
         setModalTipo(null)
-        setCrearForm({ name: '', email: '', password: '', rol: 'coordinador_sst' })
+        setCrearForm({ name: '', email: '', password: '', rol: 'usuario' })
         mostrarAlerta('ok', 'Usuario creado correctamente')
       } else {
         mostrarAlerta('error', data.message)
@@ -198,9 +190,11 @@ export default function UsuariosPage() {
     }
   }
 
+  const ROLES_VALIDOS = ['superadmin', 'admin', 'usuario']
+
   const abrirEditar = (u: Usuario) => {
     setUsuarioSeleccionado(u)
-    setEditarForm({ name: u.name, rol: u.rol })
+    setEditarForm({ name: u.name, rol: ROLES_VALIDOS.includes(u.rol) ? u.rol : 'usuario' })
     setModalTipo('editar')
   }
 
