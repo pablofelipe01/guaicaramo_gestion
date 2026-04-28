@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<'/api/sst/plan
   if (request.nextUrl.searchParams.get('dashboard') === 'true') {
     return NextResponse.json(await dashboardPlan(id))
   }
-  return NextResponse.json({ records: await listarActividades(id) })
+  return NextResponse.json(await listarActividades(id))
 }
 
 export async function POST(request: NextRequest, ctx: RouteContext<'/api/sst/planes/[id]/actividades'>) {

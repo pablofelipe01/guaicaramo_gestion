@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth'
 export async function GET(request: NextRequest) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-  return NextResponse.json({ records: await listarProgramas() })
+  return NextResponse.json(await listarProgramas())
 }
 
 export async function POST(request: NextRequest) {

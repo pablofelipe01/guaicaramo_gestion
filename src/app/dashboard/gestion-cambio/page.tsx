@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { RefreshCw, Plus, CheckCircle2, XCircle, RotateCcw, ShieldCheck } from 'lucide-react'
+import { RefreshCw, Plus, CheckCircle2, XCircle, RotateCcw, ShieldCheck, Pencil, Trash2 } from 'lucide-react'
 import type { CambioFields, CambioAprobacionFields, CambioControlFields } from '@/types/sst/cambio'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -39,6 +39,8 @@ export default function GestionCambioPage() {
   const [modalAprobacion, setModalAprobacion] = useState(false)
   const [modalControl, setModalControl] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [formCambio, setFormCambio] = useState({ Titulo: '', Descripcion: '', Tipo: 'organizacional', Justificacion: '', 'Area Afectada': '', 'Requiere Analisis Riesgo': false })
   const [formAprob, setFormAprob] = useState({ Decision: 'aprobado', Rol: 'admin', Observaciones: '' })
   const [formControl, setFormControl] = useState({ Descripcion: '', Tipo: 'administrativo', Responsable: '', 'Fecha Limite': '' })
@@ -78,14 +80,36 @@ export default function GestionCambioPage() {
   const crearCambio = async () => {
     if (!formCambio.Titulo) return
     setGuardando(true)
-    await fetch('/api/sst/cambios', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ ...formCambio, Solicitante: user?.name }),
-    })
+    if (editId) {
+      await fetch(`/api/sst/cambios/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(formCambio) })
+    } else {
+      await fetch('/api/sst/cambios', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ ...formCambio, Solicitante: user?.name }) })
+    }
     setModalCambio(false)
+    setEditId(null)
     setFormCambio({ Titulo: '', Descripcion: '', Tipo: 'organizacional', Justificacion: '', 'Area Afectada': '', 'Requiere Analisis Riesgo': false })
     await cargar()
     setGuardando(false)
+  }
+
+  const editarCambio = (c: Cambio) => {
+    setEditId(c.id)
+    setFormCambio({
+      Titulo: c.fields.Titulo ?? '',
+      Descripcion: c.fields.Descripcion ?? '',
+      Tipo: c.fields.Tipo ?? 'organizacional',
+      Justificacion: c.fields.Justificacion ?? '',
+      'Area Afectada': c.fields['Area Afectada'] ?? '',
+      'Requiere Analisis Riesgo': c.fields['Requiere Analisis Riesgo'] ?? false,
+    })
+    setModalCambio(true)
+  }
+
+  const eliminarCambio = async (id: string) => {
+    await fetch(`/api/sst/cambios/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (seleccionado?.id === id) setSeleccionado(null)
+    await cargar()
   }
 
   const registrarAprobacion = async () => {
@@ -146,17 +170,25 @@ export default function GestionCambioPage() {
               : cambios.length === 0 ? <EmptyState icon={RefreshCw} title="Sin cambios registrados" description="Registra el primer cambio" />
               : <ul>
                   {cambios.map(c => (
-                    <li key={c.id} onClick={() => seleccionar(c)}
-                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
-                      <div className="font-medium text-sm text-gray-900 truncate">{c.fields.Titulo}</div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <StatusBadge variant={ESTADO_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
-                        <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{c.fields.Tipo}</span>
+                    <li key={c.id}
+                      className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                      <div className="flex items-start gap-1">
+                        <button className="flex-1 text-left min-w-0" onClick={() => seleccionar(c)}>
+                          <div className="font-medium text-sm text-gray-900 truncate">{c.fields.Titulo}</div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StatusBadge variant={ESTADO_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
+                            <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{c.fields.Tipo}</span>
+                          </div>
+                          {c.fields['Requiere Analisis Riesgo'] && (
+                            <div className="text-xs text-orange-600 mt-1">⚠ Requiere análisis de riesgo</div>
+                          )}
+                          <div className="text-xs text-gray-400 mt-1">{c.fields.Solicitante}</div>
+                        </button>
+                        <div className="flex gap-0.5 flex-shrink-0">
+                          <button onClick={e => { e.stopPropagation(); editarCambio(c) }} className="p-1 text-gray-300 hover:text-blue-600" title="Editar"><Pencil size={12} /></button>
+                          <button onClick={e => { e.stopPropagation(); setConfirmDelete(c.id) }} className="p-1 text-gray-300 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
+                        </div>
                       </div>
-                      {c.fields['Requiere Analisis Riesgo'] && (
-                        <div className="text-xs text-orange-600 mt-1">⚠ Requiere análisis de riesgo</div>
-                      )}
-                      <div className="text-xs text-gray-400 mt-1">{c.fields.Solicitante}</div>
                     </li>
                   ))}
                 </ul>
@@ -267,7 +299,7 @@ export default function GestionCambioPage() {
         )}
       </div>
 
-      <Modal open={modalCambio} onClose={() => setModalCambio(false)} title="Nuevo cambio" size="lg">
+      <Modal open={modalCambio} onClose={() => { setModalCambio(false); setEditId(null) }} title={editId ? 'Editar cambio' : 'Nuevo cambio'} size="lg">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
@@ -304,14 +336,24 @@ export default function GestionCambioPage() {
             <label htmlFor="analisis" className="text-sm text-gray-700">Requiere análisis de riesgo (IPVR)</label>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalCambio(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setModalCambio(false); setEditId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearCambio} disabled={guardando || !formCambio.Titulo}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {guardando ? 'Guardando...' : 'Crear'}
+              {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Crear'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este cambio? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarCambio(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       <Modal open={modalAprobacion} onClose={() => setModalAprobacion(false)} title="Registrar decisión" size="md">
         <div className="space-y-4">

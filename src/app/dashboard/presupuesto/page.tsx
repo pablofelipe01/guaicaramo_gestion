@@ -56,6 +56,7 @@ export default function PresupuestoPage() {
   const [modalRubro, setModalRubro] = useState(false)
   const [modalEditRubro, setModalEditRubro] = useState(false)
   const [modalEjecucion, setModalEjecucion] = useState(false)
+  const [confirmDeletePpto, setConfirmDeletePpto] = useState<string | null>(null)
   const [guardando, setGuardando] = useState(false)
   const [formPpto, setFormPpto] = useState({ Titulo: '', 'Año': new Date().getFullYear(), 'Total Presupuestado': '' })
   const [formEditPpto, setFormEditPpto] = useState({ Titulo: '', 'Total Presupuestado': '' })
@@ -150,6 +151,17 @@ export default function PresupuestoPage() {
     await seleccionarRubro(rubroActivo)
     if (seleccionado) await seleccionar(seleccionado)
     setGuardando(false)
+  }
+
+  const eliminarPpto = async (id: string) => {
+    try {
+      await fetch(`/api/sst/presupuestos/${id}`, { method: 'DELETE', headers: authHeaders() })
+      setConfirmDeletePpto(null)
+      if (seleccionado?.id === id) setSeleccionado(null)
+      await cargar()
+    } catch (error) {
+      console.error('Error eliminando presupuesto:', error)
+    }
   }
 
   const abrirEditPpto = () => {
@@ -259,7 +271,11 @@ export default function PresupuestoPage() {
                       <StatusBadge variant={PPTO_ESTADO_VARIANT[p.fields.Estado]} label={p.fields.Estado} />
                       <span className="text-xs text-gray-500">{p.fields['Año']}</span>
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">{fmt(p.fields['Total Presupuestado'])}</div>
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="text-xs text-gray-400">{fmt(p.fields['Total Presupuestado'])}</div>
+                      <button onClick={e => { e.stopPropagation(); setConfirmDeletePpto(p.id) }}
+                        className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -580,6 +596,16 @@ export default function PresupuestoPage() {
           </div>
         </div>
       </Modal>
+
+      {confirmDeletePpto && (
+        <Modal open={!!confirmDeletePpto} onClose={() => setConfirmDeletePpto(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este presupuesto y todos sus rubros? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeletePpto(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarPpto(confirmDeletePpto)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

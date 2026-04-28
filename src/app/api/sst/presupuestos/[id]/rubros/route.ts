@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<'/api/sst/pres
   if (request.nextUrl.searchParams.get('alertas') === 'true') {
     return NextResponse.json({ alertas: await alertasPresupuesto(id) })
   }
-  return NextResponse.json({ records: await listarRubros(id) })
+  return NextResponse.json(await listarRubros(id))
 }
 
 export async function POST(request: NextRequest, ctx: RouteContext<'/api/sst/presupuestos/[id]/rubros'>) {

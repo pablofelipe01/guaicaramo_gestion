@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   if (vista === 'estadisticas') return NextResponse.json(await estadisticasAcciones())
   const estado = searchParams.get('estado') ?? undefined
   const origen = searchParams.get('origen') ?? undefined
-  return NextResponse.json({ records: await listarAcciones(estado, origen) })
+  return NextResponse.json(await listarAcciones(estado, origen))
 }
 
 export async function POST(request: NextRequest) {

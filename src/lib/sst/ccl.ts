@@ -26,6 +26,10 @@ export async function crearComite(fields: Partial<CclComiteFields>) {
   return record
 }
 
+export async function actualizarComite(id: string, fields: Partial<CclComiteFields>) {
+  return updateRecord<CclComiteFields>(T_COMITES, id, fields)
+}
+
 export async function listarIntegrantes(comiteId: string) {
   const { records } = await listRecords<CclIntegranteFields>(T_INTEGRANTES, {
     filterByFormula: `{Comite ID}="${comiteId}"`,

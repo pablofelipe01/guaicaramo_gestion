@@ -6,7 +6,7 @@ export async function GET(request: NextRequest, ctx: RouteContext<'/api/sst/rubr
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { id } = await ctx.params
-  return NextResponse.json({ records: await listarEjecuciones(id) })
+  return NextResponse.json(await listarEjecuciones(id))
 }
 
 export async function POST(request: NextRequest, ctx: RouteContext<'/api/sst/rubros/[id]/ejecuciones'>) {

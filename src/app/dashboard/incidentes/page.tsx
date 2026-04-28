@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { AlertTriangle, Plus, Search, BarChart3 } from 'lucide-react'
+import { AlertTriangle, Plus, Search, BarChart3, Pencil, Trash2 } from 'lucide-react'
 import type { IncIncidenteFields, IncInvestigacionFields } from '@/types/sst/inc'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -51,6 +51,9 @@ export default function IncidentesPage() {
   const [form, setForm] = useState<Partial<IncIncidenteFields>>({})
   const [invForm, setInvForm] = useState<Partial<IncInvestigacionFields>>({})
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const anioActual = new Date().getFullYear()
 
@@ -80,27 +83,65 @@ export default function IncidentesPage() {
   const handleSave = async () => {
     if (!form['Trabajador ID'] || !form.Tipo || !form['Fecha Ocurrencia'] || !form.Descripcion) return
     setSaving(true)
-    await fetch('/api/sst/incidentes', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
-    setSaving(false)
-    setShowModal(false)
-    setForm({})
+    setError(null)
+    try {
+      const res = editId
+        ? await fetch(`/api/sst/incidentes/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+        : await fetch('/api/sst/incidentes', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.message ?? `Error ${res.status} al guardar el incidente`)
+        return
+      }
+      setShowModal(false)
+      setEditId(null)
+      setForm({})
+      load()
+    } catch (e) {
+      setError('Error de conexión al guardar el incidente')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleEdit = (r: Incidente) => {
+    setEditId(r.id)
+    setForm({ ...r.fields })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/sst/incidentes/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (selected?.id === id) setSelected(null)
     load()
   }
 
   const handleInvestigacion = async () => {
     if (!selected || !invForm.Metodologia) return
     setSaving(true)
-    await fetch(`/api/sst/incidentes/${selected.id}/investigaciones`, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(invForm),
-    })
-    setSaving(false)
-    setShowInvModal(false)
-    setInvForm({})
-    loadInvestigaciones(selected.id)
-    await fetch(`/api/sst/incidentes/${selected.id}`, {
-      method: 'PUT', headers: authHeaders(), body: JSON.stringify({ Estado: 'en_investigacion' }),
-    })
-    load()
+    setError(null)
+    try {
+      const res = await fetch(`/api/sst/incidentes/${selected.id}/investigaciones`, {
+        method: 'POST', headers: authHeaders(), body: JSON.stringify(invForm),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.message ?? `Error ${res.status} al guardar la investigación`)
+        return
+      }
+      setShowInvModal(false)
+      setInvForm({})
+      loadInvestigaciones(selected.id)
+      await fetch(`/api/sst/incidentes/${selected.id}`, {
+        method: 'PUT', headers: authHeaders(), body: JSON.stringify({ Estado: 'en_investigacion' }),
+      })
+      load()
+    } catch (e) {
+      setError('Error de conexión al guardar la investigación')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const columns: Column<Incidente>[] = [
@@ -113,7 +154,11 @@ export default function IncidentesPage() {
     {
       key: 'ver', header: '',
       render: r => (
-        <button onClick={() => selectIncidente(r)} className="text-blue-600 text-sm hover:underline">Ver</button>
+        <div className="flex gap-1 items-center">
+          <button onClick={() => selectIncidente(r)} className="text-blue-600 text-sm hover:underline">Ver</button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+        </div>
       ),
     },
   ]
@@ -194,7 +239,7 @@ export default function IncidentesPage() {
                   <p className="text-sm text-gray-700 mb-4">{selected.fields.Descripcion}</p>
                   {selected.fields.Estado === 'reportado' && (
                     <button
-                      onClick={() => setShowInvModal(true)}
+                      onClick={() => { setShowInvModal(true); setError(null) }}
                       className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 text-white rounded-lg text-sm hover:bg-amber-700"
                     >
                       <Search size={14} /> Iniciar Investigación
@@ -222,7 +267,7 @@ export default function IncidentesPage() {
         </div>
       )}
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setForm({}) }} title="Reportar Incidente / Accidente">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditId(null); setForm({}); setError(null) }} title={editId ? 'Editar Incidente' : 'Reportar Incidente / Accidente'}>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo *</label>
@@ -283,18 +328,29 @@ export default function IncidentesPage() {
                 onChange={e => setForm(f => ({ ...f, 'Dias Perdidos': parseInt(e.target.value) }))} />
             </div>
           )}
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowModal(false); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowModal(false); setEditId(null); setForm({}); setError(null) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button
               onClick={handleSave}
               disabled={saving || !form['Trabajador ID'] || !form.Tipo || !form['Fecha Ocurrencia'] || !form.Descripcion}
               className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Reportar'}
+              {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Reportar'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este incidente? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       <Modal open={showInvModal} onClose={() => { setShowInvModal(false); setInvForm({}) }} title="Iniciar Investigación">
         <div className="space-y-4">
@@ -324,8 +380,9 @@ export default function IncidentesPage() {
               value={invForm['Causas Basicas'] ?? ''}
               onChange={e => setInvForm(f => ({ ...f, 'Causas Basicas': e.target.value }))} />
           </div>
+          {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowInvModal(false); setInvForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowInvModal(false); setInvForm({}); setError(null) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button
               onClick={handleInvestigacion}
               disabled={saving || !invForm.Metodologia}

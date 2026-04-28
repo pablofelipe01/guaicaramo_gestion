@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
-import { Archive, Plus, Search, Filter } from 'lucide-react'
+import { Archive, Plus, Search, Filter, Pencil, Trash2 } from 'lucide-react'
 import type { DocDocumentoFields, ModuloOrigen } from '@/types/sst/doc'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -35,6 +35,8 @@ export default function DocumentosPage() {
   const [filtroEstado, setFiltroEstado] = useState('')
   const [modal, setModal] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [form, setForm] = useState<Partial<DocDocumentoFields>>({
     Estado: 'vigente',
     Version: '1.0',
@@ -57,13 +59,28 @@ export default function DocumentosPage() {
   const guardar = async () => {
     if (!form.Nombre || !form['Modulo Origen']) return
     setGuardando(true)
-    await fetch('/api/sst/documentos', {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(form),
-    })
+    if (editId) {
+      await fetch(`/api/sst/documentos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+    } else {
+      await fetch('/api/sst/documentos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    }
     setModal(false)
+    setEditId(null)
     setForm({ Estado: 'vigente', Version: '1.0' })
     await cargarDocumentos()
     setGuardando(false)
+  }
+
+  const editarDoc = (d: Documento) => {
+    setEditId(d.id)
+    setForm({ ...d.fields })
+    setModal(true)
+  }
+
+  const eliminarDoc = async (id: string) => {
+    await fetch(`/api/sst/documentos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    await cargarDocumentos()
   }
 
   const columnas: Column<Documento>[] = [
@@ -85,6 +102,15 @@ export default function DocumentosPage() {
       render: (r) => r.fields['URL Archivo']
         ? <a href={r.fields['URL Archivo']} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline">Ver archivo</a>
         : <span className="text-gray-300 text-sm">Sin archivo</span>,
+    },
+    {
+      key: 'acciones', header: '',
+      render: (r) => (
+        <div className="flex gap-1 justify-end">
+          <button onClick={() => editarDoc(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={14} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={14} /></button>
+        </div>
+      ),
     },
   ]
 
@@ -138,7 +164,7 @@ export default function DocumentosPage() {
         />
       </Card>
 
-      <Modal open={modal} onClose={() => setModal(false)} title="Subir documento" size="lg">
+      <Modal open={modal} onClose={() => { setModal(false); setEditId(null) }} title={editId ? 'Editar documento' : 'Subir documento'} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -182,13 +208,23 @@ export default function DocumentosPage() {
             </div>
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <button onClick={() => setModal(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+            <button onClick={() => { setModal(false); setEditId(null) }} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
             <button onClick={guardar} disabled={guardando || !form.Nombre || !form['Modulo Origen']} className="btn-primary text-sm">
-              {guardando ? 'Guardando...' : 'Subir documento'}
+              {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Subir documento'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este documento? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarDoc(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

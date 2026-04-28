@@ -9,6 +9,6 @@ export async function GET(request: NextRequest) {
   const vista = searchParams.get('vista')
   const anio = parseInt(searchParams.get('anio') ?? String(new Date().getFullYear()))
   if (vista === 'kpis') return NextResponse.json({ kpis: await calcularKPIs(anio) })
-  if (vista === 'snapshots') return NextResponse.json({ records: await listarSnapshots() })
-  return NextResponse.json({ records: await listarIndicadores() })
+  if (vista === 'snapshots') return NextResponse.json(await listarSnapshots())
+  return NextResponse.json(await listarIndicadores())
 }

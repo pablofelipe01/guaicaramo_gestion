@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Stethoscope, Plus, Bell, AlertTriangle } from 'lucide-react'
+import { Stethoscope, Plus, Bell, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import type { MedEvaluacionFields } from '@/types/sst/med'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -41,6 +41,8 @@ export default function EvaluacionesMedicasPage() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<Partial<MedEvaluacionFields>>({})
   const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -58,14 +60,27 @@ export default function EvaluacionesMedicasPage() {
   const handleSave = async () => {
     if (!form['Trabajador ID'] || !form.Tipo || !form.Fecha || !form.Aptitud) return
     setSaving(true)
-    await fetch('/api/sst/evaluaciones-medicas', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(form),
-    })
+    if (editId) {
+      await fetch(`/api/sst/evaluaciones-medicas/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+    } else {
+      await fetch('/api/sst/evaluaciones-medicas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    }
     setSaving(false)
     setShowModal(false)
+    setEditId(null)
     setForm({})
+    load()
+  }
+
+  const handleEdit = (e: Evaluacion) => {
+    setEditId(e.id)
+    setForm({ ...e.fields })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/sst/evaluaciones-medicas/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
     load()
   }
 
@@ -84,6 +99,15 @@ export default function EvaluacionesMedicasPage() {
     },
     { key: 'restricciones', header: 'Restricciones', render: r => r.fields.Restricciones ?? '—' },
     { key: 'proxima', header: 'Próxima Evaluación', render: r => r.fields['Proxima Evaluacion'] ?? '—' },
+    {
+      key: 'acciones', header: '',
+      render: r => (
+        <div className="flex gap-1 justify-end">
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={14} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={14} /></button>
+        </div>
+      ),
+    },
   ]
 
   return (
@@ -123,7 +147,7 @@ export default function EvaluacionesMedicasPage() {
         )}
       </Card>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setForm({}) }} title="Nueva Evaluación Médica">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditId(null); setForm({}) }} title={editId ? 'Editar Evaluación Médica' : 'Nueva Evaluación Médica'}>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Trabajador ID *</label>
@@ -217,7 +241,7 @@ export default function EvaluacionesMedicasPage() {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button
-              onClick={() => { setShowModal(false); setForm({}) }}
+              onClick={() => { setShowModal(false); setEditId(null); setForm({}) }}
               className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50"
             >
               Cancelar
@@ -227,11 +251,21 @@ export default function EvaluacionesMedicasPage() {
               disabled={saving || !form['Trabajador ID'] || !form.Tipo || !form.Fecha || !form.Aptitud}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta evaluación médica? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

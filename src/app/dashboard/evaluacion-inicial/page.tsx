@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { ClipboardCheck, Plus, CheckCircle2, XCircle, MinusCircle, AlertCircle, Lock } from 'lucide-react'
+import { ClipboardCheck, Plus, CheckCircle2, XCircle, MinusCircle, AlertCircle, Lock, Pencil, Trash2 } from 'lucide-react'
 import type { EvalEvaluacionFields, EvalEstandarFields, EvalRespuestaFields } from '@/types/sst/eval'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -42,6 +42,8 @@ export default function EvaluacionInicialPage() {
   const [modalNueva, setModalNueva] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [cerrando, setCerrando] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [form, setForm] = useState({ Titulo: '', Descripcion: '' })
 
   const cargar = useCallback(async () => {
@@ -79,15 +81,29 @@ export default function EvaluacionInicialPage() {
   const crearEvaluacion = async () => {
     if (!form.Titulo) return
     setGuardando(true)
-    await fetch('/api/sst/evaluaciones', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ ...form, Responsable: user?.name }),
-    })
+    if (editId) {
+      await fetch(`/api/sst/evaluaciones/${editId}`, {
+        method: 'PUT', headers: authHeaders(),
+        body: JSON.stringify({ Titulo: form.Titulo, Descripcion: form.Descripcion }),
+      })
+    } else {
+      await fetch('/api/sst/evaluaciones', {
+        method: 'POST', headers: authHeaders(),
+        body: JSON.stringify({ ...form, Responsable: user?.name }),
+      })
+    }
     setModalNueva(false)
+    setEditId(null)
     setForm({ Titulo: '', Descripcion: '' })
     await cargar()
     setGuardando(false)
+  }
+
+  const eliminarEvaluacion = async (id: string) => {
+    await fetch(`/api/sst/evaluaciones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (seleccionada?.id === id) { setSeleccionada(null); setEstandares([]); setRespuestas([]) }
+    await cargar()
   }
 
   const responder = async (estandarId: string, estandarNombre: string, resultado: string) => {
@@ -174,17 +190,24 @@ export default function EvaluacionInicialPage() {
                 {evaluaciones.map(ev => (
                   <li
                     key={ev.id}
-                    onClick={() => seleccionar(ev)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionada?.id === ev.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
+                    className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionada?.id === ev.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
                   >
-                    <div className="font-medium text-sm text-gray-900 truncate">{ev.fields.Titulo}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StatusBadge variant={ev.fields.Estado === 'cerrada' ? 'neutral' : 'primary'} label={ev.fields.Estado} />
-                      {ev.fields.Nivel && <StatusBadge variant={NIVEL_VARIANT[ev.fields.Nivel]} label={ev.fields.Nivel} />}
+                    <div onClick={() => seleccionar(ev)} className="cursor-pointer">
+                      <div className="font-medium text-sm text-gray-900 truncate">{ev.fields.Titulo}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <StatusBadge variant={ev.fields.Estado === 'cerrada' ? 'neutral' : 'primary'} label={ev.fields.Estado} />
+                        {ev.fields.Nivel && <StatusBadge variant={NIVEL_VARIANT[ev.fields.Nivel]} label={ev.fields.Nivel} />}
+                      </div>
+                      {ev.fields['Puntaje Total'] != null && (
+                        <div className="text-xs text-gray-500 mt-1">Puntaje: {ev.fields['Puntaje Total'].toFixed(1)}%</div>
+                      )}
                     </div>
-                    {ev.fields['Puntaje Total'] != null && (
-                      <div className="text-xs text-gray-500 mt-1">Puntaje: {ev.fields['Puntaje Total'].toFixed(1)}%</div>
-                    )}
+                    <div className="flex gap-1 mt-2">
+                      <button onClick={e => { e.stopPropagation(); setEditId(ev.id); setForm({ Titulo: ev.fields.Titulo, Descripcion: ev.fields.Descripcion ?? '' }); setModalNueva(true) }}
+                        className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+                      <button onClick={e => { e.stopPropagation(); setConfirmDelete(ev.id) }}
+                        className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -267,7 +290,7 @@ export default function EvaluacionInicialPage() {
       </div>
 
       {/* Modal nueva evaluación */}
-      <Modal open={modalNueva} onClose={() => setModalNueva(false)} title="Nueva evaluación inicial" size="md">
+      <Modal open={modalNueva} onClose={() => { setModalNueva(false); setEditId(null); setForm({ Titulo: '', Descripcion: '' }) }} title={editId ? 'Editar evaluación' : 'Nueva evaluación inicial'} size="md">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
@@ -289,17 +312,27 @@ export default function EvaluacionInicialPage() {
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalNueva(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setModalNueva(false); setEditId(null); setForm({ Titulo: '', Descripcion: '' }) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button
               onClick={crearEvaluacion}
               disabled={guardando || !form.Titulo}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {guardando ? 'Guardando...' : 'Crear'}
+              {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Crear'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta evaluación? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarEvaluacion(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

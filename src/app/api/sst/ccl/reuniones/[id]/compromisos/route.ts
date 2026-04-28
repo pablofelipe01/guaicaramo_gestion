@@ -8,7 +8,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { id } = await ctx.params
-  return NextResponse.json({ records: await listarCompromisos(id) })
+  return NextResponse.json(await listarCompromisos(id))
 }
 
 export async function POST(request: NextRequest, ctx: Ctx) {

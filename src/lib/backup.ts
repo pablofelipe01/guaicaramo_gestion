@@ -86,7 +86,7 @@ const MODULOS_BACKUP: ModuloDefinicion[] = [
   {
     modulo: 'Investigación de Incidentes',
     fase: 'HACER',
-    tablas: ['sst_inc_incidentes', 'sst_inc_investigaciones'],
+    tablas: ['sst_incidentes', 'sst_inc_investigaciones'],
   },
   {
     modulo: 'Matriz IPVR',

@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { HeartPulse, Plus, MessageSquare, ChevronRight } from 'lucide-react'
+import { HeartPulse, Plus, MessageSquare, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { CasoCasoFields, CasoSeguimientoFields } from '@/types/sst/caso'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -38,6 +38,8 @@ export default function CasosMedicosPage() {
   const [form, setForm] = useState<Partial<CasoCasoFields>>({})
   const [nota, setNota] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -61,12 +63,28 @@ export default function CasosMedicosPage() {
   const handleSave = async () => {
     if (!form['Trabajador ID'] || !form.Tipo) return
     setSaving(true)
-    await fetch('/api/sst/casos-medicos', {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(form),
-    })
+    if (editId) {
+      await fetch(`/api/sst/casos-medicos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+    } else {
+      await fetch('/api/sst/casos-medicos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    }
     setSaving(false)
     setShowModal(false)
+    setEditId(null)
     setForm({})
+    load()
+  }
+
+  const handleEdit = (c: Caso) => {
+    setEditId(c.id)
+    setForm({ ...c.fields })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/sst/casos-medicos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (selected?.id === id) setSelected(null)
     load()
   }
 
@@ -93,9 +111,13 @@ export default function CasosMedicosPage() {
     {
       key: 'acciones', header: '',
       render: r => (
-        <button onClick={() => selectCaso(r)} className="flex items-center gap-1 text-blue-600 text-sm hover:underline">
-          Ver <ChevronRight size={14} />
-        </button>
+        <div className="flex items-center gap-1">
+          <button onClick={() => selectCaso(r)} className="flex items-center gap-1 text-blue-600 text-sm hover:underline">
+            Ver <ChevronRight size={14} />
+          </button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+        </div>
       ),
     },
   ]
@@ -182,7 +204,7 @@ export default function CasosMedicosPage() {
         </div>
       </div>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setForm({}) }} title="Nuevo Caso Médico">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditId(null); setForm({}) }} title={editId ? 'Editar Caso Médico' : 'Nuevo Caso Médico'}>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Trabajador ID *</label>
@@ -224,17 +246,27 @@ export default function CasosMedicosPage() {
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowModal(false); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowModal(false); setEditId(null); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button
               onClick={handleSave}
               disabled={saving || !form['Trabajador ID'] || !form.Tipo}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Crear Caso'}
+              {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Crear Caso'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este caso médico? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       <Modal open={showSeguimientoModal} onClose={() => { setShowSeguimientoModal(false); setNota('') }} title="Agregar Nota de Seguimiento">
         <div className="space-y-4">

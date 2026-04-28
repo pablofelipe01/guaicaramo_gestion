@@ -10,7 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import {
   CheckSquare, Plus, AlertTriangle, Clock, CheckCircle,
-  MessageSquare, Play, ShieldCheck, Lock, RotateCcw, ChevronRight,
+  MessageSquare, Play, ShieldCheck, Lock, RotateCcw, ChevronRight, Pencil, Trash2,
 } from 'lucide-react'
 import type { AcAccionFields, AcSeguimientoFields } from '@/types/sst/ac'
 import type { AirtableRecord } from '@/lib/airtable-client'
@@ -75,6 +75,8 @@ export default function AccionesCorrectivasPage() {
   const [eficaciaConfirmada, setEficaciaConfirmada] = useState<boolean | null>(null)
   const [saving, setSaving] = useState(false)
   const [filtroEstado, setFiltroEstado] = useState('')
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -105,10 +107,28 @@ export default function AccionesCorrectivasPage() {
   const handleSave = async () => {
     if (!form.Titulo || !form.Tipo || !form.Origen || !form.Prioridad || !form['Fecha Limite']) return
     setSaving(true)
-    await fetch('/api/sst/acciones', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    if (editId) {
+      await fetch(`/api/sst/acciones/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+    } else {
+      await fetch('/api/sst/acciones', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    }
     setSaving(false)
     setShowModal(false)
+    setEditId(null)
     setForm({})
+    load()
+  }
+
+  const handleEdit = (a: Accion) => {
+    setEditId(a.id)
+    setForm({ ...a.fields })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/sst/acciones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (selected?.id === id) setSelected(null)
     load()
   }
 
@@ -176,9 +196,13 @@ export default function AccionesCorrectivasPage() {
     {
       key: 'ver', header: '',
       render: r => (
-        <button onClick={() => selectAccion(r)} className="text-blue-600 text-sm hover:underline flex items-center gap-0.5">
-          Ver <ChevronRight size={14} />
-        </button>
+        <div className="flex items-center gap-1 justify-end">
+          <button onClick={() => selectAccion(r)} className="text-blue-600 text-sm hover:underline flex items-center gap-0.5">
+            Ver <ChevronRight size={14} />
+          </button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-500 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+        </div>
       ),
     },
   ]
@@ -383,7 +407,7 @@ export default function AccionesCorrectivasPage() {
       </div>
 
       {/* Modal nueva acción */}
-      <Modal open={showModal} onClose={() => { setShowModal(false); setForm({}) }} title="Nueva Acción">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditId(null); setForm({}) }} title={editId ? 'Editar Acción' : 'Nueva Acción'}>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
@@ -451,17 +475,27 @@ export default function AccionesCorrectivasPage() {
               onChange={e => setForm(f => ({ ...f, 'Responsable Nombre': e.target.value }))} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowModal(false); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowModal(false); setEditId(null); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button
               onClick={handleSave}
               disabled={saving || !form.Titulo || !form.Tipo || !form.Origen || !form.Prioridad || !form['Fecha Limite']}
               className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Crear Acción'}
+              {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Crear Acción'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta acción? Esta operación no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       {/* Modal seguimiento */}
       <Modal open={showSeguimientoModal} onClose={() => { setShowSeguimientoModal(false); setSeguimientoNota('') }} title="Agregar Nota de Seguimiento">

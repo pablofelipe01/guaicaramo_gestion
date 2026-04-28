@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const comiteId = request.nextUrl.searchParams.get('comiteId') ?? undefined
-  return NextResponse.json({ records: await listarCasos(comiteId) })
+  return NextResponse.json(await listarCasos(comiteId))
 }
 
 export async function POST(request: NextRequest) {

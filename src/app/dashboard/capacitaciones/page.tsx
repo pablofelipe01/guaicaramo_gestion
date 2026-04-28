@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { GraduationCap, Plus, BarChart2, CheckCircle2, XCircle, Trash2 } from 'lucide-react'
+import { GraduationCap, Plus, BarChart2, CheckCircle2, XCircle, Trash2, Pencil } from 'lucide-react'
 import type { CapProgramaFields, CapCapacitacionFields, CapAsistenciaFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -41,6 +41,8 @@ export default function CapacitacionesPage() {
   const [modalCap, setModalCap] = useState(false)
   const [modalAsistencia, setModalAsistencia] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [editCapId, setEditCapId] = useState<string | null>(null)
+  const [confirmDeleteProg, setConfirmDeleteProg] = useState<string | null>(null)
   const [formProg, setFormProg] = useState({ Titulo: '', 'Año': new Date().getFullYear() })
   const [formCap, setFormCap] = useState({ Tema: '', Tipo: 'induccion', Modalidad: 'presencial', Instructor: '', 'Fecha Programada': '', Duracion: '' })
   const [formAsist, setFormAsist] = useState({ 'Nombre Trabajador': '', 'Cargo Trabajador': '', Asistio: true })
@@ -117,22 +119,40 @@ export default function CapacitacionesPage() {
     if (!programaActivo || !formCap.Tema) return
     setGuardando(true)
     try {
-      await fetch('/api/sst/capacitaciones', {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({
-          ...formCap,
-          'Programa ID': programaActivo.id,
-          'Programa Titulo': programaActivo.fields.Titulo,
-          Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
-        }),
-      })
+      if (editCapId) {
+        await fetch(`/api/sst/capacitaciones/${editCapId}`, {
+          method: 'PUT', headers: authHeaders(),
+          body: JSON.stringify({
+            ...formCap,
+            Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
+          }),
+        })
+      } else {
+        await fetch('/api/sst/capacitaciones', {
+          method: 'POST', headers: authHeaders(),
+          body: JSON.stringify({
+            ...formCap,
+            'Programa ID': programaActivo.id,
+            'Programa Titulo': programaActivo.fields.Titulo,
+            Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
+          }),
+        })
+      }
       setModalCap(false)
+      setEditCapId(null)
       setFormCap({ Tema: '', Tipo: 'induccion', Modalidad: 'presencial', Instructor: '', 'Fecha Programada': '', Duracion: '' })
       await seleccionarPrograma(programaActivo)
     } catch (error) {
-      console.error('Error creando capacitación:', error)
+      console.error('Error guardando capacitación:', error)
     }
     setGuardando(false)
+  }
+
+  const eliminarPrograma = async (id: string) => {
+    await fetch(`/api/sst/capacitaciones/programas/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDeleteProg(null)
+    if (programaActivo?.id === id) { setProgramaActivo(null); setCapacitaciones([]) }
+    await cargar()
   }
 
   const registrarAsistencia = async () => {
@@ -251,7 +271,11 @@ export default function CapacitacionesPage() {
                       <li key={p.id} onClick={() => seleccionarPrograma(p)}
                         className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${programaActivo?.id === p.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
                         <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">{p.fields['Año']}</div>
+                        <div className="flex items-center justify-between mt-0.5">
+                          <span className="text-xs text-gray-500">{p.fields['Año']}</span>
+                          <button onClick={e => { e.stopPropagation(); setConfirmDeleteProg(p.id) }}
+                            className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -284,6 +308,12 @@ export default function CapacitacionesPage() {
                           </div>
                           {c.fields['Fecha Programada'] && <div className="text-xs text-gray-400 mt-0.5">{c.fields['Fecha Programada']}</div>}
                         </div>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setEditCapId(c.id); setFormCap({ Tema: c.fields.Tema, Tipo: c.fields.Tipo, Modalidad: c.fields.Modalidad ?? 'presencial', Instructor: c.fields.Instructor ?? '', 'Fecha Programada': c.fields['Fecha Programada'] ?? '', Duracion: c.fields.Duracion?.toString() ?? '' }); setModalCap(true) }}
+                          className="flex-shrink-0 p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Editar capacitación">
+                          <Pencil size={14} />
+                        </button>
                         <button
                           onClick={(e) => { e.stopPropagation(); eliminarCapacitacion(c) }}
                           className="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -362,7 +392,7 @@ export default function CapacitacionesPage() {
         </div>
       </Modal>
 
-      <Modal open={modalCap} onClose={() => setModalCap(false)} title="Nueva capacitación" size="md">
+      <Modal open={modalCap} onClose={() => { setModalCap(false); setEditCapId(null) }} title={editCapId ? 'Editar capacitación' : 'Nueva capacitación'} size="md">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tema *</label>
@@ -401,10 +431,10 @@ export default function CapacitacionesPage() {
               className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalCap(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setModalCap(false); setEditCapId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearCapacitacion} disabled={guardando || !formCap.Tema}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {guardando ? 'Guardando...' : 'Crear'}
+              {guardando ? 'Guardando...' : editCapId ? 'Actualizar' : 'Crear'}
             </button>
           </div>
         </div>
@@ -436,6 +466,16 @@ export default function CapacitacionesPage() {
           </div>
         </div>
       </Modal>
+
+      {confirmDeleteProg && (
+        <Modal open={!!confirmDeleteProg} onClose={() => setConfirmDeleteProg(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este programa y todas sus capacitaciones? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeleteProg(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarPrograma(confirmDeleteProg)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

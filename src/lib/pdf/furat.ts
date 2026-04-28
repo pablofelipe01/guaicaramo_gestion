@@ -4,7 +4,7 @@ import autoTable from 'jspdf-autotable'
 import { getRecord, listRecords } from '@/lib/airtable-client'
 import type { IncIncidenteFields, IncInvestigacionFields } from '@/types/sst/inc'
 
-const T_INCIDENTES = 'sst_inc_incidentes'
+const T_INCIDENTES = 'sst_incidentes'
 const T_INVESTIGACIONES = 'sst_inc_investigaciones'
 
 function formatFecha(iso?: string): string {

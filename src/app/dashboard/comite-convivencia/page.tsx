@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ComiteCasosList } from '@/components/sst/ComiteCasosList'
-import { Users, Plus, CalendarDays, AlertTriangle, Lock, CheckCircle2, User } from 'lucide-react'
+import { Users, Plus, CalendarDays, AlertTriangle, Lock, CheckCircle2, User, Trash2 } from 'lucide-react'
 import type { CclComiteFields, CclReunionFields, CclCompromisoFields, CclIntegranteFields } from '@/types/sst/ccl'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -47,6 +47,9 @@ export default function ComiteConvivenciaPage() {
   const [modalCompromiso, setModalCompromiso] = useState(false)
   const [modalIntegrante, setModalIntegrante] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [confirmDeleteReunion, setConfirmDeleteReunion] = useState<string | null>(null)
+  const [confirmDeleteComp, setConfirmDeleteComp] = useState<string | null>(null)
+  const [confirmDeleteIntegrante, setConfirmDeleteIntegrante] = useState<string | null>(null)
   const [formComite, setFormComite] = useState({ Nombre: '', 'Fecha Inicio': '', 'Fecha Fin': '' })
   const [formReunion, setFormReunion] = useState({ Tipo: 'ordinaria', Fecha: '', Lugar: '' })
   const [formComp, setFormComp] = useState({ Descripcion: '', Responsable: '', 'Fecha Limite': '' })
@@ -169,6 +172,25 @@ export default function ComiteConvivenciaPage() {
 
   const dias = comite ? diasRestantes(comite.fields['Fecha Fin']) : null
 
+  const eliminarReunion = async (id: string) => {
+    await fetch(`/api/sst/ccl/reuniones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDeleteReunion(null)
+    if (reunionActiva?.id === id) { setReunionActiva(null); setCompromisos([]) }
+    await cargar()
+  }
+
+  const eliminarCompromiso = async (id: string) => {
+    await fetch(`/api/sst/ccl/compromisos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDeleteComp(null)
+    if (reunionActiva) await seleccionarReunion(reunionActiva)
+  }
+
+  const eliminarIntegrante = async (id: string) => {
+    await fetch(`/api/sst/ccl/integrantes/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDeleteIntegrante(null)
+    await cargar()
+  }
+
   return (
     <div className="h-full flex flex-col gap-4">
       <PageHeader
@@ -265,14 +287,18 @@ export default function ComiteConvivenciaPage() {
                     ) : (
                       <ul>
                         {reuniones.map(r => (
-                          <li key={r.id} onClick={() => seleccionarReunion(r)}
-                            className={`p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${reunionActiva?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{r.fields.Tipo}</span>
-                              <StatusBadge variant={REUNION_VARIANT[r.fields.Estado]} label={r.fields.Estado} />
+                          <li key={r.id}
+                            className={`p-3 border-b hover:bg-gray-50 transition-colors ${reunionActiva?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                            <div onClick={() => seleccionarReunion(r)} className="cursor-pointer">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{r.fields.Tipo}</span>
+                                <StatusBadge variant={REUNION_VARIANT[r.fields.Estado]} label={r.fields.Estado} />
+                              </div>
+                              <div className="text-sm font-medium text-gray-800 mt-1">{r.fields.Fecha}</div>
+                              {r.fields.Lugar && <div className="text-xs text-gray-400">{r.fields.Lugar}</div>}
                             </div>
-                            <div className="text-sm font-medium text-gray-800 mt-1">{r.fields.Fecha}</div>
-                            {r.fields.Lugar && <div className="text-xs text-gray-400">{r.fields.Lugar}</div>}
+                            <button onClick={e => { e.stopPropagation(); setConfirmDeleteReunion(r.id) }}
+                              className="mt-1 p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
                           </li>
                         ))}
                       </ul>
@@ -301,7 +327,10 @@ export default function ComiteConvivenciaPage() {
                                 <div className="text-xs text-gray-500 capitalize mt-0.5">{i.fields.Rol}</div>
                                 {i.fields.Cargo && <div className="text-xs text-gray-400">{i.fields.Cargo}</div>}
                               </div>
-                              <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{i.fields.Rol.replace('_', ' ')}</span>
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{i.fields.Rol.replace('_', ' ')}</span>
+                                <button onClick={() => setConfirmDeleteIntegrante(i.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
+                              </div>
                             </div>
                           </li>
                         ))}
@@ -348,7 +377,10 @@ export default function ComiteConvivenciaPage() {
                               {c.fields['Fecha Limite'] && <span>· Límite: {c.fields['Fecha Limite']}</span>}
                             </div>
                           </div>
-                          <StatusBadge variant={COMP_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
+                          <div className="flex items-center gap-1">
+                            <StatusBadge variant={COMP_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
+                            <button onClick={() => setConfirmDeleteComp(c.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
+                          </div>
                         </div>
                       </li>
                     ))}
@@ -500,6 +532,36 @@ export default function ComiteConvivenciaPage() {
           </div>
         </div>
       </Modal>
+
+      {confirmDeleteReunion && (
+        <Modal open={!!confirmDeleteReunion} onClose={() => setConfirmDeleteReunion(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta reunión y sus compromisos? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeleteReunion(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarReunion(confirmDeleteReunion)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
+
+      {confirmDeleteComp && (
+        <Modal open={!!confirmDeleteComp} onClose={() => setConfirmDeleteComp(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este compromiso? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeleteComp(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarCompromiso(confirmDeleteComp)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
+
+      {confirmDeleteIntegrante && (
+        <Modal open={!!confirmDeleteIntegrante} onClose={() => setConfirmDeleteIntegrante(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este integrante del comité? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeleteIntegrante(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarIntegrante(confirmDeleteIntegrante)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

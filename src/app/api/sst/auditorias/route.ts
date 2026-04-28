@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const vista = request.nextUrl.searchParams.get('vista')
   if (vista === 'estadisticas') return NextResponse.json(await estadisticasAuditorias())
   const tipo = request.nextUrl.searchParams.get('tipo') ?? undefined
-  return NextResponse.json({ records: await listarAuditorias(tipo) })
+  return NextResponse.json(await listarAuditorias(tipo))
 }
 
 export async function POST(request: NextRequest) {

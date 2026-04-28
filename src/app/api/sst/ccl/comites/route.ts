@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   if (request.nextUrl.searchParams.get('alertas') === 'true')
     return NextResponse.json({ alertas: await alertasComite() })
-  return NextResponse.json({ records: await listarComites() })
+  return NextResponse.json(await listarComites())
 }
 
 export async function POST(request: NextRequest) {

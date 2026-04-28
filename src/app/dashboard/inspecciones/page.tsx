@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { ClipboardList, Plus, Flag, ChevronRight } from 'lucide-react'
+import { ClipboardList, Plus, Flag, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { InspInspeccionFields, InspHallazgoFields } from '@/types/sst/insp'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -39,6 +39,8 @@ export default function InspeccionesPage() {
   const [form, setForm] = useState<Partial<InspInspeccionFields>>({})
   const [hallazgoForm, setHallazgoForm] = useState<Partial<InspHallazgoFields>>({})
   const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -62,10 +64,28 @@ export default function InspeccionesPage() {
   const handleSave = async () => {
     if (!form['Tipo ID'] || !form.Area || !form['Fecha Programada']) return
     setSaving(true)
-    await fetch('/api/sst/inspecciones', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    if (editId) {
+      await fetch(`/api/sst/inspecciones/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+    } else {
+      await fetch('/api/sst/inspecciones', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    }
     setSaving(false)
     setShowModal(false)
+    setEditId(null)
     setForm({})
+    load()
+  }
+
+  const handleEdit = (insp: Inspeccion) => {
+    setEditId(insp.id)
+    setForm({ ...insp.fields })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/sst/inspecciones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (selected?.id === id) setSelected(null)
     load()
   }
 
@@ -101,9 +121,13 @@ export default function InspeccionesPage() {
     {
       key: 'ver', header: '',
       render: r => (
-        <button onClick={() => selectInspeccion(r)} className="text-blue-600 text-sm hover:underline">
-          Ver <ChevronRight size={14} className="inline" />
-        </button>
+        <div className="flex items-center gap-2 justify-end">
+          <button onClick={() => selectInspeccion(r)} className="text-blue-600 text-sm hover:underline">
+            Ver <ChevronRight size={14} className="inline" />
+          </button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-blue-600" title="Editar"><Pencil size={14} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-500 hover:text-red-600" title="Eliminar"><Trash2 size={14} /></button>
+        </div>
       ),
     },
   ]
@@ -192,7 +216,7 @@ export default function InspeccionesPage() {
         </div>
       </div>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setForm({}) }} title="Nueva Inspección">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditId(null); setForm({}) }} title={editId ? 'Editar Inspección' : 'Nueva Inspección'}>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tipo ID *</label>
@@ -222,17 +246,27 @@ export default function InspeccionesPage() {
               onChange={e => setForm(f => ({ ...f, 'Responsable Nombre': e.target.value }))} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowModal(false); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowModal(false); setEditId(null); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button
               onClick={handleSave}
               disabled={saving || !form['Tipo ID'] || !form.Area || !form['Fecha Programada']}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta inspección? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       <Modal open={showHallazgoModal} onClose={() => { setShowHallazgoModal(false); setHallazgoForm({}) }} title="Registrar Hallazgo">
         <div className="space-y-4">

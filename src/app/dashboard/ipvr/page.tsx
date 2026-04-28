@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { ShieldAlert, Plus, AlertTriangle } from 'lucide-react'
+import { ShieldAlert, Plus, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import type { IpvrRegistroFields } from '@/types/sst/ipvr'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -38,6 +38,8 @@ export default function IpvrPage() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState<Partial<IpvrRegistroFields> & { ND?: number; NE?: number; NC?: number }>({})
   const [saving, setSaving] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'todos' | 'criticos'>('todos')
 
   const preview = form.ND && form.NE && form.NC
@@ -63,14 +65,28 @@ export default function IpvrPage() {
   const handleSave = async () => {
     if (!form.Area || !form['Proceso Actividad'] || !form['Descripcion Peligro'] || form.ND == null || form.NE == null || form.NC == null) return
     setSaving(true)
-    await fetch('/api/sst/ipvr', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ ...form, 'Fecha Revision': form['Fecha Revision'] ?? new Date().toISOString().split('T')[0] }),
-    })
+    const payload = { ...form, 'Fecha Revision': form['Fecha Revision'] ?? new Date().toISOString().split('T')[0] }
+    if (editId) {
+      await fetch(`/api/sst/ipvr/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload) })
+    } else {
+      await fetch('/api/sst/ipvr', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) })
+    }
     setSaving(false)
     setShowModal(false)
+    setEditId(null)
     setForm({})
+    load()
+  }
+
+  const handleEdit = (r: Registro) => {
+    setEditId(r.id)
+    setForm({ ...r.fields })
+    setShowModal(true)
+  }
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/sst/ipvr/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
     load()
   }
 
@@ -85,6 +101,15 @@ export default function IpvrPage() {
       render: r => <StatusBadge label={`Nivel ${r.fields['Nivel Intervencion']}`} variant={NIVEL_VARIANT[r.fields['Nivel Intervencion']]} />,
     },
     { key: 'controles', header: 'Controles existentes', render: r => r.fields['Controles Existentes'] ?? '—' },
+    {
+      key: 'acciones', header: '',
+      render: r => (
+        <div className="flex gap-2 justify-end">
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-blue-600" title="Editar"><Pencil size={15} /></button>
+          <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-500 hover:text-red-600" title="Eliminar"><Trash2 size={15} /></button>
+        </div>
+      ),
+    },
   ]
 
   const displayData = activeTab === 'criticos' ? nivelI : registros
@@ -146,7 +171,7 @@ export default function IpvrPage() {
         )}
       </Card>
 
-      <Modal open={showModal} onClose={() => { setShowModal(false); setForm({}) }} title="Nuevo Registro IPVR">
+      <Modal open={showModal} onClose={() => { setShowModal(false); setEditId(null); setForm({}) }} title={editId ? 'Editar Registro IPVR' : 'Nuevo Registro IPVR'}>
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -208,17 +233,27 @@ export default function IpvrPage() {
               onChange={e => setForm(f => ({ ...f, 'Controles Existentes': e.target.value }))} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowModal(false); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowModal(false); setEditId(null); setForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button
               onClick={handleSave}
               disabled={saving || !form.Area || !form['Proceso Actividad'] || !form['Descripcion Peligro'] || form.ND == null || form.NE == null || form.NC == null}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
             >
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este registro IPVR? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => handleDelete(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

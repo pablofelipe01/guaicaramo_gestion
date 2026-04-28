@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { searchParams } = new URL(request.url)
   const trabajadorId = searchParams.get('trabajadorId') ?? undefined
-  return NextResponse.json({ records: await listarEntregas(trabajadorId) })
+  return NextResponse.json(await listarEntregas(trabajadorId))
 }
 
 export async function POST(request: NextRequest) {

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if (request.nextUrl.searchParams.get('cobertura') === 'true')
     return NextResponse.json(await coberturaCapacitaciones())
   const programaId = request.nextUrl.searchParams.get('programaId') ?? undefined
-  return NextResponse.json({ records: await listarCapacitaciones(programaId) })
+  return NextResponse.json(await listarCapacitaciones(programaId))
 }
 
 export async function POST(request: NextRequest) {

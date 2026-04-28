@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   if (searchParams.get('alertas') === 'true') return NextResponse.json({ alertas: await alertasLegal() })
   if (searchParams.get('resumen') === 'true') return NextResponse.json(await resumenCumplimiento())
   const todos = searchParams.get('todos') === 'true'
-  return NextResponse.json({ records: await listarRequisitos(!todos) })
+  return NextResponse.json(await listarRequisitos(!todos))
 }
 
 export async function POST(request: NextRequest) {

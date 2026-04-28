@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const area = searchParams.get('area') ?? undefined
   const nivelI = searchParams.get('nivelI')
   if (nivelI) return NextResponse.json({ records: await registrosNivelI() })
-  return NextResponse.json({ records: await listarRegistros(area) })
+  return NextResponse.json(await listarRegistros(area))
 }
 
 export async function POST(request: NextRequest) {

@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth'
 
 type Ctx = { params: Promise<{ id: string }> }
 
-const T_INCIDENTES = 'sst_inc_incidentes'
+const T_INCIDENTES = 'sst_incidentes'
 
 export async function PUT(request: NextRequest, ctx: Ctx) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')

@@ -40,3 +40,22 @@ export async function PUT(
     return NextResponse.json({ message: 'Error al actualizar documento' }, { status: 500 })
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  ctx: Ctx
+) {
+  try {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    if (!token || !(await verifyToken(token))) {
+      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+    }
+    const { id } = await ctx.params
+    const { deleteRecord } = await import('@/lib/airtable-client')
+    await deleteRecord('sst_doc_documentos', id)
+    return NextResponse.json({ message: 'Documento eliminado' })
+  } catch (error) {
+    console.error(error)
+    return NextResponse.json({ message: 'Error al eliminar documento' }, { status: 500 })
+  }
+}

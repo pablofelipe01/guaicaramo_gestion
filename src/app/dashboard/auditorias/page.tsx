@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { BarChart2, Plus, X, Loader2, CheckCircle2, AlertCircle, ClipboardList } from 'lucide-react'
+import { BarChart2, Plus, X, Loader2, CheckCircle2, AlertCircle, ClipboardList, Pencil, Trash2 } from 'lucide-react'
 import type { AudAuditoriaFields } from '@/types/sst/aud'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -42,6 +42,8 @@ export default function AuditoriasPage() {
     Tipo: 'interna',
     Estado: 'planificada',
   })
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -64,16 +66,23 @@ export default function AuditoriasPage() {
       setError('Todos los campos obligatorios son requeridos')
       return
     }
-    const res = await fetch('/api/sst/auditorias', {
-      method: 'POST', headers: getHeaders(),
+    const res = await fetch(editId ? `/api/sst/auditorias/${editId}` : '/api/sst/auditorias', {
+      method: editId ? 'PUT' : 'POST', headers: getHeaders(),
       body: JSON.stringify(form),
     })
     const data = await res.json()
-    if (!res.ok) { setError(data.message ?? 'Error al crear'); return }
+    if (!res.ok) { setError(data.message ?? 'Error al guardar'); return }
     setModalAbierto(false)
+    setEditId(null)
     setForm({ Tipo: 'interna', Estado: 'planificada' })
-    setExito('Auditoría creada correctamente')
+    setExito(editId ? 'Auditoria actualizada correctamente' : 'Auditoría creada correctamente')
     setTimeout(() => setExito(''), 3000)
+    cargar()
+  }
+
+  async function eliminar(id: string) {
+    await fetch(`/api/sst/auditorias/${id}`, { method: 'DELETE', headers: getHeaders() })
+    setConfirmDelete(null)
     cargar()
   }
 
@@ -90,7 +99,7 @@ export default function AuditoriasPage() {
           </div>
         </div>
         <button
-          onClick={() => { setError(''); setModalAbierto(true) }}
+          onClick={() => { setError(''); setEditId(null); setForm({ Tipo: 'interna', Estado: 'planificada' }); setModalAbierto(true) }}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" /> Nueva auditoría
@@ -135,7 +144,7 @@ export default function AuditoriasPage() {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-100">
               <tr>
-                {['Título', 'Tipo', 'Auditor', 'Fecha Inicio', 'Estado'].map(h => (
+                {['Título', 'Tipo', 'Auditor', 'Fecha Inicio', 'Estado', ''].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     {h}
                   </th>
@@ -156,6 +165,12 @@ export default function AuditoriasPage() {
                         {est.label}
                       </span>
                     </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1 justify-end">
+                        <button onClick={() => { setEditId(a.id); setForm({ ...a.fields }); setModalAbierto(true) }} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setConfirmDelete(a.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 className="w-3.5 h-3.5" /></button>
+                      </div>
+                    </td>
                   </tr>
                 )
               })}
@@ -168,8 +183,8 @@ export default function AuditoriasPage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-gray-900">Nueva auditoría</h2>
-              <button onClick={() => setModalAbierto(false)} className="text-gray-400 hover:text-gray-600">
+              <h2 className="font-bold text-gray-900">{editId ? 'Editar auditoría' : 'Nueva auditoría'}</h2>
+              <button onClick={() => { setModalAbierto(false); setEditId(null); setForm({ Tipo: 'interna', Estado: 'planificada' }) }} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -206,12 +221,25 @@ export default function AuditoriasPage() {
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
-              <button onClick={() => setModalAbierto(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
+              <button onClick={() => { setModalAbierto(false); setEditId(null); setForm({ Tipo: 'interna', Estado: 'planificada' }) }} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
                 Cancelar
               </button>
               <button onClick={crear} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                Crear
+                {editId ? 'Actualizar' : 'Crear'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="font-bold text-gray-900">Confirmar eliminación</h2>
+            <p className="text-sm text-gray-600">¿Eliminar esta auditoría? Esta acción no se puede deshacer.</p>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Cancelar</button>
+              <button onClick={() => eliminar(confirmDelete)} className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700">Eliminar</button>
             </div>
           </div>
         </div>

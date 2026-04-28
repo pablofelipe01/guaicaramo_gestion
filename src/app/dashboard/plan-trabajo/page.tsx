@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { ListChecks, Plus, BarChart2, ChevronRight } from 'lucide-react'
+import { ListChecks, Plus, BarChart2, ChevronRight, Trash2 } from 'lucide-react'
 import type { PlanPlanFields, PlanActividadFields } from '@/types/sst/plan'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -46,6 +46,8 @@ export default function PlanTrabajoPage() {
   const [modalEditarPlan, setModalEditarPlan] = useState(false)
   const [modalActividad, setModalActividad] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [confirmDeletePlan, setConfirmDeletePlan] = useState<string | null>(null)
+  const [confirmDeleteAct, setConfirmDeleteAct] = useState<string | null>(null)
   const [formPlan, setFormPlan] = useState({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
   const [formEditarPlan, setFormEditarPlan] = useState({ Titulo: '', Descripcion: '', Estado: 'borrador' })
   const [formAct, setFormAct] = useState({
@@ -123,6 +125,19 @@ export default function PlanTrabajoPage() {
     setGuardando(false)
   }
 
+  const eliminarPlan = async (id: string) => {
+    await fetch(`/api/sst/planes/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDeletePlan(null)
+    if (seleccionado?.id === id) { setSeleccionado(null); setActividades([]) }
+    await cargar()
+  }
+
+  const eliminarActividad = async (id: string) => {
+    await fetch(`/api/sst/actividades/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDeleteAct(null)
+    if (seleccionado) await seleccionar(seleccionado)
+  }
+
   const crearActividad = async () => {
     if (!formAct.Descripcion || !seleccionado) return
     setGuardando(true)
@@ -175,15 +190,18 @@ export default function PlanTrabajoPage() {
                 {planes.map(p => (
                   <li
                     key={p.id}
-                    onClick={() => seleccionar(p)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionado?.id === p.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
+                    className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === p.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
                   >
-                    <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <StatusBadge variant={PLAN_ESTADO_VARIANT[p.fields.Estado]} label={p.fields.Estado} />
-                      <span className="text-xs text-gray-500">{p.fields['Año']}</span>
+                    <div onClick={() => seleccionar(p)} className="cursor-pointer">
+                      <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <StatusBadge variant={PLAN_ESTADO_VARIANT[p.fields.Estado]} label={p.fields.Estado} />
+                        <span className="text-xs text-gray-500">{p.fields['Año']}</span>
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">{p.fields.Responsable}</div>
                     </div>
-                    <div className="text-xs text-gray-400 mt-1">{p.fields.Responsable}</div>
+                    <button onClick={e => { e.stopPropagation(); setConfirmDeletePlan(p.id) }}
+                      className="mt-1 p-1 text-gray-400 hover:text-red-600" title="Eliminar plan"><Trash2 size={13} /></button>
                   </li>
                 ))}
               </ul>
@@ -249,7 +267,7 @@ export default function PlanTrabajoPage() {
                     <table className="w-full text-sm">
                       <thead className="bg-gray-50 sticky top-0">
                         <tr>
-                          {['Actividad','Responsable','Ciclo','Mes','Avance','Estado'].map(h => (
+                          {['Actividad','Responsable','Ciclo','Mes','Avance','Estado',''].map(h => (
                             <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
                           ))}
                         </tr>
@@ -279,6 +297,9 @@ export default function PlanTrabajoPage() {
                               >
                                 {[0,25,50,75,100].map(v => <option key={v} value={v}>{v}%</option>)}
                               </select>
+                            </td>
+                            <td className="px-4 py-3">
+                              <button onClick={() => setConfirmDeleteAct(a.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar actividad"><Trash2 size={13} /></button>
                             </td>
                           </tr>
                         ))}
@@ -456,6 +477,26 @@ export default function PlanTrabajoPage() {
           </div>
         </div>
       </Modal>
+
+      {confirmDeletePlan && (
+        <Modal open={!!confirmDeletePlan} onClose={() => setConfirmDeletePlan(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este plan y todas sus actividades? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeletePlan(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarPlan(confirmDeletePlan)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
+
+      {confirmDeleteAct && (
+        <Modal open={!!confirmDeleteAct} onClose={() => setConfirmDeleteAct(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta actividad? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDeleteAct(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarActividad(confirmDeleteAct)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

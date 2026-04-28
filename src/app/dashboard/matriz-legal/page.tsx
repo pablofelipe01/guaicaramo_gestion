@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Scale, Plus, Bell, CheckCircle2, Clock, XCircle, MinusCircle } from 'lucide-react'
+import { Scale, Plus, Bell, CheckCircle2, Clock, XCircle, MinusCircle, Pencil, Trash2 } from 'lucide-react'
 import type { LegalRequisitoFields, LegalCumplimientoFields } from '@/types/sst/legal'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -49,6 +49,8 @@ export default function MatrizLegalPage() {
   const [modalRequisito, setModalRequisito] = useState(false)
   const [modalCumplimiento, setModalCumplimiento] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [formReq, setFormReq] = useState({ Norma: '', Articulo: '', Descripcion: '', Tipo: 'decreto', Ambito: 'nacional', 'Fecha Vigencia': '' })
   const [formCumpl, setFormCumpl] = useState({ Estado: 'en_proceso', Responsable: '', Observaciones: '', 'Proxima Revision': '', 'Evidencia URL': '' })
 
@@ -98,14 +100,36 @@ export default function MatrizLegalPage() {
   const crearRequisito = async () => {
     if (!formReq.Norma) return
     setGuardando(true)
-    await fetch('/api/sst/legal/requisitos', {
-      method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ ...formReq, Activo: true }),
-    })
+    if (editId) {
+      await fetch(`/api/sst/legal/requisitos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(formReq) })
+    } else {
+      await fetch('/api/sst/legal/requisitos', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ ...formReq, Activo: true }) })
+    }
     setModalRequisito(false)
+    setEditId(null)
     setFormReq({ Norma: '', Articulo: '', Descripcion: '', Tipo: 'decreto', Ambito: 'nacional', 'Fecha Vigencia': '' })
     await cargar()
     setGuardando(false)
+  }
+
+  const editarRequisito = (r: Requisito) => {
+    setEditId(r.id)
+    setFormReq({
+      Norma: r.fields.Norma ?? '',
+      Articulo: r.fields.Articulo ?? '',
+      Descripcion: r.fields.Descripcion ?? '',
+      Tipo: r.fields.Tipo ?? 'decreto',
+      Ambito: r.fields.Ambito ?? 'nacional',
+      'Fecha Vigencia': r.fields['Fecha Vigencia'] ?? '',
+    })
+    setModalRequisito(true)
+  }
+
+  const eliminarRequisito = async (id: string) => {
+    await fetch(`/api/sst/legal/requisitos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (seleccionado?.id === id) setSeleccionado(null)
+    await cargar()
   }
 
   const crearCumplimiento = async () => {
@@ -179,15 +203,23 @@ export default function MatrizLegalPage() {
               <EmptyState icon={Scale} title="Sin requisitos" description="Agrega el primer requisito legal" />
             ) : (
               <ul>
-                {requisitos.map(r => (
-                  <li key={r.id} onClick={() => seleccionar(r)}
-                    className={`p-3 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionado?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
-                    <div className="font-medium text-sm text-gray-900 truncate">{r.fields.Norma}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{r.fields.Tipo}</span>
-                      <span className="text-xs text-gray-500 capitalize">{r.fields.Ambito}</span>
+                  {requisitos.map(r => (
+                  <li key={r.id}
+                    className={`p-3 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                    <div className="flex items-start gap-1">
+                      <button className="flex-1 text-left min-w-0" onClick={() => seleccionar(r)}>
+                        <div className="font-medium text-sm text-gray-900 truncate">{r.fields.Norma}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{r.fields.Tipo}</span>
+                          <span className="text-xs text-gray-500 capitalize">{r.fields.Ambito}</span>
+                        </div>
+                        {r.fields.Articulo && <div className="text-xs text-gray-400 mt-0.5">Art. {r.fields.Articulo}</div>}
+                      </button>
+                      <div className="flex gap-0.5 flex-shrink-0 mt-0.5">
+                        <button onClick={e => { e.stopPropagation(); editarRequisito(r) }} className="p-1 text-gray-300 hover:text-blue-600" title="Editar"><Pencil size={12} /></button>
+                        <button onClick={e => { e.stopPropagation(); setConfirmDelete(r.id) }} className="p-1 text-gray-300 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
+                      </div>
                     </div>
-                    {r.fields.Articulo && <div className="text-xs text-gray-400 mt-0.5">Art. {r.fields.Articulo}</div>}
                   </li>
                 ))}
               </ul>
@@ -308,7 +340,7 @@ export default function MatrizLegalPage() {
       </Modal>
 
       {/* Modal nuevo requisito */}
-      <Modal open={modalRequisito} onClose={() => setModalRequisito(false)} title="Nuevo requisito legal" size="lg">
+      <Modal open={modalRequisito} onClose={() => { setModalRequisito(false); setEditId(null) }} title={editId ? 'Editar requisito legal' : 'Nuevo requisito legal'} size="lg">
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Norma *</label>
@@ -348,14 +380,24 @@ export default function MatrizLegalPage() {
               className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalRequisito(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setModalRequisito(false); setEditId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearRequisito} disabled={guardando || !formReq.Norma}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {guardando ? 'Guardando...' : 'Crear'}
+              {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Crear'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este requisito legal? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarRequisito(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       {/* Modal registrar cumplimiento */}
       <Modal open={modalCumplimiento} onClose={() => setModalCumplimiento(false)} title="Registrar cumplimiento" size="md">

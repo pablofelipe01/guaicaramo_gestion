@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { searchParams } = new URL(request.url)
   const estado = searchParams.get('estado') ?? undefined
-  return NextResponse.json({ records: await listarCasos(estado) })
+  return NextResponse.json(await listarCasos(estado))
 }
 
 export async function POST(request: NextRequest) {

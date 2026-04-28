@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { obtenerComiteActivo, listarIntegrantes } from '@/lib/sst/ccl'
+import { listarIntegrantes, actualizarComite } from '@/lib/sst/ccl'
 import { getRecord, deleteRecord } from '@/lib/airtable-client'
 import { verifyToken } from '@/lib/auth'
 
@@ -24,13 +24,24 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   }
 }
 
+export async function PUT(request: NextRequest, ctx: Ctx) {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const { id } = await ctx.params
+  const body = await request.json()
+  try {
+    const updated = await actualizarComite(id, body)
+    return NextResponse.json({ record: updated })
+  } catch (error) {
+    console.error('Error actualizando comité:', error)
+    return NextResponse.json({ message: 'Error al actualizar comité' }, { status: 500 })
+  }
+}
+
 export async function DELETE(request: NextRequest, { params }: Ctx) {
   try {
     const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    
-    const verified = await verifyToken(token)
-    if (!verified) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+    if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
     
     const { id } = await params
     await deleteRecord(T_COMITES, id)

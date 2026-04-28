@@ -10,7 +10,7 @@ import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
 import {
   UserCog, Plus, Shield, HardHat, Stethoscope,
-  AlertTriangle, ChevronRight, X,
+  AlertTriangle, ChevronRight, X, Pencil, Trash2,
 } from 'lucide-react'
 import type { CargoPerfilFields, CargoPeligroFields, CargoEppFields, CargoExamenFields } from '@/types/sst/cargo'
 import type { AirtableRecord } from '@/lib/airtable-client'
@@ -42,6 +42,8 @@ export default function PerfilesCargoPage() {
   const [form, setForm] = useState({ 'Nombre Cargo': '', Codigo: '', Area: '', 'Nivel Riesgo ARL': '1', Descripcion: '' })
   const [formSub, setFormSub] = useState<Record<string, string | boolean | number>>({})
   const [guardando, setGuardando] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const cargarPerfiles = useCallback(async () => {
     setLoading(true)
@@ -74,13 +76,35 @@ export default function PerfilesCargoPage() {
 
   const guardarPerfil = async () => {
     setGuardando(true)
-    await fetch('/api/sst/cargo/perfiles', {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(form),
-    })
+    if (editId) {
+      await fetch(`/api/sst/cargo/perfiles/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+    } else {
+      await fetch('/api/sst/cargo/perfiles', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+    }
     setModalPerfil(false)
+    setEditId(null)
     setForm({ 'Nombre Cargo': '', Codigo: '', Area: '', 'Nivel Riesgo ARL': '1', Descripcion: '' })
     await cargarPerfiles()
     setGuardando(false)
+  }
+
+  const editarPerfil = (p: Perfil) => {
+    setEditId(p.id)
+    setForm({
+      'Nombre Cargo': p.fields['Nombre Cargo'] ?? '',
+      Codigo: p.fields.Codigo ?? '',
+      Area: p.fields.Area ?? '',
+      'Nivel Riesgo ARL': p.fields['Nivel Riesgo ARL'] ?? '1',
+      Descripcion: p.fields.Descripcion ?? '',
+    })
+    setModalPerfil(true)
+  }
+
+  const eliminarPerfil = async (id: string) => {
+    await fetch(`/api/sst/cargo/perfiles/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (seleccionado?.id === id) setSeleccionado(null)
+    await cargarPerfiles()
   }
 
   const guardarSubrecurso = async () => {
@@ -128,9 +152,17 @@ export default function PerfilesCargoPage() {
               isLoading={loading}
               emptyMessage="No hay perfiles de cargo"
               actions={(row) => (
-                <button onClick={() => seleccionarPerfil(row as unknown as Perfil)} className="text-blue-600 hover:text-blue-800">
-                  <ChevronRight className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => seleccionarPerfil(row as unknown as Perfil)} className="text-blue-600 hover:text-blue-800">
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => editarPerfil(row as unknown as Perfil)} className="text-gray-400 hover:text-blue-600" title="Editar">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={() => setConfirmDelete((row as unknown as Perfil).id)} className="text-gray-400 hover:text-red-600" title="Eliminar">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               )}
             />
           </Card>
@@ -233,7 +265,7 @@ export default function PerfilesCargoPage() {
         </div>
       </div>
 
-      <Modal open={modalPerfil} onClose={() => setModalPerfil(false)} title="Nuevo perfil de cargo">
+      <Modal open={modalPerfil} onClose={() => { setModalPerfil(false); setEditId(null) }} title={editId ? 'Editar perfil de cargo' : 'Nuevo perfil de cargo'}>
         <div className="space-y-4">
           {[
             { label: 'Nombre del cargo *', key: 'Nombre Cargo', type: 'text' },
@@ -256,13 +288,23 @@ export default function PerfilesCargoPage() {
             </select>
           </div>
           <div className="flex gap-3 justify-end pt-2">
-            <button onClick={() => setModalPerfil(false)} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
+            <button onClick={() => { setModalPerfil(false); setEditId(null) }} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">Cancelar</button>
             <button onClick={guardarPerfil} disabled={guardando} className="btn-primary text-sm">
-              {guardando ? 'Guardando...' : 'Guardar cargo'}
+              {guardando ? 'Guardando...' : editId ? 'Actualizar cargo' : 'Guardar cargo'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este perfil de cargo? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarPerfil(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       <Modal
         open={modalSubrecurso}

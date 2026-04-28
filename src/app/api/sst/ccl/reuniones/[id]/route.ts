@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarCompromisos, actualizarReunion } from '@/lib/sst/ccl'
-import { getRecord } from '@/lib/airtable-client'
+import { getRecord, deleteRecord } from '@/lib/airtable-client'
 import { verifyToken } from '@/lib/auth'
 
 type Ctx = { params: Promise<{ id: string }> }
@@ -35,5 +35,18 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
   } catch (error) {
     console.error('Error actualizando reunión:', error)
     return NextResponse.json({ error: 'Error al actualizar reunión' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, ctx: Ctx) {
+  const token = request.headers.get('authorization')?.replace('Bearer ', '')
+  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const { id } = await ctx.params
+  try {
+    await deleteRecord('sst_ccl_reuniones', id)
+    return NextResponse.json({ deleted: true })
+  } catch (error) {
+    console.error('Error eliminando reunión:', error)
+    return NextResponse.json({ error: 'Error al eliminar reunión' }, { status: 500 })
   }
 }

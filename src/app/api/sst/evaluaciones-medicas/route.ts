@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const trabajadorId = searchParams.get('trabajadorId') ?? undefined
   const alertas = searchParams.get('alertas')
   if (alertas) return NextResponse.json({ records: await alertasEvaluaciones() })
-  return NextResponse.json({ records: await listarEvaluaciones(trabajadorId) })
+  return NextResponse.json(await listarEvaluaciones(trabajadorId))
 }
 
 export async function POST(request: NextRequest) {

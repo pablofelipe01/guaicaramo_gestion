@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { HardHat, Plus, AlertTriangle, CheckCircle2, UserCheck } from 'lucide-react'
+import { HardHat, Plus, AlertTriangle, CheckCircle2, UserCheck, Pencil, Trash2 } from 'lucide-react'
 import type { ContContratistaFields, ContDocumentoFields, ContTrabajadorFields } from '@/types/sst/cont'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -43,6 +43,8 @@ export default function ContratistasPage() {
   const [modalDoc, setModalDoc] = useState(false)
   const [modalTrabajador, setModalTrabajador] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [formCont, setFormCont] = useState({ 'Nombre Empresa': '', NIT: '', 'Representante Legal': '', Email: '', Telefono: '', Actividad: '' })
   const [formDoc, setFormDoc] = useState({ Tipo: 'arl', 'Fecha Vencimiento': '', 'URL Documento': '' })
   const [formTrab, setFormTrab] = useState({ 'Nombre Completo': '', Identificacion: '', Cargo: '' })
@@ -87,11 +89,36 @@ export default function ContratistasPage() {
   const crearContratista = async () => {
     if (!formCont['Nombre Empresa'] || !formCont.NIT) return
     setGuardando(true)
-    await fetch('/api/sst/contratistas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(formCont) })
+    if (editId) {
+      await fetch(`/api/sst/contratistas/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(formCont) })
+    } else {
+      await fetch('/api/sst/contratistas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(formCont) })
+    }
     setModalContratista(false)
+    setEditId(null)
     setFormCont({ 'Nombre Empresa': '', NIT: '', 'Representante Legal': '', Email: '', Telefono: '', Actividad: '' })
     await cargar()
     setGuardando(false)
+  }
+
+  const editarContratista = (c: Contratista) => {
+    setEditId(c.id)
+    setFormCont({
+      'Nombre Empresa': c.fields['Nombre Empresa'] ?? '',
+      NIT: c.fields.NIT ?? '',
+      'Representante Legal': c.fields['Representante Legal'] ?? '',
+      Email: c.fields.Email ?? '',
+      Telefono: c.fields.Telefono ?? '',
+      Actividad: c.fields.Actividad ?? '',
+    })
+    setModalContratista(true)
+  }
+
+  const eliminarContratista = async (id: string) => {
+    await fetch(`/api/sst/contratistas/${id}`, { method: 'DELETE', headers: authHeaders() })
+    setConfirmDelete(null)
+    if (seleccionado?.id === id) setSeleccionado(null)
+    await cargar()
   }
 
   const crearDocumento = async () => {
@@ -140,11 +167,19 @@ export default function ContratistasPage() {
               : contratistas.length === 0 ? <EmptyState icon={HardHat} title="Sin contratistas" description="Registra el primer contratista" />
               : <ul>
                   {contratistas.map(c => (
-                    <li key={c.id} onClick={() => seleccionar(c)}
-                      className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
-                      <div className="font-medium text-sm text-gray-900 truncate">{c.fields['Nombre Empresa']}</div>
-                      <div className="text-xs text-gray-500 mt-0.5">NIT: {c.fields.NIT}</div>
-                      {c.fields.Actividad && <div className="text-xs text-gray-400 truncate mt-0.5">{c.fields.Actividad}</div>}
+                    <li key={c.id}
+                      className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                      <div className="flex items-start justify-between gap-1">
+                        <button className="flex-1 text-left min-w-0" onClick={() => seleccionar(c)}>
+                          <div className="font-medium text-sm text-gray-900 truncate">{c.fields['Nombre Empresa']}</div>
+                          <div className="text-xs text-gray-500 mt-0.5">NIT: {c.fields.NIT}</div>
+                          {c.fields.Actividad && <div className="text-xs text-gray-400 truncate mt-0.5">{c.fields.Actividad}</div>}
+                        </button>
+                        <div className="flex gap-0.5 flex-shrink-0">
+                          <button onClick={e => { e.stopPropagation(); editarContratista(c) }} className="p-1 text-gray-300 hover:text-blue-600" title="Editar"><Pencil size={12} /></button>
+                          <button onClick={e => { e.stopPropagation(); setConfirmDelete(c.id) }} className="p-1 text-gray-300 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
+                        </div>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -257,7 +292,7 @@ export default function ContratistasPage() {
         )}
       </div>
 
-      <Modal open={modalContratista} onClose={() => setModalContratista(false)} title="Nuevo contratista" size="lg">
+      <Modal open={modalContratista} onClose={() => { setModalContratista(false); setEditId(null) }} title={editId ? 'Editar contratista' : 'Nuevo contratista'} size="lg">
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -287,14 +322,24 @@ export default function ContratistasPage() {
               className="input-field" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalContratista(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setModalContratista(false); setEditId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearContratista} disabled={guardando || !formCont['Nombre Empresa'] || !formCont.NIT}
               className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-              {guardando ? 'Guardando...' : 'Registrar'}
+              {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Registrar'}
             </button>
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => setConfirmDelete(null)} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este contratista? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => eliminarContratista(confirmDelete)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
 
       <Modal open={modalDoc} onClose={() => setModalDoc(false)} title="Agregar documento" size="md">
         <div className="space-y-4">

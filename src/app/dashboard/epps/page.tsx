@@ -8,7 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { HardHat, Plus, Bell, Package } from 'lucide-react'
+import { HardHat, Plus, Bell, Package, Pencil, Trash2 } from 'lucide-react'
 import type { EppCatalogoFields, EppEntregaFields } from '@/types/sst/epp'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -37,6 +37,9 @@ export default function EppsPage() {
   const [catForm, setCatForm] = useState<Partial<EppCatalogoFields>>({})
   const [entregaForm, setEntregaForm] = useState<Partial<EppEntregaFields>>({})
   const [saving, setSaving] = useState(false)
+  const [editCatId, setEditCatId] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleteType, setDeleteType] = useState<'catalogo' | 'entrega' | null>(null)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -56,10 +59,33 @@ export default function EppsPage() {
   const handleSaveCatalogo = async () => {
     if (!catForm.Nombre || !catForm.Tipo) return
     setSaving(true)
-    await fetch('/api/sst/epps', { method: 'POST', headers: authHeaders(), body: JSON.stringify(catForm) })
+    if (editCatId) {
+      await fetch(`/api/sst/epps/${editCatId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(catForm) })
+    } else {
+      await fetch('/api/sst/epps', { method: 'POST', headers: authHeaders(), body: JSON.stringify(catForm) })
+    }
     setSaving(false)
     setShowCatalogoModal(false)
+    setEditCatId(null)
     setCatForm({})
+    load()
+  }
+
+  const editarCatalogo = (c: Catalogo) => {
+    setEditCatId(c.id)
+    setCatForm({ ...c.fields })
+    setShowCatalogoModal(true)
+  }
+
+  const eliminar = async () => {
+    if (!confirmDelete || !deleteType) return
+    if (deleteType === 'catalogo') {
+      await fetch(`/api/sst/epps/${confirmDelete}`, { method: 'DELETE', headers: authHeaders() })
+    } else {
+      await fetch(`/api/sst/epps/entregas/${confirmDelete}`, { method: 'DELETE', headers: authHeaders() })
+    }
+    setConfirmDelete(null)
+    setDeleteType(null)
     load()
   }
 
@@ -81,6 +107,15 @@ export default function EppsPage() {
     },
     { key: 'vida', header: 'Vida útil (meses)', render: r => r.fields['Vida Util Meses'] ?? '—' },
     { key: 'reposicion', header: 'Reposición (meses)', render: r => r.fields['Periodicidad Reposicion Meses'] ?? '—' },
+    {
+      key: 'acciones', header: '',
+      render: r => (
+        <div className="flex gap-1 justify-end">
+          <button onClick={() => editarCatalogo(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => { setConfirmDelete(r.id); setDeleteType('catalogo') }} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+        </div>
+      ),
+    },
   ]
 
   const entregasColumns: Column<Entrega>[] = [
@@ -102,6 +137,12 @@ export default function EppsPage() {
           </span>
         )
       },
+    },
+    {
+      key: 'acciones_ent', header: '',
+      render: r => (
+        <button onClick={() => { setConfirmDelete(r.id); setDeleteType('entrega') }} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
+      ),
     },
   ]
 
@@ -177,7 +218,7 @@ export default function EppsPage() {
         )}
       </Card>
 
-      <Modal open={showCatalogoModal} onClose={() => { setShowCatalogoModal(false); setCatForm({}) }} title="Nuevo EPP / Dotación">
+      <Modal open={showCatalogoModal} onClose={() => { setShowCatalogoModal(false); setEditCatId(null); setCatForm({}) }} title={editCatId ? 'Editar EPP / Dotación' : 'Nuevo EPP / Dotación'}>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
@@ -210,10 +251,10 @@ export default function EppsPage() {
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setShowCatalogoModal(false); setCatForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={() => { setShowCatalogoModal(false); setEditCatId(null); setCatForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button onClick={handleSaveCatalogo} disabled={saving || !catForm.Nombre || !catForm.Tipo}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : editCatId ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
         </div>
@@ -288,6 +329,16 @@ export default function EppsPage() {
           </div>
         </div>
       </Modal>
+
+      {confirmDelete && (
+        <Modal open={!!confirmDelete} onClose={() => { setConfirmDelete(null); setDeleteType(null) }} title="Confirmar eliminación">
+          <p className="text-sm text-gray-600 mb-4">¿Eliminar este registro? Esta acción no se puede deshacer.</p>
+          <div className="flex justify-end gap-3">
+            <button onClick={() => { setConfirmDelete(null); setDeleteType(null) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
+            <button onClick={eliminar} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const alertas = searchParams.get('alertas')
   if (alertas) return NextResponse.json({ records: await alertasVencimiento() })
-  return NextResponse.json({ records: await listarCatalogo() })
+  return NextResponse.json(await listarCatalogo())
 }
 
 export async function POST(request: NextRequest) {

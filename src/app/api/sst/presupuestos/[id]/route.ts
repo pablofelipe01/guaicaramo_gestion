@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { obtenerPresupuesto, actualizarPresupuesto } from '@/lib/sst/ppto'
+import { deleteRecord } from '@/lib/airtable-client'
 import { verifyToken } from '@/lib/auth'
+
+const T_PPTO = 'sst_ppto_presupuestos'
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -33,5 +36,18 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
     return NextResponse.json({ record: updated })
   } catch (error) {
     return NextResponse.json({ message: error instanceof Error ? error.message : 'Error al actualizar presupuesto' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: Ctx) {
+  try {
+    const token = request.headers.get('authorization')?.replace('Bearer ', '')
+    if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+    const { id } = await params
+    await deleteRecord(T_PPTO, id)
+    return NextResponse.json({ message: 'Presupuesto eliminado' })
+  } catch (error) {
+    console.error('Error eliminando presupuesto:', error)
+    return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 })
   }
 }

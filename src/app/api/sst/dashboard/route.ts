@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       calcularKPIs(anio).catch(() => []),
       obtenerAlertasDashboard().catch(() => []),
       obtenerTareasDashboard().catch(() => []),
-      listRecords<IncIncidenteFields>('sst_inc_incidentes', {
+      listRecords<IncIncidenteFields>('sst_incidentes', {
         filterByFormula: `IS_AFTER({Fecha Ocurrencia},'${anio - 1}-12-31')`,
       }).catch(() => ({ records: [] })),
     ])
