@@ -1,17 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoginForm from './LoginForm';
-import RegisterForm from './RegisterForm';
 import { Lock, Shield } from 'lucide-react';
 import { isTokenValid } from '@/lib/token';
 
 export default function AuthContainer() {
   const router = useRouter();
-  const [isLogin, setIsLogin] = useState(true);
 
-  // Fix #3: redirigir al dashboard si ya hay sesión activa
+  // Redirigir al dashboard si ya hay sesión activa
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     if (token && isTokenValid(token)) {
@@ -37,14 +35,8 @@ export default function AuthContainer() {
           </div>
 
           {/* Título */}
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
-            {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
-          </h2>
-          <p className="text-gray-600 text-sm mb-6">
-            {isLogin
-              ? 'Accede a tu cuenta para continuar'
-              : 'Crea una nueva cuenta para empezar'}
-          </p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Iniciar Sesión</h2>
+          <p className="text-gray-600 text-sm mb-6">Accede a tu cuenta para continuar</p>
 
           {/* Indicador de Seguridad */}
           <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mb-6">
@@ -54,22 +46,7 @@ export default function AuthContainer() {
             </span>
           </div>
 
-          {/* Formularios */}
-          {isLogin ? (
-            <LoginForm
-              onSwitchToRegister={() => setIsLogin(false)}
-              onLoginSuccess={() => {
-                // El componente maneja la redirección
-              }}
-            />
-          ) : (
-            <RegisterForm
-              onSwitchToLogin={() => setIsLogin(true)}
-              onRegisterSuccess={() => {
-                // El componente maneja la redirección
-              }}
-            />
-          )}
+          <LoginForm />
         </div>
 
         {/* Pie de Página */}
