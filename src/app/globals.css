@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Sienna Accessibility Widget — posición derecha, botón compacto */
+.asw-menu-btn {
+  --asw-btn-size: 44px !important;
+  --asw-icon-size: 26px !important;
+}
+
 :root {
   /* Paleta Verde Bosque + Crema */
   --primary: #166534;        /* Verde bosque oscuro */
