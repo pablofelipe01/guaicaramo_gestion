@@ -22,13 +22,14 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   }
 
   return (
-    <header className="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 shrink-0">
+    <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
       {/* Izquierda: menú móvil + botón volver o inicio */}
       <div className="flex items-center gap-2">
         <button
           onClick={onMenuClick}
-          className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+          className="lg:hidden p-2 rounded-lg text-gray-400 hover:bg-gray-50"
           aria-label="Abrir menú"
+          title="Abrir menú de navegación"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -36,7 +37,8 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         {!enDashboardInicio ? (
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700 rounded-lg transition-colors"
+            title="Volver al panel de inicio"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Inicio</span>
@@ -44,7 +46,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         ) : (
           <Link
             href="/dashboard"
-            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-500 rounded-lg"
+            className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400 rounded-lg"
           >
             <LayoutDashboard className="w-4 h-4" />
             <span>Inicio</span>
@@ -54,9 +56,9 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
       {/* Derecha: usuario y logout */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 text-sm text-gray-700">
-          <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-blue-600" />
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <div className="w-7 h-7 bg-green-100 rounded-full flex items-center justify-center">
+            <User className="w-4 h-4 text-green-700" />
           </div>
           <span className="hidden sm:block font-medium">{user?.name ?? '...'}</span>
           {user?.role && (
@@ -68,7 +70,8 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+          title="Cerrar sesión"
         >
           <LogOut className="w-4 h-4" />
           <span className="hidden sm:block">Salir</span>

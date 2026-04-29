@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* Paleta de Colores Profesional */
-  --primary: #2563eb;        /* Azul profesional */
-  --primary-dark: #1d4ed8;   /* Azul oscuro */
-  --primary-light: #3b82f6;  /* Azul claro */
-  --secondary: #7c3aed;      /* Púrpura */
-  --success: #10b981;        /* Verde */
-  --error: #ef4444;          /* Rojo */
-  --warning: #f59e0b;        /* Ámbar */
-  --info: #06b6d4;           /* Cian */
-  
+  /* Paleta Verde Bosque + Crema */
+  --primary: #166534;        /* Verde bosque oscuro */
+  --primary-dark: #14532d;   /* Verde muy oscuro */
+  --primary-light: #15803d;  /* Verde medio */
+  --primary-muted: #f0fdf4;  /* Verde muy pálido (crema verde) */
+  --secondary: #ca8a04;      /* Dorado/ámbar cálido */
+  --cream: #fefce8;          /* Crema cálida */
+  --success: #16a34a;        /* Verde éxito */
+  --error: #dc2626;          /* Rojo */
+  --warning: #d97706;        /* Ámbar */
+  --info: #0284c7;           /* Azul info */
+
   /* Grises Neutros */
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
@@ -22,9 +24,11 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
-  
-  --background: #ffffff;
-  --foreground: #111827;
+
+  --background: #f5f7fa;     /* Gris muy claro */
+  --surface: #ffffff;        /* Superficie de cards */
+  --foreground: #1f2937;
+  --border: #e5e7eb;
   color-scheme: light only;
 }
 
@@ -34,11 +38,15 @@
   --color-primary: var(--primary);
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-light);
+  --color-primary-muted: var(--primary-muted);
   --color-secondary: var(--secondary);
+  --color-cream: var(--cream);
   --color-success: var(--success);
   --color-error: var(--error);
   --color-warning: var(--warning);
   --color-info: var(--info);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
   --color-gray-50: var(--gray-50);
   --color-gray-100: var(--gray-100);
   --color-gray-200: var(--gray-200);
@@ -49,21 +57,24 @@
   --color-gray-700: var(--gray-700);
   --color-gray-800: var(--gray-800);
   --color-gray-900: var(--gray-900);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-poppins);
+}
+
+html {
+  background: var(--background);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins), 'Poppins', sans-serif;
 }
 
 /* Garantizar colores explícitos en todos los controles de formulario */
 input,
 textarea,
 select {
-  color: #111827;
+  color: #1f2937;
   background-color: #ffffff;
 }
 
@@ -77,21 +88,26 @@ textarea::placeholder {
   color-scheme: light;
 }
 
-/* Estilos personalizados */
+/* Sistema de diseño — Botones */
 .btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  @apply bg-green-800 hover:bg-green-900 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm;
 }
 
 .btn-primary:disabled {
-  @apply bg-gray-300 cursor-not-allowed;
+  @apply bg-gray-300 cursor-not-allowed shadow-none;
 }
 
+.btn-secondary {
+  @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-200 transition-all duration-200;
+}
+
+/* Sistema de diseño — Inputs */
 .input-field {
-  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-white text-gray-900;
+  @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition-all duration-200 bg-white text-gray-800;
 }
 
 .input-field:disabled {
-  @apply bg-gray-100 cursor-not-allowed text-gray-500;
+  @apply bg-gray-50 cursor-not-allowed text-gray-400;
 }
 
 select.input-field {
@@ -99,17 +115,53 @@ select.input-field {
 }
 
 .input-error {
-  @apply border-red-500 focus:ring-red-500;
+  @apply border-red-400 focus:ring-red-500;
 }
 
+/* Sistema de diseño — Cards */
 .card {
-  @apply bg-white rounded-lg shadow-lg;
+  @apply bg-white rounded-xl border border-gray-200 shadow-sm;
 }
 
+.card-hover {
+  @apply bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200;
+}
+
+/* Sistema de diseño — Textos de estado */
 .text-error {
   @apply text-red-600 text-sm mt-1;
 }
 
 .text-success {
-  @apply text-green-600 text-sm;
+  @apply text-green-700 text-sm;
+}
+
+/* Sistema de diseño — Badges PHVA */
+.badge-planear {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700;
+}
+.badge-hacer {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700;
+}
+.badge-verificar {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700;
+}
+.badge-actuar {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

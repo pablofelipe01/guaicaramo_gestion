@@ -21,36 +21,41 @@ function getEstadoName(estado: UserFields['Estado']): string {
 
 /** Resuelve el nombre del rol a partir del array de linked records o strings */
 function getRolName(rol: UserFields['Rol'], rolesMap: Map<string, string>): string {
-  if (!rol || rol.length === 0) return 'usuario'
+  if (!rol || rol.length === 0) return 'Sin rol'
   const first = rol[0]
   if (typeof first === 'object' && first !== null && 'id' in first) {
-    return rolesMap.get(first.id) ?? first.id
+    // Airtable a veces expande el objeto con 'name'
+    const obj = first as { id: string; name?: string }
+    return rolesMap.get(obj.id) ?? obj.name ?? 'Sin rol'
   }
-  // Es un string — puede ser un record ID o un nombre directo
-  const byId = rolesMap.get(first as string)
-  return byId ?? (first as string)
+  // Es un string
+  const rawStr = first as string
+  const byId = rolesMap.get(rawStr)
+  if (byId) return byId
+  // Si parece un record ID de Airtable (empieza con 'rec'), no lo mostramos crudo
+  if (rawStr.startsWith('rec')) return 'Sin rol'
+  return rawStr
 }
 
 /** Obtiene todos los roles y construye un mapa recordId → nombre */
 async function buildRolesMap(): Promise<Map<string, string>> {
+  const map = new Map<string, string>()
+  const T_ROLES = process.env.AIRTABLE_TABLE_ROLES ?? 'ROLES'
   try {
-    const { records } = await listRecords<RolFields>('Roles', {
-      fields: ['Nombre'],
-    })
-    const map = new Map<string, string>()
+    const { records } = await listRecords<RolFields>(T_ROLES, { fields: ['Nombre Rol'] })
     for (const r of records) {
-      if (r.fields.Nombre) map.set(r.id, r.fields.Nombre)
+      if (r.fields['Nombre Rol']) map.set(r.id, r.fields['Nombre Rol'])
     }
-    return map
-  } catch {
-    return new Map()
-  }
+  } catch { /* tabla Roles inaccesible */ }
+  return map
 }
 
 /** Busca el record ID en la tabla Roles para un nombre de rol dado */
 async function getRolRecordId(rolName: string): Promise<string | null> {
-  const { records } = await listRecords<RolFields>('Roles', {
-    filterByFormula: `{Nombre}="${rolName}"`,
+  const T_ROLES = process.env.AIRTABLE_TABLE_ROLES ?? 'ROLES'
+  const { records } = await listRecords<RolFields>(T_ROLES, {
+    filterByFormula: `{Nombre Rol}="${rolName}"`,
+
     maxRecords: 1,
   })
   return records.length > 0 ? records[0].id : null
@@ -61,7 +66,6 @@ function escapeAirtable(value: string): string {
 }
 
 const EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/
-const ROLES_VALIDOS = ['superadmin', 'admin', 'usuario']
 const TABLE = () => process.env.AIRTABLE_TABLE_USERS ?? 'Usuarios'
 
 async function authenticate(request: NextRequest) {
@@ -86,14 +90,23 @@ export async function GET(request: NextRequest) {
       buildRolesMap(),
     ])
 
-    const users = records.map((r) => ({
-      id: r.id,
-      email: r.fields.Email,
-      name: r.fields['Nombre Completo'] ?? '',
-      estado: getEstadoName(r.fields.Estado),
-      rol: getRolName(r.fields.Rol, rolesMap),
-      fechaCreacion: r.fields['Fecha Creacion'] ?? '',
-    }))
+    const users = records.map((r) => {
+      const rolRaw = r.fields.Rol
+      let rolId = ''
+      if (Array.isArray(rolRaw) && rolRaw.length > 0) {
+        const first = rolRaw[0]
+        rolId = typeof first === 'object' ? (first as { id: string }).id : String(first)
+      }
+      return {
+        id: r.id,
+        email: r.fields.Email,
+        name: r.fields['Nombre Completo'] ?? '',
+        estado: getEstadoName(r.fields.Estado),
+        rol: getRolName(r.fields.Rol, rolesMap),
+        rolId,
+        fechaCreacion: r.fields['Fecha Creacion'] ?? '',
+      }
+    })
 
     return NextResponse.json({ success: true, users })
   } catch (error) {
@@ -110,7 +123,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { email, password, name, rol } = body
+    const { email, password, name, rolId } = body
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -143,12 +156,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const rolName = rol && ROLES_VALIDOS.includes(String(rol)) ? String(rol) : 'usuario'
-
     const hash = await bcrypt.hash(String(password), 10)
-
-    // Rol es linked record → buscar el record ID
-    const rolRecordId = await getRolRecordId(rolName)
 
     const fieldsToCreate: Record<string, unknown> = {
       Email: trimmedEmail,
@@ -157,8 +165,9 @@ export async function POST(request: NextRequest) {
       Estado: 'Activo',
       'Fecha Creacion': new Date().toISOString().split('T')[0],
     }
-    if (rolRecordId) {
-      fieldsToCreate['Rol'] = [rolRecordId]
+    // rolId es el record ID de Airtable — usarlo directamente
+    if (rolId && String(rolId).startsWith('rec')) {
+      fieldsToCreate['Rol'] = [String(rolId)]
     }
 
     const [newUser] = await createRecords<UserFields>(TABLE(), [
@@ -173,7 +182,8 @@ export async function POST(request: NextRequest) {
           email: newUser.fields.Email,
           name: newUser.fields['Nombre Completo'],
           estado: 'activo',
-          rol: rolName,
+          rol: '',
+          rolId: rolId ?? '',
           fechaCreacion: newUser.fields['Fecha Creacion'],
         },
       },

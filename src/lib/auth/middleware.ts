@@ -11,9 +11,9 @@ export type RolSST =
   | 'auditor'
   | 'contratista'
   | 'medico'
-  | 'admin'
+  | 'administrador'
   | 'superadmin'
-  | 'usuario'
+  | 'operativo'
 
 /**
  * Extrae y verifica el JWT del encabezado Authorization.
@@ -55,10 +55,10 @@ export async function requireRole(
     }
   }
 
-  const rolUsuario = (user.role ?? 'usuario') as RolSST
+  const rolUsuario = (user.role ?? 'operativo') as RolSST
 
-  // superadmin y admin tienen acceso total
-  if (rolUsuario === 'superadmin' || rolUsuario === 'admin') {
+  // superadmin y administrador tienen acceso total
+  if (rolUsuario === 'superadmin' || rolUsuario === 'administrador') {
     return { user }
   }
 

@@ -33,6 +33,7 @@ import {
 
 interface Module {
   name: string
+  desc: string
   href: string
   icon: LucideIcon
 }
@@ -40,9 +41,7 @@ interface Module {
 interface PhaseGroup {
   phase: string
   label: string
-  color: string
-  bgColor: string
-  textColor: string
+  dotColor: string
   modules: Module[]
 }
 
@@ -50,68 +49,58 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'PLANEAR',
     label: 'Planear',
-    color: 'border-blue-500',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
+    dotColor: 'bg-blue-400',
     modules: [
-      { name: 'Evaluación Inicial', href: '/dashboard/evaluacion-inicial', icon: ClipboardList },
-      { name: 'Plan de Trabajo Anual', href: '/dashboard/plan-trabajo', icon: Calendar },
-      { name: 'Comité de Convivencia', href: '/dashboard/comite-convivencia', icon: Users },
-      { name: 'Capacitaciones', href: '/dashboard/capacitaciones', icon: BookOpen },
-      { name: 'Presupuesto', href: '/dashboard/presupuesto', icon: DollarSign },
-      { name: 'Matriz Legal', href: '/dashboard/matriz-legal', icon: Scale },
-      { name: 'Gestión del Cambio', href: '/dashboard/gestion-cambio', icon: RefreshCw },
-      { name: 'Conservación Documental', href: '/dashboard/documentos', icon: Archive },
-      { name: 'Contratistas', href: '/dashboard/contratistas', icon: Briefcase },
+      { name: 'Evaluación Inicial', desc: 'Diagnóstico Res. 0312', href: '/dashboard/evaluacion-inicial', icon: ClipboardList },
+      { name: 'Plan de Trabajo Anual', desc: 'Actividades y seguimiento', href: '/dashboard/plan-trabajo', icon: Calendar },
+      { name: 'Comité de Convivencia', desc: 'CCL — Res. 652/2012', href: '/dashboard/comite-convivencia', icon: Users },
+      { name: 'Capacitaciones', desc: 'Programa anual SST', href: '/dashboard/capacitaciones', icon: BookOpen },
+      { name: 'Presupuesto', desc: 'Ejecución financiera', href: '/dashboard/presupuesto', icon: DollarSign },
+      { name: 'Matriz Legal', desc: 'Requisitos normativos', href: '/dashboard/matriz-legal', icon: Scale },
+      { name: 'Gestión del Cambio', desc: 'Evaluación de impactos', href: '/dashboard/gestion-cambio', icon: RefreshCw },
+      { name: 'Conservación Documental', desc: 'Repositorio central', href: '/dashboard/documentos', icon: Archive },
+      { name: 'Contratistas', desc: 'Semáforo de cumplimiento', href: '/dashboard/contratistas', icon: Briefcase },
     ],
   },
   {
     phase: 'HACER',
     label: 'Hacer',
-    color: 'border-green-500',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
+    dotColor: 'bg-emerald-400',
     modules: [
-      { name: 'Evaluaciones Médicas', href: '/dashboard/evaluaciones-medicas', icon: Stethoscope },
-      { name: 'Perfiles de Cargo', href: '/dashboard/perfiles-cargo', icon: UserCog },
-      { name: 'Casos Médicos', href: '/dashboard/casos-medicos', icon: Activity },
-      { name: 'Investigación Incidentes', href: '/dashboard/incidentes', icon: AlertTriangle },
-      { name: 'Matriz IPVR', href: '/dashboard/ipvr', icon: ShieldAlert },
-      { name: 'Inspecciones', href: '/dashboard/inspecciones', icon: ClipboardCheck },
-      { name: 'EPPs y Dotación', href: '/dashboard/epps', icon: HardHat },
-      { name: 'Permisos de Trabajo', href: '/dashboard/permisos-trabajo', icon: Key },
+      { name: 'Evaluaciones Médicas', desc: 'Aptitud laboral — Res. 2346', href: '/dashboard/evaluaciones-medicas', icon: Stethoscope },
+      { name: 'Perfiles de Cargo', desc: 'Peligros y EPPs por cargo', href: '/dashboard/perfiles-cargo', icon: UserCog },
+      { name: 'Casos Médicos', desc: 'Restricciones e incapacidades', href: '/dashboard/casos-medicos', icon: Activity },
+      { name: 'Investigación Incidentes', desc: 'AT, incidentes y EL', href: '/dashboard/incidentes', icon: AlertTriangle },
+      { name: 'Matriz IPVR', desc: 'Peligros GTC-45', href: '/dashboard/ipvr', icon: ShieldAlert },
+      { name: 'Inspecciones', desc: 'Listas de chequeo', href: '/dashboard/inspecciones', icon: ClipboardCheck },
+      { name: 'EPPs y Dotación', desc: 'Entregas y control de vida útil', href: '/dashboard/epps', icon: HardHat },
+      { name: 'Permisos de Trabajo', desc: 'Alto riesgo — LOTO, alturas', href: '/dashboard/permisos-trabajo', icon: Key },
     ],
   },
   {
     phase: 'VERIFICAR',
     label: 'Verificar',
-    color: 'border-yellow-500',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-700',
+    dotColor: 'bg-amber-400',
     modules: [
-      { name: 'Indicadores', href: '/dashboard/indicadores', icon: TrendingUp },
-      { name: 'Auditorías', href: '/dashboard/auditorias', icon: BarChart2 },
+      { name: 'Indicadores', desc: 'KPIs y semáforo de metas', href: '/dashboard/indicadores', icon: TrendingUp },
+      { name: 'Auditorías', desc: 'Internas y externas', href: '/dashboard/auditorias', icon: BarChart2 },
     ],
   },
   {
     phase: 'ACTUAR',
     label: 'Actuar',
-    color: 'border-red-500',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700',
+    dotColor: 'bg-red-400',
     modules: [
-      { name: 'Acciones Correctivas', href: '/dashboard/acciones-correctivas', icon: CheckSquare },
+      { name: 'Acciones Correctivas', desc: 'Mejora continua — verificación de eficacia', href: '/dashboard/acciones-correctivas', icon: CheckSquare },
     ],
   },
   {
     phase: 'ADMIN',
     label: 'Administración',
-    color: 'border-gray-400',
-    bgColor: 'bg-gray-50',
-    textColor: 'text-gray-600',
+    dotColor: 'bg-gray-400',
     modules: [
-      { name: 'Gestión de Usuarios', href: '/dashboard/usuarios', icon: Users },
-      { name: 'Backup', href: '/dashboard/backup', icon: Database },
+      { name: 'Gestión de Usuarios', desc: 'Roles y permisos del sistema', href: '/dashboard/usuarios', icon: Users },
+      { name: 'Backup', desc: 'Respaldo de datos', href: '/dashboard/backup', icon: Database },
     ],
   },
 ]
@@ -140,30 +129,30 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={[
-          'fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 z-30 flex flex-col transition-transform duration-300',
+          'fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-100 z-30 flex flex-col transition-transform duration-300',
           'lg:static lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
       >
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200 shrink-0">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
+          <div className="w-8 h-8 bg-green-800 rounded-lg flex items-center justify-center shadow-sm">
             <span className="text-white font-bold text-sm">G</span>
           </div>
           <div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Guaicaramo</p>
-            <p className="text-xs text-gray-500">SG-SST</p>
+            <p className="font-semibold text-gray-800 text-sm leading-tight">Guaicaramo</p>
+            <p className="text-xs text-green-700 font-medium">SG-SST</p>
           </div>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-3">
+        <nav className="flex-1 overflow-y-auto py-3 px-2">
           <Link
             href="/dashboard"
             onClick={onClose}
             className={[
-              'flex items-center gap-3 mx-3 px-3 py-2 rounded-lg text-sm font-medium mb-1',
+              'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium mb-3 transition-all duration-150',
               pathname === '/dashboard'
-                ? 'bg-blue-600 text-white'
-                : 'text-gray-600 hover:bg-gray-100',
+                ? 'bg-green-50 text-green-800 border-l-[3px] border-green-700'
+                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700',
             ].join(' ')}
           >
             <LayoutDashboard className="w-4 h-4 shrink-0" />
@@ -172,27 +161,24 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
           {NAV.map((group) => {
             const isCollapsed = collapsed[group.phase]
-            const hasActive = group.modules.some((m) => pathname.startsWith(m.href))
 
             return (
               <div key={group.phase} className="mb-1">
                 <button
                   onClick={() => togglePhase(group.phase)}
-                  className={[
-                    'w-full flex items-center justify-between px-4 py-1.5 text-xs font-bold uppercase tracking-wider',
-                    group.textColor,
-                  ].join(' ')}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  <span className={['flex items-center gap-2 border-l-2 pl-2', group.color, hasActive ? 'opacity-100' : 'opacity-70'].join(' ')}>
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${group.dotColor}`} />
+                  <span className="flex-1 text-xs font-semibold text-gray-400 uppercase tracking-wider text-left">
                     {group.label}
                   </span>
                   {isCollapsed
-                    ? <ChevronRight className="w-3 h-3" />
-                    : <ChevronDown className="w-3 h-3" />}
+                    ? <ChevronRight className="w-3 h-3 text-gray-300" />
+                    : <ChevronDown className="w-3 h-3 text-gray-300" />}
                 </button>
 
                 {!isCollapsed && (
-                  <ul className="mt-0.5">
+                  <ul className="mt-0.5 ml-1">
                     {group.modules.map((mod) => {
                       const Icon = mod.icon
                       const active = pathname.startsWith(mod.href)
@@ -201,11 +187,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           <Link
                             href={mod.href}
                             onClick={onClose}
+                            title={mod.desc}
                             className={[
-                              'flex items-center gap-2.5 mx-3 px-3 py-1.5 rounded-lg text-xs transition-colors',
+                              'flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-all duration-150',
                               active
-                                ? 'bg-blue-600 text-white font-medium'
-                                : 'text-gray-600 hover:bg-gray-100',
+                                ? 'bg-green-50 text-green-800 font-semibold border-l-[3px] border-green-700'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-normal',
                             ].join(' ')}
                           >
                             <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -221,7 +208,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        <div className="px-4 py-3 border-t border-gray-200 shrink-0">
+        <div className="px-4 py-3 border-t border-gray-100 shrink-0">
           <p className="text-xs text-gray-400 text-center">
             Ciclo PHVA — Res. 0312/2019
           </p>

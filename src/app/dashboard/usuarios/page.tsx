@@ -23,20 +23,16 @@ interface Usuario {
   name: string
   estado: string
   rol: string
+  rolId: string
   fechaCreacion: string
 }
 
+interface RolOpcion {
+  id: string
+  nombre: string
+}
+
 type ModalTipo = 'crear' | 'editar' | 'reset' | null
-
-const ROLES: { value: string; label: string }[] = [
-  { value: 'superadmin', label: 'Super Administrador' },
-  { value: 'admin', label: 'Administrador' },
-  { value: 'usuario', label: 'Usuario' },
-]
-
-const ROL_LABELS: Record<string, string> = Object.fromEntries(
-  ROLES.map((r) => [r.value, r.label])
-)
 
 // ─── Helpers UI ───────────────────────────────────────────────────────────────
 
@@ -56,14 +52,19 @@ function EstadoBadge({ estado }: { estado: string }) {
 }
 
 function RolBadge({ rol }: { rol: string }) {
-  const colors: Record<string, string> = {
-    superadmin: 'bg-red-100 text-red-700',
-    admin: 'bg-blue-100 text-blue-700',
-    usuario: 'bg-gray-100 text-gray-600',
+  // Claves fijas del sistema interno
+  const fixed: Record<string, { label: string; cls: string }> = {
+    superadmin:    { label: 'Superadmin',     cls: 'bg-red-100 text-red-700' },
+    administrador: { label: 'Administrador',  cls: 'bg-blue-100 text-blue-700' },
+    operativo:     { label: 'Operativo',      cls: 'bg-gray-100 text-gray-600' },
+    'Sin rol':     { label: 'Sin rol',        cls: 'bg-yellow-50 text-yellow-600' },
   }
+  const match = fixed[rol]
+  const label = match?.label ?? rol
+  const cls   = match?.cls   ?? 'bg-green-50 text-green-700'
   return (
-    <span className={['inline-block px-2 py-0.5 rounded text-xs font-medium', colors[rol] ?? 'bg-gray-100 text-gray-600'].join(' ')}>
-      {ROL_LABELS[rol] ?? rol}
+    <span className={['inline-block px-2 py-0.5 rounded text-xs font-medium', cls].join(' ')}>
+      {label}
     </span>
   )
 }
@@ -106,6 +107,8 @@ function Alerta({ tipo, mensaje }: { tipo: 'ok' | 'error'; mensaje: string }) {
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [roles, setRoles] = useState<RolOpcion[]>([])
+  const [rolesLoading, setRolesLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('')
@@ -114,12 +117,12 @@ export default function UsuariosPage() {
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null)
   const [alerta, setAlerta] = useState<{ tipo: 'ok' | 'error'; mensaje: string } | null>(null)
 
-  // Formulario crear
-  const [crearForm, setCrearForm] = useState({ name: '', email: '', password: '', rol: 'usuario' })
+  // Formulario crear — rolId es el record ID de Airtable
+  const [crearForm, setCrearForm] = useState({ name: '', email: '', password: '', rolId: '' })
   const [crearLoading, setCrearLoading] = useState(false)
 
   // Formulario editar
-  const [editarForm, setEditarForm] = useState({ name: '', rol: '' })
+  const [editarForm, setEditarForm] = useState({ name: '', rolId: '' })
   const [editarLoading, setEditarLoading] = useState(false)
 
   // Formulario reset
@@ -132,6 +135,39 @@ export default function UsuariosPage() {
     setAlerta({ tipo, mensaje })
     setTimeout(() => setAlerta(null), 4000)
   }
+
+  const cargarRoles = useCallback(async () => {
+    setRolesLoading(true)
+    try {
+      const res = await fetch('/api/roles', {
+        headers: { Authorization: `Bearer ${token()}` },
+      })
+      if (!res.ok) {
+        console.error('Error cargando roles:', res.status, await res.text())
+        setRoles([])
+        return
+      }
+      const data = await res.json()
+      if (data.records) {
+        const ops: RolOpcion[] = data.records.map((r: { id: string; fields: { 'Nombre Rol'?: string } }) => ({
+          id: r.id,
+          nombre: r.fields['Nombre Rol'] ?? r.id,
+        }))
+        setRoles(ops)
+        // Preseleccionar el primer rol
+        if (ops.length > 0) {
+          setCrearForm((f) => ({ ...f, rolId: ops[0].id }))
+        }
+      } else {
+        setRoles([])
+      }
+    } catch (err) {
+      console.error('Error cargando roles:', err)
+      setRoles([])
+    } finally {
+      setRolesLoading(false)
+    }
+  }, [])
 
   const cargarUsuarios = useCallback(async () => {
     setLoading(true)
@@ -150,7 +186,8 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     cargarUsuarios()
-  }, [cargarUsuarios])
+    cargarRoles()
+  }, [cargarUsuarios, cargarRoles])
 
   // Filtro
   const usuariosFiltrados = usuarios.filter((u) => {
@@ -158,7 +195,7 @@ export default function UsuariosPage() {
       !busqueda ||
       u.name.toLowerCase().includes(busqueda.toLowerCase()) ||
       u.email.toLowerCase().includes(busqueda.toLowerCase())
-    const matchRol = !filtroRol || u.rol === filtroRol
+    const matchRol = !filtroRol || u.rolId === filtroRol
     const matchEstado = !filtroEstado || u.estado === filtroEstado
     return matchBusqueda && matchRol && matchEstado
   })
@@ -178,7 +215,7 @@ export default function UsuariosPage() {
       if (data.success) {
         setUsuarios((prev) => [...prev, data.user])
         setModalTipo(null)
-        setCrearForm({ name: '', email: '', password: '', rol: 'usuario' })
+        setCrearForm({ name: '', email: '', password: '', rolId: roles[0]?.id ?? '' })
         mostrarAlerta('ok', 'Usuario creado correctamente')
       } else {
         mostrarAlerta('error', data.message)
@@ -190,11 +227,9 @@ export default function UsuariosPage() {
     }
   }
 
-  const ROLES_VALIDOS = ['superadmin', 'admin', 'usuario']
-
   const abrirEditar = (u: Usuario) => {
     setUsuarioSeleccionado(u)
-    setEditarForm({ name: u.name, rol: ROLES_VALIDOS.includes(u.rol) ? u.rol : 'usuario' })
+    setEditarForm({ name: u.name, rolId: u.rolId ?? '' })
     setModalTipo('editar')
   }
 
@@ -315,11 +350,11 @@ export default function UsuariosPage() {
         <select
           value={filtroRol}
           onChange={(e) => setFiltroRol(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600"
         >
           <option value="">Todos los roles</option>
-          {ROLES.map((r) => (
-            <option key={r.value} value={r.value}>{r.label}</option>
+          {roles.map((r) => (
+            <option key={r.id} value={r.id}>{r.nombre}</option>
           ))}
         </select>
         <select
@@ -451,12 +486,15 @@ export default function UsuariosPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
               <select
-                value={crearForm.rol}
-                onChange={(e) => setCrearForm((f) => ({ ...f, rol: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={crearForm.rolId}
+                onChange={(e) => setCrearForm((f) => ({ ...f, rolId: e.target.value }))}
+                disabled={rolesLoading}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 disabled:bg-gray-50 disabled:text-gray-400"
               >
-                {ROLES.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                {rolesLoading && <option value="">Cargando roles...</option>}
+                {!rolesLoading && roles.length === 0 && <option value="">Sin roles disponibles</option>}
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.nombre}</option>
                 ))}
               </select>
             </div>
@@ -500,12 +538,15 @@ export default function UsuariosPage() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
               <select
-                value={editarForm.rol}
-                onChange={(e) => setEditarForm((f) => ({ ...f, rol: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={editarForm.rolId}
+                onChange={(e) => setEditarForm((f) => ({ ...f, rolId: e.target.value }))}
+                disabled={rolesLoading}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 disabled:bg-gray-50 disabled:text-gray-400"
               >
-                {ROLES.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                {rolesLoading && <option value="">Cargando roles...</option>}
+                {!rolesLoading && roles.length === 0 && <option value="">Sin roles disponibles</option>}
+                {roles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.nombre}</option>
                 ))}
               </select>
             </div>

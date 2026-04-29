@@ -42,7 +42,7 @@ export default function GestionCambioPage() {
   const [editId, setEditId] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [formCambio, setFormCambio] = useState({ Titulo: '', Descripcion: '', Tipo: 'organizacional', Justificacion: '', 'Area Afectada': '', 'Requiere Analisis Riesgo': false })
-  const [formAprob, setFormAprob] = useState({ Decision: 'aprobado', Rol: 'admin', Observaciones: '' })
+  const [formAprob, setFormAprob] = useState({ Decision: 'aprobado', Rol: 'administrador', Observaciones: '' })
   const [formControl, setFormControl] = useState({ Descripcion: '', Tipo: 'administrativo', Responsable: '', 'Fecha Limite': '' })
 
   const cargar = useCallback(async () => {
@@ -120,7 +120,7 @@ export default function GestionCambioPage() {
       body: JSON.stringify(formAprob),
     })
     setModalAprobacion(false)
-    setFormAprob({ Decision: 'aprobado', Rol: 'admin', Observaciones: '' })
+    setFormAprob({ Decision: 'aprobado', Rol: 'administrador', Observaciones: '' })
     await seleccionar(seleccionado)
     await cargar()
     setGuardando(false)
@@ -371,9 +371,9 @@ export default function GestionCambioPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
               <select value={formAprob.Rol} onChange={e => setFormAprob(f => ({ ...f, Rol: e.target.value }))}
                 className="input-field">
-                <option value="superadmin">Super Administrador</option>
-                <option value="admin">Administrador</option>
-                <option value="usuario">Usuario</option>
+                <option value="superadmin">Superadmin</option>
+                <option value="administrador">Administrador</option>
+                <option value="operativo">Operativo</option>
               </select>
             </div>
           </div>

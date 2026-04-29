@@ -4,7 +4,7 @@ import { listRecords, getRecord, createRecords, updateRecord, deleteRecord } fro
 import type { UsuarioFields, RolFields, UsuarioNormalizado } from '@/types/usuarios'
 
 const T_USUARIOS = process.env.AIRTABLE_TABLE_USERS ?? 'Usuarios'
-const T_ROLES    = 'Roles'
+const T_ROLES    = () => process.env.AIRTABLE_TABLE_ROLES ?? 'ROLES'
 
 interface AirtableSelect { id: string; name: string; color?: string }
 interface AirtableLinked { id: string; name?: string }
@@ -104,8 +104,8 @@ export async function eliminarUsuario(id: string): Promise<void> {
 }
 
 export async function listarRoles() {
-  const { records } = await listRecords<RolFields>(T_ROLES, {
-    sort: [{ field: 'Nombre', direction: 'asc' }],
+  const { records } = await listRecords<RolFields>(T_ROLES(), {
+    sort: [{ field: 'Nombre Rol', direction: 'asc' }],
   })
   return records
 }

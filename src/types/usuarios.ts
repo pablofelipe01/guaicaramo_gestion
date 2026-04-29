@@ -1,5 +1,5 @@
 export interface RolFields {
-  Nombre: string
+  'Nombre Rol': string
   Descripcion?: string
 }
 
@@ -66,11 +66,11 @@ function permisosPersonalizados(mapa: Record<string, PermisosUsuario>): ModuloAc
 
 export const PERMISOS_POR_ROL: Record<string, ModuloAcceso[]> = {
   superadmin: permisosPara(TOTAL),
-  admin: permisosPersonalizados({
+  administrador: permisosPersonalizados({
     ...Object.fromEntries(MODULOS.map((m) => [m, TOTAL])),
     'Gestión de Usuarios': ESCRITURA,
   }),
-  usuario: permisosPersonalizados({
+  operativo: permisosPersonalizados({
     'Evaluación Inicial': LECTURA,
     'Plan de Trabajo Anual': LECTURA,
     'Comité de Convivencia': LECTURA,

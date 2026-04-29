@@ -15,25 +15,28 @@ interface UserFields {
 }
 
 async function resolveRoleName(rolRaw: UserFields['Rol']): Promise<string> {
-  if (!Array.isArray(rolRaw) || rolRaw.length === 0) return 'usuario'
+  if (!Array.isArray(rolRaw) || rolRaw.length === 0) return 'operativo'
   const first = rolRaw[0]
   // Si Airtable devuelve el objeto expandido con name
   if (typeof first === 'object' && first !== null && 'name' in first && first.name) {
-    return first.name
+    return String(first.name).toLowerCase()
   }
   // Es un string: puede ser record ID (recXXXXX) o nombre directo
   const rawStr = typeof first === 'string' ? first : first.id
-  if (!rawStr.startsWith('rec')) return rawStr  // ya es nombre
+  if (!rawStr.startsWith('rec')) return rawStr.toLowerCase()  // ya es nombre
   // Resolver record ID → nombre en tabla Roles
   try {
-    const { records } = await listRecords<RolFields>('Roles', {
-      filterByFormula: `RECORD_ID()="${rawStr}"`,
-      maxRecords: 1,
-      fields: ['Nombre'],
-    })
-    return records[0]?.fields.Nombre ?? 'usuario'
+    const { records } = await listRecords<RolFields>(
+      process.env.AIRTABLE_TABLE_ROLES ?? 'ROLES',
+      {
+        filterByFormula: `RECORD_ID()="${rawStr}"`,
+        maxRecords: 1,
+        fields: ['Nombre Rol'],
+      }
+    )
+    return (records[0]?.fields['Nombre Rol'] ?? 'operativo').toLowerCase()
   } catch {
-    return 'usuario'
+    return 'operativo'
   }
 }
 
