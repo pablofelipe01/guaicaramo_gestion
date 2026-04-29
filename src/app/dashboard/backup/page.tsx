@@ -25,7 +25,7 @@ export default function BackupPage() {
   const [estado, setEstado] = useState<{ tipo: 'ok' | 'error'; mensaje: string } | null>(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('authToken')
     fetch('/api/backup', { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then((data) => {
@@ -65,7 +65,7 @@ export default function BackupPage() {
     setLoading(true)
     setEstado(null)
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('authToken')
       const body = seleccionados.size === modulos.length
         ? {}
         : { modulos: [...seleccionados] }

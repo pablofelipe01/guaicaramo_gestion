@@ -26,7 +26,7 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
   const inicio = `${anio}-01-01`
   const fin = `${anio}-12-31`
 
-  const [incidentesRes, asistenciasRes, actividadesRes, rubrosRes, ejecucionesRes, accionesRes, inspeccionesRes] = await Promise.all([
+  const [incidentesRes, asistenciasRes, actividadesRes, rubrosRes, ejecucionesRes, accionesRes, inspeccionesRes, usuariosRes] = await Promise.all([
     listRecords<IncIncidenteFields>('sst_incidentes', {
       filterByFormula: `AND(IS_AFTER({Fecha Ocurrencia},'${inicio}'),IS_BEFORE({Fecha Ocurrencia},'${fin}'))`,
     }),
@@ -36,6 +36,10 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
     listRecords<PptoEjecucionFields>('sst_ppto_ejecuciones', {}),
     listRecords<AcAccionFields>('sst_ac_acciones', {}),
     listRecords<InspInspeccionFields>('sst_insp_inspecciones', {}),
+    listRecords<Record<string, unknown>>(process.env.AIRTABLE_TABLE_USERS ?? 'USUARIOS', {
+      fields: ['Email'],
+      filterByFormula: `{Estado}='Activo'`,
+    }),
   ])
 
   const incidentes = incidentesRes.records
@@ -69,26 +73,29 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
   const inspeccionesTotal = inspecciones.length
   const inspeccionesRealizadas = inspecciones.filter(r => r.fields.Estado === 'realizada').length
 
-  const nTrabajadores = 100
+  // Total de trabajadores activos — consultado dinámicamente
+  const nTrabajadores = usuariosRes.records.length || 1  // mínimo 1 para evitar división por cero
 
   const kpis: IndKpiResult[] = [
     {
       codigo: 'IF',
       nombre: 'Índice de Frecuencia de AT',
-      valor: ats.length > 0 ? Math.round((ats.length * hht) / hht) : 0,
+      // Fórmula correcta: (N° AT × 240.000) / HHT — hht es el parámetro real de horas trabajadas
+      valor: hht > 0 ? Math.round((ats.length * 240000) / hht) : 0,
       meta: KPI_METAS.IF,
       unidad: 'AT por 240.000 HHT',
-      cumpleMeta: ats.length <= KPI_METAS.IF,
+      cumpleMeta: hht > 0 ? Math.round((ats.length * 240000) / hht) <= KPI_METAS.IF : true,
       formula: '(N° AT × 240.000) / HHT',
       fuente: 'sst_incidentes',
     },
     {
       codigo: 'IS',
       nombre: 'Índice de Severidad de AT',
-      valor: diasPerdidos,
+      // Fórmula correcta: (días perdidos × 240.000) / HHT
+      valor: hht > 0 ? Math.round((diasPerdidos * 240000) / hht) : 0,
       meta: KPI_METAS.IS,
       unidad: 'Días perdidos por 240.000 HHT',
-      cumpleMeta: diasPerdidos <= KPI_METAS.IS,
+      cumpleMeta: hht > 0 ? Math.round((diasPerdidos * 240000) / hht) <= KPI_METAS.IS : true,
       formula: '(Días perdidos × 240.000) / HHT',
       fuente: 'sst_incidentes',
     },

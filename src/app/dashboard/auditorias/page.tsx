@@ -6,7 +6,7 @@ import type { AudAuditoriaFields } from '@/types/sst/aud'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
 function getHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : ''
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : ''
   return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
 }
 

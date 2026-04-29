@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { updateRecord } from '@/lib/airtable-client'
+import { updateRecord, deleteRecord } from '@/lib/airtable-client'
 import { verifyToken } from '@/lib/auth'
 
 interface UserFields {
@@ -85,3 +85,26 @@ export async function PUT(
   }
 }
 
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const payload = await authenticate(request)
+  if (!payload) {
+    return NextResponse.json({ success: false, message: 'No autorizado' }, { status: 401 })
+  }
+
+  // Solo superadmin puede eliminar usuarios
+  if (payload.role !== 'superadmin') {
+    return NextResponse.json({ success: false, message: 'Solo el superadmin puede eliminar usuarios' }, { status: 403 })
+  }
+
+  try {
+    const { id } = await params
+    await deleteRecord(T_USUARIOS(), id)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error)
+    return NextResponse.json({ success: false, message: 'Error al eliminar usuario' }, { status: 500 })
+  }
+}

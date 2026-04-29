@@ -13,6 +13,7 @@ import {
   X,
   AlertCircle,
   CheckCircle2,
+  Trash2,
 } from 'lucide-react'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ interface RolOpcion {
   nombre: string
 }
 
-type ModalTipo = 'crear' | 'editar' | 'reset' | null
+type ModalTipo = 'crear' | 'editar' | 'reset' | 'eliminar' | null
 
 // ─── Helpers UI ───────────────────────────────────────────────────────────────
 
@@ -129,6 +130,9 @@ export default function UsuariosPage() {
   const [resetPassword, setResetPassword] = useState('')
   const [resetLoading, setResetLoading] = useState(false)
 
+  // Eliminar
+  const [eliminarLoading, setEliminarLoading] = useState(false)
+
   const token = () => localStorage.getItem('authToken') ?? ''
 
   const mostrarAlerta = (tipo: 'ok' | 'error', mensaje: string) => {
@@ -204,6 +208,10 @@ export default function UsuariosPage() {
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!crearForm.rolId || !crearForm.rolId.startsWith('rec')) {
+      mostrarAlerta('error', 'Debes seleccionar un rol válido')
+      return
+    }
     setCrearLoading(true)
     try {
       const res = await fetch('/api/usuarios', {
@@ -213,7 +221,9 @@ export default function UsuariosPage() {
       })
       const data = await res.json()
       if (data.success) {
-        setUsuarios((prev) => [...prev, data.user])
+        // Enriquecer con nombre de rol desde el estado local
+        const rolNombre = roles.find((r) => r.id === data.user.rolId)?.nombre ?? ''
+        setUsuarios((prev) => [...prev, { ...data.user, rol: rolNombre }])
         setModalTipo(null)
         setCrearForm({ name: '', email: '', password: '', rolId: roles[0]?.id ?? '' })
         mostrarAlerta('ok', 'Usuario creado correctamente')
@@ -229,7 +239,9 @@ export default function UsuariosPage() {
 
   const abrirEditar = (u: Usuario) => {
     setUsuarioSeleccionado(u)
-    setEditarForm({ name: u.name, rolId: u.rolId ?? '' })
+    // Si el usuario no tiene rol asignado, preseleccionar el primero disponible
+    const rolId = u.rolId && u.rolId.startsWith('rec') ? u.rolId : (roles[0]?.id ?? '')
+    setEditarForm({ name: u.name, rolId })
     setModalTipo('editar')
   }
 
@@ -245,7 +257,13 @@ export default function UsuariosPage() {
       })
       const data = await res.json()
       if (data.success) {
-        setUsuarios((prev) => prev.map((u) => (u.id === data.user.id ? { ...u, ...data.user } : u)))
+        // Enriquecer con nombre de rol desde el estado local de roles
+        const rolNombre = roles.find((r) => r.id === data.user.rolId)?.nombre ?? ''
+        setUsuarios((prev) =>
+          prev.map((u) =>
+            u.id === data.user.id ? { ...u, ...data.user, rol: rolNombre } : u
+          )
+        )
         setModalTipo(null)
         mostrarAlerta('ok', 'Usuario actualizado correctamente')
       } else {
@@ -282,6 +300,34 @@ export default function UsuariosPage() {
     setUsuarioSeleccionado(u)
     setResetPassword('')
     setModalTipo('reset')
+  }
+
+  const abrirEliminar = (u: Usuario) => {
+    setUsuarioSeleccionado(u)
+    setModalTipo('eliminar')
+  }
+
+  const handleEliminar = async () => {
+    if (!usuarioSeleccionado) return
+    setEliminarLoading(true)
+    try {
+      const res = await fetch(`/api/usuarios/${usuarioSeleccionado.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token()}` },
+      })
+      const data = await res.json()
+      if (data.success) {
+        setUsuarios((prev) => prev.filter((u) => u.id !== usuarioSeleccionado.id))
+        setModalTipo(null)
+        mostrarAlerta('ok', `Usuario "${usuarioSeleccionado.name}" eliminado`)
+      } else {
+        mostrarAlerta('error', data.message ?? 'Error al eliminar usuario')
+      }
+    } catch {
+      mostrarAlerta('error', 'Error al eliminar usuario')
+    } finally {
+      setEliminarLoading(false)
+    }
   }
 
   const handleReset = async (e: React.FormEvent) => {
@@ -422,11 +468,18 @@ export default function UsuariosPage() {
                         className={[
                           'p-1.5 rounded transition-colors',
                           u.estado === 'activo'
-                            ? 'text-gray-400 hover:text-red-600 hover:bg-red-50'
+                            ? 'text-gray-400 hover:text-orange-600 hover:bg-orange-50'
                             : 'text-gray-400 hover:text-green-600 hover:bg-green-50',
                         ].join(' ')}
                       >
                         {u.estado === 'activo' ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                      </button>
+                      <button
+                        onClick={() => abrirEliminar(u)}
+                        title="Eliminar usuario"
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>
@@ -608,6 +661,43 @@ export default function UsuariosPage() {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Modal — Confirmar eliminar */}
+      {modalTipo === 'eliminar' && usuarioSeleccionado && (
+        <Modal title="Eliminar usuario" onClose={() => setModalTipo(null)}>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-red-50 rounded-lg border border-red-100">
+              <Trash2 className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-red-800">Esta acción no se puede deshacer</p>
+                <p className="text-sm text-red-600 mt-1">
+                  Se eliminará permanentemente el usuario{' '}
+                  <span className="font-semibold">{usuarioSeleccionado.name}</span>{' '}
+                  ({usuarioSeleccionado.email}).
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setModalTipo(null)}
+                className="flex-1 border border-gray-200 text-gray-600 px-4 py-2 rounded-lg text-sm hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleEliminar}
+                disabled={eliminarLoading}
+                className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {eliminarLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {eliminarLoading ? 'Eliminando...' : 'Eliminar usuario'}
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>

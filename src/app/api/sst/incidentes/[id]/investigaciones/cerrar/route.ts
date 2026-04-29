@@ -11,7 +11,7 @@ type Ctx = { params: Promise<{ id: string }> }
  * - Caso médico si hay días de incapacidad
  */
 export async function POST(request: NextRequest, ctx: Ctx) {
-  const auth = await requireRole(request, 'coordinador_sst', 'admin')
+  const auth = await requireRole(request, 'coordinador_sst', 'administrador')
   if ('error' in auth) return auth.error
 
   const { id } = await ctx.params
