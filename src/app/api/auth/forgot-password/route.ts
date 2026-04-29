@@ -24,20 +24,11 @@ function getSecret(): Uint8Array {
   return new TextEncoder().encode(secret)
 }
 
-// Respuesta genérica — no revela si el email existe
 const GENERIC_OK = {
   success: true,
   message: 'Si el email está registrado recibirás un código en los próximos minutos.',
 }
 
-/**
- * POST /api/auth/forgot-password
- * Paso 1 del flujo de recuperación: envía un código OTP al email.
- * Body: { email: string }
- * Respuesta exitosa: { success: true, resetToken: string }
- *   resetToken es un JWT firmado que contiene el código (no visible para el usuario).
- *   Se pasa de vuelta en el Paso 2.
- */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -56,7 +47,6 @@ export async function POST(request: NextRequest) {
       fields: ['Email', 'Estado'],
     })
 
-    // Si no existe, respuesta genérica sin revelar información
     if (records.length === 0) {
       return NextResponse.json(GENERIC_OK)
     }
@@ -73,21 +63,15 @@ export async function POST(request: NextRequest) {
     const code = generateCode()
     const normalizedEmail = email.trim().toLowerCase()
 
-    // Firmar JWT con código y expiración de 10 minutos
     const resetToken = await new SignJWT({ email: normalizedEmail, code, purpose: 'reset-otp' })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('10m')
       .setIssuedAt()
       .sign(getSecret())
 
-    // Enviar código por email
     await sendResetCodeEmail(normalizedEmail, code)
 
-    return NextResponse.json({
-      success: true,
-      resetToken,
-      message: GENERIC_OK.message,
-    })
+    return NextResponse.json({ success: true, resetToken, message: GENERIC_OK.message })
   } catch (error) {
     console.error('[/api/auth/forgot-password]', error)
     return NextResponse.json(

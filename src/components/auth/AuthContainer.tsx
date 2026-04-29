@@ -9,7 +9,6 @@ import { isTokenValid } from '@/lib/token';
 export default function AuthContainer() {
   const router = useRouter();
 
-  // Redirigir al dashboard si ya hay sesión activa
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
     if (token && isTokenValid(token)) {
@@ -34,7 +33,6 @@ export default function AuthContainer() {
             <p className="text-gray-600 text-sm">Sistema de Gestión</p>
           </div>
 
-          {/* Título */}
           <h2 className="text-xl font-bold text-gray-900 mb-2">Iniciar Sesión</h2>
           <p className="text-gray-600 text-sm mb-6">Accede a tu cuenta para continuar</p>
 
@@ -46,7 +44,7 @@ export default function AuthContainer() {
             </span>
           </div>
 
-          <LoginForm />
+          <LoginForm onLoginSuccess={() => { /* El componente maneja la redirección */ }} />
         </div>
 
         {/* Pie de Página */}

@@ -9,7 +9,6 @@ interface LoginFormProps {
   onLoginSuccess?: (token: string) => void;
 }
 
-// Pasos del flujo de recuperación
 type ForgotStep = 'email' | 'code' | 'password' | 'done';
 
 export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
@@ -23,7 +22,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [errorMessage, setErrorMessage] = useState('');
   const submitting = useRef(false);
 
-  // Estado del modal de recuperación
+  // Modal recuperación
   const [showForgot, setShowForgot] = useState(false);
   const [forgotStep, setForgotStep] = useState<ForgotStep>('email');
   const [forgotEmail, setForgotEmail] = useState('');
@@ -33,7 +32,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotError, setForgotError] = useState('');
-  // Tokens intermedios del flujo (nunca mostrados al usuario)
   const [resetToken, setResetToken] = useState('');
   const [verifiedToken, setVerifiedToken] = useState('');
 
@@ -46,9 +44,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     const validationErrors = validateLoginForm(email, password);
     if (validationErrors.length > 0) {
       const errorMap: Record<string, string> = {};
-      validationErrors.forEach((err) => {
-        errorMap[err.field] = err.message;
-      });
+      validationErrors.forEach((err) => { errorMap[err.field] = err.message; });
       setErrors(errorMap);
       return;
     }
@@ -82,12 +78,10 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     }
   };
 
-  // Paso 1: enviar código al email
   const handleSendCode = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setForgotError('');
     if (!forgotEmail.trim()) { setForgotError('Ingresa tu email.'); return; }
-
     setForgotLoading(true);
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -109,12 +103,10 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     }
   };
 
-  // Paso 2: verificar código OTP
   const handleVerifyCode = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setForgotError('');
     if (!/^\d{6}$/.test(forgotCode.trim())) { setForgotError('Ingresa el código de 6 dígitos.'); return; }
-
     setForgotLoading(true);
     try {
       const res = await fetch('/api/auth/verify-reset-code', {
@@ -136,13 +128,11 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     }
   };
 
-  // Paso 3: establecer nueva contraseña
   const handleResetPassword = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setForgotError('');
     if (forgotPassword.length < 8) { setForgotError('La contraseña debe tener al menos 8 caracteres.'); return; }
     if (forgotPassword !== forgotConfirm) { setForgotError('Las contraseñas no coinciden.'); return; }
-
     setForgotLoading(true);
     try {
       const res = await fetch('/api/auth/reset-password', {
@@ -175,13 +165,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     setVerifiedToken('');
   };
 
-  // Indicadores de paso
-  const stepConfig = {
-    email:    { icon: Mail,     label: 'Ingresa tu email',       num: 1 },
-    code:     { icon: KeyRound, label: 'Verifica el código',     num: 2 },
-    password: { icon: Lock,     label: 'Nueva contraseña',       num: 3 },
-    done:     { icon: CheckCircle, label: 'Listo',               num: 3 },
-  };
+  const stepNum = { email: 1, code: 2, password: 3, done: 3 }[forgotStep];
 
   return (
     <>
@@ -192,7 +176,6 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
             <span className="text-red-700 text-sm">{errorMessage}</span>
           </div>
         )}
-
         {successMessage && (
           <div role="status" className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -201,98 +184,54 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
         )}
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isLoading}
-            placeholder="tu@email.com"
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading} placeholder="tu@email.com"
             className={`input-field ${errors.email ? 'input-error' : ''}`}
-            autoComplete="email"
-            maxLength={254}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-          />
-          {errors.email && (
-            <p id="email-error" role="alert" className="text-error">{errors.email}</p>
-          )}
+            autoComplete="email" maxLength={254}
+            aria-describedby={errors.email ? 'email-error' : undefined} />
+          {errors.email && <p id="email-error" role="alert" className="text-error">{errors.email}</p>}
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-            Contraseña
-          </label>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
           <div className="relative">
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+            <input id="password" type={showPassword ? 'text' : 'password'} value={password}
+              onChange={(e) => setPassword(e.target.value)} disabled={isLoading}
               placeholder="Tu contraseña"
               className={`input-field ${errors.password ? 'input-error' : ''}`}
-              autoComplete="current-password"
-              maxLength={128}
-              aria-describedby={errors.password ? 'password-error' : undefined}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              disabled={isLoading}
+              autoComplete="current-password" maxLength={128}
+              aria-describedby={errors.password ? 'password-error' : undefined} />
+            <button type="button" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}
               aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-            >
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
               {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
             </button>
           </div>
-          {errors.password && (
-            <p id="password-error" role="alert" className="text-error">{errors.password}</p>
-          )}
+          {errors.password && <p id="password-error" role="alert" className="text-error">{errors.password}</p>}
         </div>
 
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => setShowForgot(true)}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-          >
+          <button type="button" onClick={() => setShowForgot(true)}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium">
             ¿Olvidaste tu contraseña?
           </button>
         </div>
 
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full btn-primary flex items-center justify-center gap-2"
-        >
-          {isLoading ? (
-            <>
-              <Loader className="w-5 h-5 animate-spin" />
-              Autenticando...
-            </>
-          ) : (
-            'Iniciar Sesión'
-          )}
+        <button type="submit" disabled={isLoading}
+          className="w-full btn-primary flex items-center justify-center gap-2">
+          {isLoading ? <><Loader className="w-5 h-5 animate-spin" />Autenticando...</> : 'Iniciar Sesión'}
         </button>
       </form>
 
-      {/* Modal recuperar contraseña — flujo 3 pasos */}
+      {/* Modal recuperar contraseña — 3 pasos */}
       {showForgot && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="forgot-title"
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          role="dialog" aria-modal="true" aria-labelledby="forgot-title">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            {/* Cabecera */}
+
             <div className="flex items-center justify-between mb-5">
-              <h3 id="forgot-title" className="text-lg font-bold text-gray-900">
-                Recuperar contraseña
-              </h3>
+              <h3 id="forgot-title" className="text-lg font-bold text-gray-900">Recuperar contraseña</h3>
               <button type="button" onClick={closeForgot} aria-label="Cerrar" className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
@@ -301,26 +240,19 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
             {/* Indicador de pasos */}
             {forgotStep !== 'done' && (
               <div className="flex items-center gap-1 mb-5">
-                {(['email', 'code', 'password'] as const).map((step, i) => {
-                  const current = stepConfig[forgotStep].num;
-                  const stepNum = i + 1;
-                  const isActive = stepNum === current;
-                  const isDone = stepNum < current;
-                  return (
-                    <React.Fragment key={step}>
-                      <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
-                        isDone ? 'bg-green-500 text-white' : isActive ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'
-                      }`}>
-                        {isDone ? '✓' : stepNum}
-                      </div>
-                      {i < 2 && <div className={`flex-1 h-0.5 ${stepNum < current ? 'bg-green-400' : 'bg-gray-200'}`} />}
-                    </React.Fragment>
-                  );
-                })}
+                {[1, 2, 3].map((n, i) => (
+                  <React.Fragment key={n}>
+                    <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
+                      n < stepNum ? 'bg-green-500 text-white' : n === stepNum ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'
+                    }`}>
+                      {n < stepNum ? '✓' : n}
+                    </div>
+                    {i < 2 && <div className={`flex-1 h-0.5 ${n < stepNum ? 'bg-green-400' : 'bg-gray-200'}`} />}
+                  </React.Fragment>
+                ))}
               </div>
             )}
 
-            {/* Error compartido */}
             {forgotError && (
               <div role="alert" className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg mb-3">
                 <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
@@ -328,83 +260,56 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               </div>
             )}
 
-            {/* PASO 1: Email */}
+            {/* Paso 1 */}
             {forgotStep === 'email' && (
               <form onSubmit={handleSendCode} className="space-y-4">
-                <p className="text-sm text-gray-500">
-                  Ingresa tu email registrado. Te enviaremos un código de 6 dígitos válido por 10 minutos.
-                </p>
+                <p className="text-sm text-gray-500">Ingresa tu email registrado. Te enviaremos un código de 6 dígitos válido por 10 minutos.</p>
                 <div>
                   <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    id="forgot-email"
-                    type="email"
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
-                    disabled={forgotLoading}
-                    placeholder="tu@email.com"
-                    className="input-field"
-                    autoComplete="email"
-                    maxLength={254}
-                    autoFocus
-                  />
+                  <input id="forgot-email" type="email" value={forgotEmail}
+                    onChange={(e) => setForgotEmail(e.target.value)} disabled={forgotLoading}
+                    placeholder="tu@email.com" className="input-field" autoComplete="email" maxLength={254} autoFocus />
                 </div>
                 <button type="submit" disabled={forgotLoading} className="w-full btn-primary flex items-center justify-center gap-2">
-                  {forgotLoading ? <><Loader className="w-4 h-4 animate-spin" /> Enviando...</> : 'Enviar código'}
+                  {forgotLoading ? <><Loader className="w-4 h-4 animate-spin" />Enviando...</> : <><Mail className="w-4 h-4" />Enviar código</>}
                 </button>
               </form>
             )}
 
-            {/* PASO 2: Código OTP */}
+            {/* Paso 2 */}
             {forgotStep === 'code' && (
               <form onSubmit={handleVerifyCode} className="space-y-4">
-                <p className="text-sm text-gray-500">
-                  Revisá tu bandeja de entrada en <strong>{forgotEmail}</strong> e ingresa el código de 6 dígitos.
-                </p>
+                <p className="text-sm text-gray-500">Revisá tu bandeja de entrada en <strong>{forgotEmail}</strong> e ingresa el código de 6 dígitos.</p>
                 <div>
                   <label htmlFor="forgot-code" className="block text-sm font-medium text-gray-700 mb-1">Código de verificación</label>
-                  <input
-                    id="forgot-code"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="\d{6}"
-                    value={forgotCode}
-                    onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    disabled={forgotLoading}
-                    placeholder="000000"
+                  <input id="forgot-code" type="text" inputMode="numeric" pattern="\d{6}"
+                    value={forgotCode} onChange={(e) => setForgotCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    disabled={forgotLoading} placeholder="000000"
                     className="input-field text-center text-2xl font-bold tracking-widest"
-                    maxLength={6}
-                    autoFocus
-                  />
+                    maxLength={6} autoFocus />
                 </div>
-                <button type="submit" disabled={forgotLoading || forgotCode.length < 6} className="w-full btn-primary flex items-center justify-center gap-2">
-                  {forgotLoading ? <><Loader className="w-4 h-4 animate-spin" /> Verificando...</> : 'Verificar código'}
+                <button type="submit" disabled={forgotLoading || forgotCode.length < 6}
+                  className="w-full btn-primary flex items-center justify-center gap-2">
+                  {forgotLoading ? <><Loader className="w-4 h-4 animate-spin" />Verificando...</> : <><KeyRound className="w-4 h-4" />Verificar código</>}
                 </button>
-                <button type="button" onClick={() => { setForgotStep('email'); setForgotCode(''); setForgotError(''); }} className="w-full text-sm text-gray-500 hover:text-gray-700 text-center">
+                <button type="button" onClick={() => { setForgotStep('email'); setForgotCode(''); setForgotError(''); }}
+                  className="w-full text-sm text-gray-500 hover:text-gray-700 text-center">
                   ← Cambiar email
                 </button>
               </form>
             )}
 
-            {/* PASO 3: Nueva contraseña */}
+            {/* Paso 3 */}
             {forgotStep === 'password' && (
               <form onSubmit={handleResetPassword} className="space-y-3">
                 <p className="text-sm text-gray-500">Código verificado. Define tu nueva contraseña.</p>
                 <div>
                   <label htmlFor="forgot-new-password" className="block text-sm font-medium text-gray-700 mb-1">Nueva contraseña</label>
                   <div className="relative">
-                    <input
-                      id="forgot-new-password"
-                      type={showForgotPassword ? 'text' : 'password'}
-                      value={forgotPassword}
-                      onChange={(e) => setForgotPassword(e.target.value)}
-                      disabled={forgotLoading}
-                      placeholder="Mínimo 8 caracteres"
-                      className="input-field"
-                      autoComplete="new-password"
-                      maxLength={128}
-                      autoFocus
-                    />
+                    <input id="forgot-new-password" type={showForgotPassword ? 'text' : 'password'}
+                      value={forgotPassword} onChange={(e) => setForgotPassword(e.target.value)}
+                      disabled={forgotLoading} placeholder="Mínimo 8 caracteres"
+                      className="input-field" autoComplete="new-password" maxLength={128} autoFocus />
                     <button type="button" onClick={() => setShowForgotPassword(!showForgotPassword)} disabled={forgotLoading}
                       aria-label={showForgotPassword ? 'Ocultar' : 'Mostrar'}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700">
@@ -414,25 +319,18 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 </div>
                 <div>
                   <label htmlFor="forgot-confirm" className="block text-sm font-medium text-gray-700 mb-1">Confirmar contraseña</label>
-                  <input
-                    id="forgot-confirm"
-                    type="password"
-                    value={forgotConfirm}
-                    onChange={(e) => setForgotConfirm(e.target.value)}
-                    disabled={forgotLoading}
-                    placeholder="Repite la contraseña"
-                    className="input-field"
-                    autoComplete="new-password"
-                    maxLength={128}
-                  />
+                  <input id="forgot-confirm" type="password" value={forgotConfirm}
+                    onChange={(e) => setForgotConfirm(e.target.value)} disabled={forgotLoading}
+                    placeholder="Repite la contraseña" className="input-field"
+                    autoComplete="new-password" maxLength={128} />
                 </div>
                 <button type="submit" disabled={forgotLoading} className="w-full btn-primary flex items-center justify-center gap-2 mt-1">
-                  {forgotLoading ? <><Loader className="w-4 h-4 animate-spin" /> Guardando...</> : 'Guardar contraseña'}
+                  {forgotLoading ? <><Loader className="w-4 h-4 animate-spin" />Guardando...</> : <><Lock className="w-4 h-4" />Guardar contraseña</>}
                 </button>
               </form>
             )}
 
-            {/* PASO 4: Confirmación final */}
+            {/* Paso 4: éxito */}
             {forgotStep === 'done' && (
               <div className="text-center py-4">
                 <div className="flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mx-auto mb-4">

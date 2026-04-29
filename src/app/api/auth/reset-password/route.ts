@@ -20,7 +20,6 @@ function getSecret(): Uint8Array {
 /**
  * POST /api/auth/reset-password
  * Paso 3 del flujo de recuperación: establece la nueva contraseña.
- * Requiere el verifiedToken emitido por /api/auth/verify-reset-code.
  * Body: { verifiedToken: string, newPassword: string }
  */
 export async function POST(request: NextRequest) {
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
     if (!verifiedToken || typeof verifiedToken !== 'string') {
       return NextResponse.json({ success: false, message: 'Token de verificación inválido.' }, { status: 400 })
     }
-
     if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
       return NextResponse.json(
         { success: false, message: 'La contraseña debe tener al menos 8 caracteres.' },

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { jwtVerify, SignJWT } from 'jose'
+import { SignJWT, jwtVerify } from 'jose'
 
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET
@@ -11,8 +11,7 @@ function getSecret(): Uint8Array {
  * POST /api/auth/verify-reset-code
  * Paso 2 del flujo de recuperación: valida el código OTP.
  * Body: { resetToken: string, code: string }
- * Respuesta exitosa: { success: true, verifiedToken: string }
- *   verifiedToken es un JWT de corta duración (5 min) que habilita el cambio de contraseña.
+ * Respuesta: { success: true, verifiedToken: string }
  */
 export async function POST(request: NextRequest) {
   try {
@@ -23,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Token inválido.' }, { status: 400 })
     }
     if (!code || typeof code !== 'string' || !/^\d{6}$/.test(code.trim())) {
-      return NextResponse.json({ success: false, message: 'El código debe ser de 6 dígitos.' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Código inválido.' }, { status: 400 })
     }
 
     const secret = getSecret()
@@ -34,27 +33,20 @@ export async function POST(request: NextRequest) {
       payload = result.payload as typeof payload
     } catch {
       return NextResponse.json(
-        { success: false, message: 'El código ha expirado o es inválido. Solicita uno nuevo.' },
+        { success: false, message: 'El código expiró. Solicita uno nuevo.' },
         { status: 400 }
       )
     }
 
-    if (payload.purpose !== 'reset-otp') {
+    if (payload.purpose !== 'reset-otp' || !payload.email || !payload.code) {
       return NextResponse.json({ success: false, message: 'Token inválido.' }, { status: 400 })
     }
 
     if (payload.code !== code.trim()) {
-      return NextResponse.json(
-        { success: false, message: 'Código incorrecto. Verifica e intenta de nuevo.' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, message: 'Código incorrecto.' }, { status: 400 })
     }
 
-    // Emitir un token de corta duración (5 min) que autoriza el cambio de contraseña
-    const verifiedToken = await new SignJWT({
-      email: payload.email,
-      purpose: 'reset-verified',
-    })
+    const verifiedToken = await new SignJWT({ email: payload.email, purpose: 'reset-verified' })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('5m')
       .setIssuedAt()
