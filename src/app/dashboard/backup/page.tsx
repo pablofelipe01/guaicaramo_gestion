@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { Download, Database, CheckSquare, Square, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -10,7 +10,7 @@ interface ModuloInfo {
 }
 
 const FASE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  PLANEAR:   { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200' },
+  PLANEAR:   { bg: 'bg-green-50',   text: 'text-green-800',   border: 'border-green-200' },
   HACER:     { bg: 'bg-green-50',  text: 'text-green-700',  border: 'border-green-200' },
   VERIFICAR: { bg: 'bg-yellow-50', text: 'text-yellow-700', border: 'border-yellow-200' },
   ACTUAR:    { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200' },
@@ -136,7 +136,7 @@ export default function BackupPage() {
           <div className="flex gap-3">
             <button
               onClick={seleccionarTodos}
-              className="text-xs text-blue-600 hover:underline"
+              className="text-xs text-green-700 hover:underline"
             >
               Todos
             </button>
@@ -195,7 +195,7 @@ export default function BackupPage() {
                           ].join(' ')}
                         >
                           {sel
-                            ? <CheckSquare className="w-4 h-4 text-blue-500 shrink-0" />
+                            ? <CheckSquare className="w-4 h-4 text-green-600 shrink-0" />
                             : <Square className="w-4 h-4 shrink-0" />}
                           <span className="flex-1 truncate">{m.modulo}</span>
                           <span className="text-xs text-gray-400 shrink-0">{m.cantidadTablas}t</span>
@@ -219,7 +219,7 @@ export default function BackupPage() {
         <button
           onClick={generarBackup}
           disabled={loading || seleccionados.size === 0}
-          className="flex items-center gap-2 px-5 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-2 px-5 py-2 bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />

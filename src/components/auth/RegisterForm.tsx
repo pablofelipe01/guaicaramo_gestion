@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, FormEvent } from 'react';
 import { Eye, EyeOff, AlertCircle, CheckCircle, Loader } from 'lucide-react';
@@ -286,7 +286,7 @@ export default function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: Reg
         <button
           type="button"
           onClick={onSwitchToLogin}
-          className="text-blue-600 hover:text-blue-700 font-medium"
+          className="text-green-700 hover:text-green-800 font-medium"
         >
           Inicia sesión aquí
         </button>

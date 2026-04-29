@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -197,10 +197,10 @@ export default function AccionesCorrectivasPage() {
       key: 'ver', header: '',
       render: r => (
         <div className="flex items-center gap-1 justify-end">
-          <button onClick={() => selectAccion(r)} className="text-blue-600 text-sm hover:underline flex items-center gap-0.5">
+          <button onClick={() => selectAccion(r)} className="text-green-700 text-sm hover:underline flex items-center gap-0.5">
             Ver <ChevronRight size={14} />
           </button>
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-green-700" title="Editar"><Pencil size={13} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-500 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
         </div>
       ),
@@ -229,7 +229,7 @@ export default function AccionesCorrectivasPage() {
           <Card><div className="p-4 text-center"><p className="text-2xl font-bold text-gray-800">{stats.total}</p><p className="text-xs text-gray-500 mt-1">Total acciones</p></div></Card>
           <Card><div className="p-4 text-center"><p className="text-2xl font-bold text-amber-600">{(stats.porEstado['pendiente'] ?? 0) + (stats.porEstado['en_proceso'] ?? 0)}</p><p className="text-xs text-gray-500 mt-1">En proceso</p></div></Card>
           <Card><div className="p-4 text-center"><p className="text-2xl font-bold text-green-600">{stats.tasaCierre}%</p><p className="text-xs text-gray-500 mt-1">Tasa de cierre</p></div></Card>
-          <Card><div className="p-4 text-center"><p className="text-2xl font-bold text-blue-600">{stats.tasaTiempo}%</p><p className="text-xs text-gray-500 mt-1">Cierre a tiempo</p></div></Card>
+          <Card><div className="p-4 text-center"><p className="text-2xl font-bold text-green-700">{stats.tasaTiempo}%</p><p className="text-xs text-gray-500 mt-1">Cierre a tiempo</p></div></Card>
         </div>
       )}
 
@@ -332,7 +332,7 @@ export default function AccionesCorrectivasPage() {
                   {(selected.fields.Estado === 'pendiente' || selected.fields.Estado === 'reabierta') && (
                     <button
                       onClick={handleEjecutar}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                      className="w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-green-700 text-white rounded text-sm hover:bg-green-800"
                     >
                       <Play size={13} /> Marcar en proceso
                     </button>
@@ -512,7 +512,7 @@ export default function AccionesCorrectivasPage() {
             <button
               onClick={handleSeguimiento}
               disabled={saving || !seguimientoNota.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : 'Guardar'}
             </button>

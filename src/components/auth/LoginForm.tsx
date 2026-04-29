@@ -213,7 +213,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
 
         <div className="flex justify-end">
           <button type="button" onClick={() => setShowForgot(true)}
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+            className="text-sm text-green-700 hover:text-green-800 font-medium">
             ¿Olvidaste tu contraseña?
           </button>
         </div>
@@ -243,7 +243,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
                 {[1, 2, 3].map((n, i) => (
                   <React.Fragment key={n}>
                     <div className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold transition-colors ${
-                      n < stepNum ? 'bg-green-500 text-white' : n === stepNum ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-400'
+                      n < stepNum ? 'bg-green-500 text-white' : n === stepNum ? 'bg-green-700 text-white' : 'bg-gray-100 text-gray-400'
                     }`}>
                       {n < stepNum ? '✓' : n}
                     </div>

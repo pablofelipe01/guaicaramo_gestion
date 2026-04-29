@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -125,8 +125,8 @@ export default function PermisosTrabajoPage() {
       key: 'ver', header: '',
       render: r => (
         <div className="flex gap-1 items-center">
-          <button onClick={() => selectPermiso(r)} className="text-blue-600 text-sm hover:underline">Ver</button>
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => selectPermiso(r)} className="text-green-700 text-sm hover:underline">Ver</button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={13} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
         </div>
       ),
@@ -148,7 +148,7 @@ export default function PermisosTrabajoPage() {
         actions={
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800"
           >
             <Plus size={16} /> Nuevo Permiso
           </button>
@@ -243,7 +243,7 @@ export default function PermisosTrabajoPage() {
                       setSelected(null)
                       load()
                     }}
-                    className="w-full px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                    className="w-full px-3 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800"
                   >
                     Iniciar Ejecución
                   </button>
@@ -319,7 +319,7 @@ export default function PermisosTrabajoPage() {
             <button
               onClick={handleSave}
               disabled={saving || !form['Tipo ID'] || !form.Area || !form['Tarea Descripcion'] || !form['Fecha Inicio'] || !form['Fecha Fin']}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Crear Permiso'}
             </button>

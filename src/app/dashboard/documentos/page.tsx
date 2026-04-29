@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -100,14 +100,14 @@ export default function DocumentosPage() {
     {
       key: 'URL Archivo', header: 'Archivo',
       render: (r) => r.fields['URL Archivo']
-        ? <a href={r.fields['URL Archivo']} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-sm hover:underline">Ver archivo</a>
+        ? <a href={r.fields['URL Archivo']} target="_blank" rel="noopener noreferrer" className="text-green-700 text-sm hover:underline">Ver archivo</a>
         : <span className="text-gray-300 text-sm">Sin archivo</span>,
     },
     {
       key: 'acciones', header: '',
       render: (r) => (
         <div className="flex gap-1 justify-end">
-          <button onClick={() => editarDoc(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={14} /></button>
+          <button onClick={() => editarDoc(r)} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={14} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={14} /></button>
         </div>
       ),
@@ -122,7 +122,7 @@ export default function DocumentosPage() {
         icon={Archive}
         iconColor="text-purple-600"
         actions={
-          <button onClick={() => setModal(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+          <button onClick={() => setModal(true)} className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-medium hover:bg-green-800">
             <Plus className="w-4 h-4" /> Subir documento
           </button>
         }

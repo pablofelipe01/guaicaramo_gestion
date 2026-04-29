@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -23,7 +23,7 @@ const ESTADO_ICON: Record<string, React.ReactNode> = {
   cumple: <CheckCircle2 size={14} className="text-green-500" />,
   parcial: <MinusCircle size={14} className="text-yellow-500" />,
   no_cumple: <XCircle size={14} className="text-red-500" />,
-  en_proceso: <Clock size={14} className="text-blue-500" />,
+  en_proceso: <Clock size={14} className="text-green-600" />,
   no_aplica: <MinusCircle size={14} className="text-gray-400" />,
 }
 const TIPOS = ['ley','decreto','resolucion','circular','norma_tecnica']
@@ -162,7 +162,7 @@ export default function MatrizLegalPage() {
               </button>
             )}
             <button onClick={() => setModalRequisito(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+              className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
               <Plus size={16} /> Nuevo requisito
             </button>
           </div>
@@ -177,7 +177,7 @@ export default function MatrizLegalPage() {
             { label: 'Cumple', value: resumen.cumple, color: 'text-green-600' },
             { label: 'Parcial', value: resumen.parcial, color: 'text-yellow-600' },
             { label: 'No cumple', value: resumen.no_cumple, color: 'text-red-600' },
-            { label: 'En proceso', value: resumen.en_proceso, color: 'text-blue-600' },
+            { label: 'En proceso', value: resumen.en_proceso, color: 'text-green-700' },
           ].map(item => (
             <Card key={item.label} className="text-center py-3">
               <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
@@ -205,7 +205,7 @@ export default function MatrizLegalPage() {
               <ul>
                   {requisitos.map(r => (
                   <li key={r.id}
-                    className={`p-3 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                    className={`p-3 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === r.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                     <div className="flex items-start gap-1">
                       <button className="flex-1 text-left min-w-0" onClick={() => seleccionar(r)}>
                         <div className="font-medium text-sm text-gray-900 truncate">{r.fields.Norma}</div>
@@ -216,7 +216,7 @@ export default function MatrizLegalPage() {
                         {r.fields.Articulo && <div className="text-xs text-gray-400 mt-0.5">Art. {r.fields.Articulo}</div>}
                       </button>
                       <div className="flex gap-0.5 flex-shrink-0 mt-0.5">
-                        <button onClick={e => { e.stopPropagation(); editarRequisito(r) }} className="p-1 text-gray-300 hover:text-blue-600" title="Editar"><Pencil size={12} /></button>
+                        <button onClick={e => { e.stopPropagation(); editarRequisito(r) }} className="p-1 text-gray-300 hover:text-green-700" title="Editar"><Pencil size={12} /></button>
                         <button onClick={e => { e.stopPropagation(); setConfirmDelete(r.id) }} className="p-1 text-gray-300 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
                       </div>
                     </div>
@@ -254,7 +254,7 @@ export default function MatrizLegalPage() {
                   </div>
                 </div>
                 <button onClick={() => setModalCumplimiento(true)}
-                  className="flex items-center gap-1.5 ml-4 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex-shrink-0">
+                  className="flex items-center gap-1.5 ml-4 px-3 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm flex-shrink-0">
                   <Plus size={14} /> Registrar cumplimiento
                 </button>
               </div>
@@ -306,7 +306,7 @@ export default function MatrizLegalPage() {
                         </div>
                         {c.fields['Evidencia URL'] && (
                           <a href={c.fields['Evidencia URL']} target="_blank" rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline flex-shrink-0">
+                            className="text-xs text-green-700 hover:underline flex-shrink-0">
                             Evidencia
                           </a>
                         )}
@@ -382,7 +382,7 @@ export default function MatrizLegalPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setModalRequisito(false); setEditId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearRequisito} disabled={guardando || !formReq.Norma}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Crear'}
             </button>
           </div>
@@ -436,7 +436,7 @@ export default function MatrizLegalPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalCumplimiento(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearCumplimiento} disabled={guardando}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Registrar'}
             </button>
           </div>

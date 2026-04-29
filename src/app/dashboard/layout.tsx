@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -25,7 +25,7 @@ export default function DashboardLayout({
   if (isLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Loader className="w-8 h-8 text-blue-600 animate-spin" />
+        <Loader className="w-8 h-8 text-green-700 animate-spin" />
       </div>
     )
   }

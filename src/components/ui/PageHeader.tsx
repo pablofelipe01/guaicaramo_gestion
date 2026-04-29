@@ -1,4 +1,4 @@
-import { type LucideIcon } from 'lucide-react'
+﻿import { type LucideIcon } from 'lucide-react'
 
 interface PageHeaderProps {
   title: string
@@ -12,7 +12,7 @@ export function PageHeader({
   title,
   description,
   icon: Icon,
-  iconColor = 'text-blue-600',
+  iconColor = 'text-green-700',
   actions,
 }: PageHeaderProps) {
   return (

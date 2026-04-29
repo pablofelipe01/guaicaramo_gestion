@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -155,8 +155,8 @@ export default function IncidentesPage() {
       key: 'ver', header: '',
       render: r => (
         <div className="flex gap-1 items-center">
-          <button onClick={() => selectIncidente(r)} className="text-blue-600 text-sm hover:underline">Ver</button>
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => selectIncidente(r)} className="text-green-700 text-sm hover:underline">Ver</button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={13} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
         </div>
       ),
@@ -184,7 +184,7 @@ export default function IncidentesPage() {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? 'bg-green-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
           >
             {tab === 'lista' ? 'Lista' : 'Estadísticas'}
           </button>

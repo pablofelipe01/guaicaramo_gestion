@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -171,7 +171,7 @@ export default function PlanTrabajoPage() {
         title="Plan de Trabajo Anual"
         description="Planificación y seguimiento del SG-SST"
         actions={
-          <button onClick={() => setModalPlan(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+          <button onClick={() => setModalPlan(true)} className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> Nuevo plan
           </button>
         }
@@ -190,7 +190,7 @@ export default function PlanTrabajoPage() {
                 {planes.map(p => (
                   <li
                     key={p.id}
-                    className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === p.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
+                    className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === p.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}
                   >
                     <div onClick={() => seleccionar(p)} className="cursor-pointer">
                       <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
@@ -221,13 +221,13 @@ export default function PlanTrabajoPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setTab('actividades')}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'actividades' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'actividades' ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}
                 >
                   <ChevronRight size={15} /> Actividades
                 </button>
                 <button
                   onClick={() => setTab('dashboard')}
-                  className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'dashboard' ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}
                 >
                   <BarChart2 size={15} /> Dashboard
                 </button>
@@ -284,7 +284,7 @@ export default function PlanTrabajoPage() {
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-20 bg-gray-200 rounded-full h-1.5">
-                                  <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${a.fields['Porcentaje Avance']}%` }} />
+                                  <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${a.fields['Porcentaje Avance']}%` }} />
                                 </div>
                                 <span className="text-xs text-gray-600 w-8">{a.fields['Porcentaje Avance']}%</span>
                               </div>
@@ -314,16 +314,16 @@ export default function PlanTrabajoPage() {
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
                       <Card>
-                        <div className="text-3xl font-bold text-blue-600">{dashboard.cumplimiento.toFixed(0)}%</div>
+                        <div className="text-3xl font-bold text-green-700">{dashboard.cumplimiento.toFixed(0)}%</div>
                         <div className="text-sm text-gray-500 mt-1">Cumplimiento general</div>
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${dashboard.cumplimiento}%` }} />
+                          <div className="bg-green-600 h-2 rounded-full" style={{ width: `${dashboard.cumplimiento}%` }} />
                         </div>
                       </Card>
                       <Card>
                         <div className="grid grid-cols-3 gap-2 text-center">
                           <div><div className="text-2xl font-bold text-green-600">{dashboard.completadas}</div><div className="text-xs text-gray-500">Completadas</div></div>
-                          <div><div className="text-2xl font-bold text-blue-600">{dashboard.enProgreso}</div><div className="text-xs text-gray-500">En progreso</div></div>
+                          <div><div className="text-2xl font-bold text-green-700">{dashboard.enProgreso}</div><div className="text-xs text-gray-500">En progreso</div></div>
                           <div><div className="text-2xl font-bold text-gray-400">{dashboard.pendientes}</div><div className="text-xs text-gray-500">Pendientes</div></div>
                         </div>
                         <div className="text-xs text-gray-400 text-center mt-2">{dashboard.total} actividades total</div>
@@ -335,10 +335,10 @@ export default function PlanTrabajoPage() {
                             const pct = dashboard.porCiclo[c] ?? 0
                             return (
                               <div key={c} className="text-center">
-                                <div className="text-xl font-bold text-blue-600">{pct.toFixed(0)}%</div>
+                                <div className="text-xl font-bold text-green-700">{pct.toFixed(0)}%</div>
                                 <div className="text-xs text-gray-500">{c}</div>
                                 <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                                  <div className="bg-blue-400 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                                  <div className="bg-green-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
                                 </div>
                               </div>
                             )
@@ -390,7 +390,7 @@ export default function PlanTrabajoPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalPlan(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearPlan} disabled={guardando || !formPlan.Titulo}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Crear'}
             </button>
           </div>
@@ -422,7 +422,7 @@ export default function PlanTrabajoPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalEditarPlan(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={editarPlan} disabled={guardando || !formEditarPlan.Titulo}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Guardar'}
             </button>
           </div>

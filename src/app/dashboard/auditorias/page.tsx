@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { BarChart2, Plus, X, Loader2, CheckCircle2, AlertCircle, ClipboardList, Pencil, Trash2 } from 'lucide-react'
@@ -11,7 +11,7 @@ function getHeaders() {
 }
 
 const ESTADO_LABELS: Record<string, { label: string; color: string }> = {
-  planificada:   { label: 'Planificada',    color: 'bg-blue-50 text-blue-700' },
+  planificada:   { label: 'Planificada',    color: 'bg-green-50 text-green-800' },
   en_ejecucion:  { label: 'En ejecución',   color: 'bg-yellow-50 text-yellow-700' },
   cerrada:       { label: 'Cerrada',         color: 'bg-green-50 text-green-700' },
 }
@@ -100,7 +100,7 @@ export default function AuditoriasPage() {
         </div>
         <button
           onClick={() => { setError(''); setEditId(null); setForm({ Tipo: 'interna', Estado: 'planificada' }); setModalAbierto(true) }}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white text-sm font-medium rounded-lg hover:bg-green-800 transition-colors"
         >
           <Plus className="w-4 h-4" /> Nueva auditoría
         </button>
@@ -116,7 +116,7 @@ export default function AuditoriasPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
             { label: 'Total', value: stats.total, color: 'text-gray-900' },
-            { label: 'Planificadas', value: stats.planificadas, color: 'text-blue-600' },
+            { label: 'Planificadas', value: stats.planificadas, color: 'text-green-700' },
             { label: 'En ejecución', value: stats.enEjecucion, color: 'text-yellow-600' },
             { label: 'Cerradas', value: stats.cerradas, color: 'text-green-600' },
             { label: 'NC abiertas', value: stats.noConformidadesAbiertas, color: 'text-red-500' },
@@ -167,7 +167,7 @@ export default function AuditoriasPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1 justify-end">
-                        <button onClick={() => { setEditId(a.id); setForm({ ...a.fields }); setModalAbierto(true) }} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => { setEditId(a.id); setForm({ ...a.fields }); setModalAbierto(true) }} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil className="w-3.5 h-3.5" /></button>
                         <button onClick={() => setConfirmDelete(a.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     </td>
@@ -224,7 +224,7 @@ export default function AuditoriasPage() {
               <button onClick={() => { setModalAbierto(false); setEditId(null); setForm({ Tipo: 'interna', Estado: 'planificada' }) }} className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">
                 Cancelar
               </button>
-              <button onClick={crear} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              <button onClick={crear} className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800">
                 {editId ? 'Actualizar' : 'Crear'}
               </button>
             </div>

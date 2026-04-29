@@ -25,8 +25,8 @@ export default function AuthContainer() {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Lock className="w-6 h-6 text-blue-600" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Lock className="w-6 h-6 text-green-700" />
               </div>
               <h1 className="text-2xl font-bold text-gray-900">Guaicaramo</h1>
             </div>
@@ -37,9 +37,9 @@ export default function AuthContainer() {
           <p className="text-gray-600 text-sm mb-6">Accede a tu cuenta para continuar</p>
 
           {/* Indicador de Seguridad */}
-          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg mb-6">
-            <Shield className="w-5 h-5 text-blue-600" />
-            <span className="text-xs text-blue-700 font-medium">
+          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg mb-6">
+            <Shield className="w-5 h-5 text-green-700" />
+            <span className="text-xs text-green-800 font-medium">
               Conexión segura a Airtable
             </span>
           </div>

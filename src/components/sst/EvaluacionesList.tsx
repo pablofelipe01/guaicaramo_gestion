@@ -78,7 +78,7 @@ export function EvaluacionesList() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader className="w-6 h-6 animate-spin text-blue-600" />
+        <Loader className="w-6 h-6 animate-spin text-green-700" />
       </div>
     )
   }

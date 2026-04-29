@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -156,7 +156,7 @@ export default function GestionCambioPage() {
         description="Control de cambios organizacionales y tecnológicos en el SG-SST"
         actions={
           <button onClick={() => setModalCambio(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> Nuevo cambio
           </button>
         }
@@ -171,7 +171,7 @@ export default function GestionCambioPage() {
               : <ul>
                   {cambios.map(c => (
                     <li key={c.id}
-                      className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                      className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                       <div className="flex items-start gap-1">
                         <button className="flex-1 text-left min-w-0" onClick={() => seleccionar(c)}>
                           <div className="font-medium text-sm text-gray-900 truncate">{c.fields.Titulo}</div>
@@ -185,7 +185,7 @@ export default function GestionCambioPage() {
                           <div className="text-xs text-gray-400 mt-1">{c.fields.Solicitante}</div>
                         </button>
                         <div className="flex gap-0.5 flex-shrink-0">
-                          <button onClick={e => { e.stopPropagation(); editarCambio(c) }} className="p-1 text-gray-300 hover:text-blue-600" title="Editar"><Pencil size={12} /></button>
+                          <button onClick={e => { e.stopPropagation(); editarCambio(c) }} className="p-1 text-gray-300 hover:text-green-700" title="Editar"><Pencil size={12} /></button>
                           <button onClick={e => { e.stopPropagation(); setConfirmDelete(c.id) }} className="p-1 text-gray-300 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
                         </div>
                       </div>
@@ -217,7 +217,7 @@ export default function GestionCambioPage() {
                 </div>
                 {seleccionado.fields.Estado === 'borrador' && (
                   <button onClick={() => enviarRevision(seleccionado)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex-shrink-0">
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm flex-shrink-0">
                     <RotateCcw size={14} /> Enviar a revisión
                   </button>
                 )}
@@ -228,14 +228,14 @@ export default function GestionCambioPage() {
             <div className="flex gap-2">
               {(['aprobaciones', 'controles'] as const).map(t => (
                 <button key={t} onClick={() => setTab(t)}
-                  className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === t ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
+                  className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === t ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
                   {t.charAt(0).toUpperCase() + t.slice(1)}
                 </button>
               ))}
               <div className="flex-1" />
               {tab === 'aprobaciones' && seleccionado.fields.Estado === 'en_revision' && (
                 <button onClick={() => setModalAprobacion(true)}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800">
                   <Plus size={12} /> Decisión
                 </button>
               )}
@@ -338,7 +338,7 @@ export default function GestionCambioPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setModalCambio(false); setEditId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearCambio} disabled={guardando || !formCambio.Titulo}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Crear'}
             </button>
           </div>
@@ -385,7 +385,7 @@ export default function GestionCambioPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalAprobacion(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={registrarAprobacion} disabled={guardando}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Registrar'}
             </button>
           </div>

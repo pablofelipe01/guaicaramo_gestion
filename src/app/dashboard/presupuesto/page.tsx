@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -247,7 +247,7 @@ export default function PresupuestoPage() {
         title="Presupuesto SST"
         description="Seguimiento financiero del sistema de gestión"
         actions={
-          <button onClick={() => setModalPpto(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+          <button onClick={() => setModalPpto(true)} className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> Nuevo presupuesto
           </button>
         }
@@ -265,7 +265,7 @@ export default function PresupuestoPage() {
               <ul>
                 {presupuestos.map(p => (
                   <li key={p.id} onClick={() => seleccionar(p)}
-                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionado?.id === p.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                    className={`p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors ${seleccionado?.id === p.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                     <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
                     <div className="flex items-center gap-2 mt-1">
                       <StatusBadge variant={PPTO_ESTADO_VARIANT[p.fields.Estado]} label={p.fields.Estado} />
@@ -297,7 +297,7 @@ export default function PresupuestoPage() {
                 <>
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-gray-700">{seleccionado.fields.Titulo}</h3>
-                    <button onClick={abrirEditPpto} className="text-xs px-2 py-1 text-blue-600 hover:bg-blue-50 rounded">Editar</button>
+                    <button onClick={abrirEditPpto} className="text-xs px-2 py-1 text-green-700 hover:bg-green-50 rounded">Editar</button>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <Card>
@@ -306,7 +306,7 @@ export default function PresupuestoPage() {
                     </Card>
                     <Card>
                       <div className="text-xs text-gray-500">Ejecutado</div>
-                      <div className="text-lg font-bold text-blue-600">{fmt(totalEjecutado)}</div>
+                      <div className="text-lg font-bold text-green-700">{fmt(totalEjecutado)}</div>
                     </Card>
                     <Card>
                       <div className="text-xs text-gray-500">% Ejecución</div>
@@ -316,13 +316,13 @@ export default function PresupuestoPage() {
                     </Card>
                   </div>
                   {seleccionado.fields.Estado !== 'cerrado' && (
-                    <Card className="bg-blue-50 border-l-4 border-l-blue-400">
+                    <Card className="bg-green-50 border-l-4 border-l-green-500">
                       <div className="text-xs font-semibold text-gray-700 mb-2">Cambiar estado: {seleccionado.fields.Estado}</div>
                       <div className="flex flex-wrap gap-2">
                         {seleccionado.fields.Estado === 'borrador' && (
                           <>
                             <button onClick={() => cambiarEstado('aprobado')} disabled={guardando}
-                              className="text-xs px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50">→ Aprobado</button>
+                              className="text-xs px-3 py-1 bg-green-700 text-white rounded hover:bg-green-800 disabled:opacity-50">→ Aprobado</button>
                             <button onClick={() => cambiarEstado('cancelado')} disabled={guardando}
                               className="text-xs px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50">→ Cancelado</button>
                           </>
@@ -370,7 +370,7 @@ export default function PresupuestoPage() {
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-gray-50">
                   <span className="text-sm font-semibold text-gray-700">Rubros</span>
                   <button onClick={() => setModalRubro(true)}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800">
                     <Plus size={12} /> Rubro
                   </button>
                 </div>
@@ -382,10 +382,10 @@ export default function PresupuestoPage() {
                   <ul>
                     {rubros.map(r => {
                       const p = pct(r.fields['Valor Ejecutado'], r.fields['Valor Presupuestado'])
-                      const color = p > 80 ? 'bg-red-500' : p < 50 && p > 0 ? 'bg-yellow-400' : 'bg-blue-500'
+                      const color = p > 80 ? 'bg-red-500' : p < 50 && p > 0 ? 'bg-yellow-400' : 'bg-green-600'
                       return (
                         <li key={r.id}
-                          className={`p-4 border-b hover:bg-gray-50 transition-colors flex items-start justify-between gap-2 ${rubroActivo?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                          className={`p-4 border-b hover:bg-gray-50 transition-colors flex items-start justify-between gap-2 ${rubroActivo?.id === r.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                           <div onClick={() => seleccionarRubro(r)} className="flex-1 cursor-pointer">
                             <div className="font-medium text-sm text-gray-800">{r.fields['Nombre Rubro']}</div>
                             <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded mt-0.5 inline-block">{CAT_LABEL[r.fields.Categoria]}</span>
@@ -401,7 +401,7 @@ export default function PresupuestoPage() {
                           </div>
                           <div className="flex gap-1 flex-shrink-0">
                             <button onClick={(e) => { e.stopPropagation(); abrirEditRubro(r) }}
-                              className="text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded">Editar</button>
+                              className="text-xs text-green-700 hover:bg-green-50 px-2 py-1 rounded">Editar</button>
                             <button onClick={(e) => { e.stopPropagation(); eliminarRubro(r) }}
                               className="text-xs text-red-600 hover:bg-red-50 px-1.5 py-1 rounded" title="Eliminar rubro">
                               <Trash2 size={14} />
@@ -436,7 +436,7 @@ export default function PresupuestoPage() {
                         {ejecuciones.map(e => (
                           <li key={e.id} className="p-3 border-b">
                             <div className="text-sm font-medium text-gray-800">{e.fields.Descripcion}</div>
-                            <div className="text-sm font-bold text-blue-600 mt-0.5">{fmt(e.fields.Valor)}</div>
+                            <div className="text-sm font-bold text-green-700 mt-0.5">{fmt(e.fields.Valor)}</div>
                             <div className="flex gap-2 text-xs text-gray-400 mt-0.5">
                               {e.fields.Fecha && <span>{e.fields.Fecha}</span>}
                               {e.fields.Proveedor && <span>· {e.fields.Proveedor}</span>}
@@ -477,7 +477,7 @@ export default function PresupuestoPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalPpto(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearPpto} disabled={guardando || !formPpto.Titulo || !formPpto['Total Presupuestado']}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Crear'}
             </button>
           </div>
@@ -509,7 +509,7 @@ export default function PresupuestoPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalRubro(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearRubro} disabled={guardando || !formRubro['Nombre Rubro']}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Crear'}
             </button>
           </div>
@@ -567,7 +567,7 @@ export default function PresupuestoPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalEditPpto(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={editarPpto} disabled={guardando || !formEditPpto.Titulo}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Actualizar'}
             </button>
           </div>
@@ -590,7 +590,7 @@ export default function PresupuestoPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalEditRubro(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={editarRubro} disabled={guardando || !formEditRubro['Nombre Rubro']}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Actualizar'}
             </button>
           </div>

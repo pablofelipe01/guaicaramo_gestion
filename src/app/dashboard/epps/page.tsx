@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -111,7 +111,7 @@ export default function EppsPage() {
       key: 'acciones', header: '',
       render: r => (
         <div className="flex gap-1 justify-end">
-          <button onClick={() => editarCatalogo(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => editarCatalogo(r)} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={13} /></button>
           <button onClick={() => { setConfirmDelete(r.id); setDeleteType('catalogo') }} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
         </div>
       ),
@@ -159,7 +159,7 @@ export default function EppsPage() {
               <Package size={16} /> Nuevo EPP
             </button>
             <button onClick={() => setShowEntregaModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+              className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800">
               <Plus size={16} /> Registrar Entrega
             </button>
           </div>
@@ -185,7 +185,7 @@ export default function EppsPage() {
         ].map(s => (
           <Card key={s.label}>
             <div className="p-4 flex items-center gap-3">
-              <s.icon size={24} className="text-blue-500" />
+              <s.icon size={24} className="text-green-600" />
               <div>
                 <p className="text-2xl font-bold">{s.value}</p>
                 <p className="text-xs text-gray-500">{s.label}</p>
@@ -198,7 +198,7 @@ export default function EppsPage() {
       <div className="flex gap-2">
         {(['entregas', 'catalogo'] as const).map(t => (
           <button key={t} onClick={() => setActiveTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === t ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === t ? 'bg-green-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
             {t === 'entregas' ? `Historial de Entregas (${entregas.length})` : `Catálogo (${catalogo.length})`}
           </button>
         ))}
@@ -253,7 +253,7 @@ export default function EppsPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setShowCatalogoModal(false); setEditCatId(null); setCatForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button onClick={handleSaveCatalogo} disabled={saving || !catForm.Nombre || !catForm.Tipo}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50">
               {saving ? 'Guardando...' : editCatId ? 'Actualizar' : 'Guardar'}
             </button>
           </div>
@@ -323,7 +323,7 @@ export default function EppsPage() {
             <button onClick={() => { setShowEntregaModal(false); setEntregaForm({}) }} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button onClick={handleSaveEntrega}
               disabled={saving || !entregaForm['Trabajador ID'] || !entregaForm['Catalogo ID'] || !entregaForm.Motivo || !entregaForm['Fecha Entrega']}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50">
               {saving ? 'Guardando...' : 'Registrar Entrega'}
             </button>
           </div>

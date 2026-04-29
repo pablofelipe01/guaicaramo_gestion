@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -153,7 +153,7 @@ export default function ContratistasPage() {
         description="Control de requisitos SST y semáforo de cumplimiento"
         actions={
           <button onClick={() => setModalContratista(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> Nuevo contratista
           </button>
         }
@@ -168,7 +168,7 @@ export default function ContratistasPage() {
               : <ul>
                   {contratistas.map(c => (
                     <li key={c.id}
-                      className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                      className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionado?.id === c.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                       <div className="flex items-start justify-between gap-1">
                         <button className="flex-1 text-left min-w-0" onClick={() => seleccionar(c)}>
                           <div className="font-medium text-sm text-gray-900 truncate">{c.fields['Nombre Empresa']}</div>
@@ -176,7 +176,7 @@ export default function ContratistasPage() {
                           {c.fields.Actividad && <div className="text-xs text-gray-400 truncate mt-0.5">{c.fields.Actividad}</div>}
                         </button>
                         <div className="flex gap-0.5 flex-shrink-0">
-                          <button onClick={e => { e.stopPropagation(); editarContratista(c) }} className="p-1 text-gray-300 hover:text-blue-600" title="Editar"><Pencil size={12} /></button>
+                          <button onClick={e => { e.stopPropagation(); editarContratista(c) }} className="p-1 text-gray-300 hover:text-green-700" title="Editar"><Pencil size={12} /></button>
                           <button onClick={e => { e.stopPropagation(); setConfirmDelete(c.id) }} className="p-1 text-gray-300 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
                         </div>
                       </div>
@@ -216,17 +216,17 @@ export default function ContratistasPage() {
             {/* Tabs */}
             <div className="flex gap-2">
               <button onClick={() => setTab('documentos')}
-                className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'documentos' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'documentos' ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
                 Documentos
               </button>
               <button onClick={() => setTab('trabajadores')}
-                className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'trabajadores' ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
+                className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === 'trabajadores' ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
                 Trabajadores
               </button>
               <div className="flex-1" />
               {tab === 'documentos' ? (
                 <button onClick={() => setModalDoc(true)}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800">
                   <Plus size={12} /> Documento
                 </button>
               ) : (
@@ -255,7 +255,7 @@ export default function ContratistasPage() {
                               <td className="px-4 py-3"><StatusBadge variant={DOC_ESTADO_VARIANT[d.fields.Estado]} label={d.fields.Estado} /></td>
                               <td className="px-4 py-3">
                                 {d.fields['URL Documento']
-                                  ? <a href={d.fields['URL Documento']} target="_blank" rel="noopener noreferrer" className="text-blue-600 text-xs hover:underline">Ver</a>
+                                  ? <a href={d.fields['URL Documento']} target="_blank" rel="noopener noreferrer" className="text-green-700 text-xs hover:underline">Ver</a>
                                   : <span className="text-gray-400 text-xs">—</span>}
                               </td>
                             </tr>
@@ -324,7 +324,7 @@ export default function ContratistasPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setModalContratista(false); setEditId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearContratista} disabled={guardando || !formCont['Nombre Empresa'] || !formCont.NIT}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Registrar'}
             </button>
           </div>
@@ -365,7 +365,7 @@ export default function ContratistasPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalDoc(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearDocumento} disabled={guardando || !formDoc['Fecha Vencimiento']}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Agregar'}
             </button>
           </div>

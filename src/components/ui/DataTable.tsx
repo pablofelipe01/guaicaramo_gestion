@@ -27,7 +27,7 @@ export function DataTable<T extends { id: string }>({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <Loader className="w-6 h-6 text-blue-600 animate-spin" />
+        <Loader className="w-6 h-6 text-green-700 animate-spin" />
       </div>
     )
   }

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -122,10 +122,10 @@ export default function InspeccionesPage() {
       key: 'ver', header: '',
       render: r => (
         <div className="flex items-center gap-2 justify-end">
-          <button onClick={() => selectInspeccion(r)} className="text-blue-600 text-sm hover:underline">
+          <button onClick={() => selectInspeccion(r)} className="text-green-700 text-sm hover:underline">
             Ver <ChevronRight size={14} className="inline" />
           </button>
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-blue-600" title="Editar"><Pencil size={14} /></button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-green-700" title="Editar"><Pencil size={14} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-500 hover:text-red-600" title="Eliminar"><Trash2 size={14} /></button>
         </div>
       ),
@@ -141,7 +141,7 @@ export default function InspeccionesPage() {
         actions={
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800"
           >
             <Plus size={16} /> Nueva Inspección
           </button>
@@ -250,7 +250,7 @@ export default function InspeccionesPage() {
             <button
               onClick={handleSave}
               disabled={saving || !form['Tipo ID'] || !form.Area || !form['Fecha Programada']}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Guardar'}
             </button>

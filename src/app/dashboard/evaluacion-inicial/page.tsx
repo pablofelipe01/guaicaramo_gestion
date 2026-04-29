@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -170,7 +170,7 @@ export default function EvaluacionInicialPage() {
         actions={
           <button
             onClick={() => setModalNueva(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium"
           >
             <Plus size={16} /> Nueva evaluación
           </button>
@@ -190,7 +190,7 @@ export default function EvaluacionInicialPage() {
                 {evaluaciones.map(ev => (
                   <li
                     key={ev.id}
-                    className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionada?.id === ev.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}
+                    className={`p-4 border-b hover:bg-gray-50 transition-colors ${seleccionada?.id === ev.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}
                   >
                     <div onClick={() => seleccionar(ev)} className="cursor-pointer">
                       <div className="font-medium text-sm text-gray-900 truncate">{ev.fields.Titulo}</div>
@@ -204,7 +204,7 @@ export default function EvaluacionInicialPage() {
                     </div>
                     <div className="flex gap-1 mt-2">
                       <button onClick={e => { e.stopPropagation(); setEditId(ev.id); setForm({ Titulo: ev.fields.Titulo, Descripcion: ev.fields.Descripcion ?? '' }); setModalNueva(true) }}
-                        className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+                        className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={13} /></button>
                       <button onClick={e => { e.stopPropagation(); setConfirmDelete(ev.id) }}
                         className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
                     </div>
@@ -316,7 +316,7 @@ export default function EvaluacionInicialPage() {
             <button
               onClick={crearEvaluacion}
               disabled={guardando || !form.Titulo}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50"
             >
               {guardando ? 'Guardando...' : editId ? 'Actualizar' : 'Crear'}
             </button>

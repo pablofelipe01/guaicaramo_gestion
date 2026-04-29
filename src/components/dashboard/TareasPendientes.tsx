@@ -9,9 +9,9 @@ const CICLOS: TareaDashboard['cicloPhva'][] = ['Planear', 'Hacer', 'Verificar', 
 
 const CICLO_CONFIG: Record<TareaDashboard['cicloPhva'], { color: string; active: string; dot: string }> = {
   Planear: {
-    color: 'text-blue-700',
-    active: 'border-b-2 border-blue-500 text-blue-700',
-    dot: 'bg-blue-500',
+    color: 'text-teal-700',
+    active: 'border-b-2 border-teal-500 text-teal-700',
+    dot: 'bg-teal-500',
   },
   Hacer: {
     color: 'text-green-700',
@@ -70,7 +70,7 @@ export function TareasPendientes({ tareas }: TareasPendientesProps) {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
       <h2 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <ClipboardList className="w-4 h-4 text-blue-600" />
+        <ClipboardList className="w-4 h-4 text-green-700" />
         Tareas pendientes
         <span className="ml-auto text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
           {tareas.length} total

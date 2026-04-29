@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -134,7 +134,7 @@ export default function PerfilesCargoPage() {
         icon={UserCog}
         iconColor="text-green-600"
         actions={
-          <button onClick={() => setModalPerfil(true)} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+          <button onClick={() => setModalPerfil(true)} className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg text-sm font-medium hover:bg-green-800">
             <Plus className="w-4 h-4" /> Nuevo cargo
           </button>
         }
@@ -153,10 +153,10 @@ export default function PerfilesCargoPage() {
               emptyMessage="No hay perfiles de cargo"
               actions={(row) => (
                 <div className="flex items-center gap-1">
-                  <button onClick={() => seleccionarPerfil(row as unknown as Perfil)} className="text-blue-600 hover:text-blue-800">
+                  <button onClick={() => seleccionarPerfil(row as unknown as Perfil)} className="text-green-700 hover:text-green-900">
                     <ChevronRight className="w-4 h-4" />
                   </button>
-                  <button onClick={() => editarPerfil(row as unknown as Perfil)} className="text-gray-400 hover:text-blue-600" title="Editar">
+                  <button onClick={() => editarPerfil(row as unknown as Perfil)} className="text-gray-400 hover:text-green-700" title="Editar">
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button onClick={() => setConfirmDelete((row as unknown as Perfil).id)} className="text-gray-400 hover:text-red-600" title="Eliminar">
@@ -192,7 +192,7 @@ export default function PerfilesCargoPage() {
                   <button
                     key={key}
                     onClick={() => setTab(key)}
-                    className={['flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 -mb-px', tab === key ? 'border-blue-600 text-blue-700 font-medium' : 'border-transparent text-gray-500 hover:text-gray-700'].join(' ')}
+                    className={['flex items-center gap-1.5 px-4 py-2.5 text-sm border-b-2 -mb-px', tab === key ? 'border-green-700 text-green-800 font-medium' : 'border-transparent text-gray-500 hover:text-gray-700'].join(' ')}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     {label}
@@ -203,7 +203,7 @@ export default function PerfilesCargoPage() {
 
               <div className="p-4">
                 <div className="flex justify-end mb-3">
-                  <button onClick={() => { setFormSub({}); setModalSubrecurso(true) }} className="flex items-center gap-1 text-xs px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100">
+                  <button onClick={() => { setFormSub({}); setModalSubrecurso(true) }} className="flex items-center gap-1 text-xs px-3 py-1.5 bg-green-50 text-green-800 rounded-lg hover:bg-green-100">
                     <Plus className="w-3 h-3" /> Agregar
                   </button>
                 </div>
@@ -229,7 +229,7 @@ export default function PerfilesCargoPage() {
                   <div className="space-y-2">
                     {loadingDetalle ? <p className="text-sm text-gray-400">Cargando...</p> : detalle.epps.length === 0 ? <p className="text-sm text-gray-400">Sin EPPs registrados</p> : detalle.epps.map(e => (
                       <div key={e.id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                        <Shield className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                        <Shield className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-800">{e.fields['Nombre EPP']}</p>
                           <div className="flex gap-2 mt-1 flex-wrap">

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -112,10 +112,10 @@ export default function CasosMedicosPage() {
       key: 'acciones', header: '',
       render: r => (
         <div className="flex items-center gap-1">
-          <button onClick={() => selectCaso(r)} className="flex items-center gap-1 text-blue-600 text-sm hover:underline">
+          <button onClick={() => selectCaso(r)} className="flex items-center gap-1 text-green-700 text-sm hover:underline">
             Ver <ChevronRight size={14} />
           </button>
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={13} /></button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={13} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={13} /></button>
         </div>
       ),
@@ -131,7 +131,7 @@ export default function CasosMedicosPage() {
         actions={
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800"
           >
             <Plus size={16} /> Nuevo Caso
           </button>
@@ -151,7 +151,7 @@ export default function CasosMedicosPage() {
                   <button
                     key={c.id}
                     onClick={() => selectCaso(c)}
-                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${selected?.id === c.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}
+                    className={`w-full text-left p-4 hover:bg-gray-50 transition-colors ${selected?.id === c.id ? 'bg-green-50 border-l-4 border-green-700' : ''}`}
                   >
                     <p className="font-medium text-sm">{c.fields['Trabajador Nombre'] ?? c.fields['Trabajador ID']}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{TIPO_LABEL[c.fields.Tipo]} · {c.fields['Fecha Apertura']}</p>
@@ -172,7 +172,7 @@ export default function CasosMedicosPage() {
                 </div>
                 <button
                   onClick={() => setShowSeguimientoModal(true)}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                  className="flex items-center gap-2 px-3 py-1.5 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800"
                 >
                   <MessageSquare size={14} /> Agregar nota
                 </button>
@@ -250,7 +250,7 @@ export default function CasosMedicosPage() {
             <button
               onClick={handleSave}
               disabled={saving || !form['Trabajador ID'] || !form.Tipo}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Crear Caso'}
             </button>
@@ -282,7 +282,7 @@ export default function CasosMedicosPage() {
             <button
               onClick={handleSeguimiento}
               disabled={saving || !nota}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : 'Guardar Nota'}
             </button>

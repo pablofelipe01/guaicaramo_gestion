@@ -49,7 +49,7 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'PLANEAR',
     label: 'Planear',
-    dotColor: 'bg-blue-400',
+    dotColor: 'bg-teal-400',
     modules: [
       { name: 'Evaluación Inicial', desc: 'Diagnóstico Res. 0312', href: '/dashboard/evaluacion-inicial', icon: ClipboardList },
       { name: 'Plan de Trabajo Anual', desc: 'Actividades y seguimiento', href: '/dashboard/plan-trabajo', icon: Calendar },

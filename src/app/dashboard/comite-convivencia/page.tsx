@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -199,7 +199,7 @@ export default function ComiteConvivenciaPage() {
         description="Res. 652 y 1356 de 2012"
         actions={
           <button onClick={() => setModalComite(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> {comite ? 'Nuevo comité' : 'Crear comité'}
           </button>
         }
@@ -243,7 +243,7 @@ export default function ComiteConvivenciaPage() {
                   onClick={() => { setTab('reuniones'); setReunionActiva(null) }}
                   className={`w-full text-left px-3 py-2 text-xs rounded font-medium transition-colors ${
                     tab === 'reuniones'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-green-700 text-white'
                       : 'text-gray-600 hover:bg-gray-50'
                   }`}
                 >
@@ -277,7 +277,7 @@ export default function ComiteConvivenciaPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-gray-700">Reuniones</span>
                     <button onClick={() => setModalReunion(true)}
-                      className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                      className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800">
                       <Plus size={12} /> Nueva
                     </button>
                   </div>
@@ -288,7 +288,7 @@ export default function ComiteConvivenciaPage() {
                       <ul>
                         {reuniones.map(r => (
                           <li key={r.id}
-                            className={`p-3 border-b hover:bg-gray-50 transition-colors ${reunionActiva?.id === r.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                            className={`p-3 border-b hover:bg-gray-50 transition-colors ${reunionActiva?.id === r.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                             <div onClick={() => seleccionarReunion(r)} className="cursor-pointer">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{r.fields.Tipo}</span>
@@ -421,7 +421,7 @@ export default function ComiteConvivenciaPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalComite(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearComite} disabled={guardando || !formComite.Nombre}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Crear'}
             </button>
           </div>
@@ -453,7 +453,7 @@ export default function ComiteConvivenciaPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalReunion(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearReunion} disabled={guardando || !formReunion.Fecha}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Crear'}
             </button>
           </div>

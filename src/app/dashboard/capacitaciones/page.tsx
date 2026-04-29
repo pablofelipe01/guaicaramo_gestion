@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -201,7 +201,7 @@ export default function CapacitacionesPage() {
         description="Planeación y control del programa anual SST"
         actions={
           <button onClick={() => setModalPrograma(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> Nuevo programa
           </button>
         }
@@ -210,7 +210,7 @@ export default function CapacitacionesPage() {
       <div className="flex gap-2">
         {['lista', 'cobertura'].map(t => (
           <button key={t} onClick={() => setTab(t as 'lista' | 'cobertura')}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === t ? 'bg-blue-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === t ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
             {t === 'lista' ? <><GraduationCap size={15} /> Capacitaciones</> : <><BarChart2 size={15} /> Cobertura</>}
           </button>
         ))}
@@ -223,17 +223,17 @@ export default function CapacitacionesPage() {
           ) : (
             <div className="grid grid-cols-2 gap-3">
               <Card>
-                <div className="text-3xl font-bold text-blue-600">{cobertura.cobertura}%</div>
+                <div className="text-3xl font-bold text-green-700">{cobertura.cobertura}%</div>
                 <div className="text-sm text-gray-500 mt-1">Cobertura general</div>
                 <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${cobertura.cobertura}%` }} />
+                  <div className="bg-green-600 h-2 rounded-full" style={{ width: `${cobertura.cobertura}%` }} />
                 </div>
               </Card>
               <Card>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div><div className="text-2xl font-bold text-green-600">{cobertura.realizadas}</div><div className="text-xs text-gray-500">Realizadas</div></div>
                   <div><div className="text-2xl font-bold text-gray-400">{cobertura.totalCapacitaciones - cobertura.realizadas}</div><div className="text-xs text-gray-500">Pendientes</div></div>
-                  <div><div className="text-2xl font-bold text-blue-600">{cobertura.asistieron}</div><div className="text-xs text-gray-500">Asistieron</div></div>
+                  <div><div className="text-2xl font-bold text-green-700">{cobertura.asistieron}</div><div className="text-xs text-gray-500">Asistieron</div></div>
                   <div><div className="text-2xl font-bold text-gray-400">{cobertura.totalAsistencias}</div><div className="text-xs text-gray-500">Registrados</div></div>
                 </div>
               </Card>
@@ -247,7 +247,7 @@ export default function CapacitacionesPage() {
                         <div key={cargo} className="flex items-center gap-3">
                           <div className="w-36 text-sm text-gray-600 truncate">{cargo}</div>
                           <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                            <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
+                            <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
                           </div>
                           <span className="text-xs text-gray-500 w-16 text-right">{data.asistieron}/{data.total} ({pct}%)</span>
                         </div>
@@ -269,7 +269,7 @@ export default function CapacitacionesPage() {
                 : <ul>
                     {programas.map(p => (
                       <li key={p.id} onClick={() => seleccionarPrograma(p)}
-                        className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${programaActivo?.id === p.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                        className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${programaActivo?.id === p.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                         <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
                         <div className="flex items-center justify-between mt-0.5">
                           <span className="text-xs text-gray-500">{p.fields['Año']}</span>
@@ -288,7 +288,7 @@ export default function CapacitacionesPage() {
             {programaActivo && (
               <div className="flex justify-end">
                 <button onClick={() => setModalCap(true)}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800">
                   <Plus size={12} /> Capacitación
                 </button>
               </div>
@@ -299,7 +299,7 @@ export default function CapacitacionesPage() {
                 : <ul>
                     {capacitaciones.map(c => (
                       <li key={c.id}
-                        className={`p-3 border-b hover:bg-gray-50 flex items-center justify-between gap-2 ${capActiva?.id === c.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''}`}>
+                        className={`p-3 border-b hover:bg-gray-50 flex items-center justify-between gap-2 ${capActiva?.id === c.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
                         <div onClick={() => seleccionarCap(c)} className="flex-1 cursor-pointer">
                           <div className="font-medium text-sm text-gray-800 truncate">{c.fields.Tema}</div>
                           <div className="flex items-center gap-2 mt-1">
@@ -310,7 +310,7 @@ export default function CapacitacionesPage() {
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); setEditCapId(c.id); setFormCap({ Tema: c.fields.Tema, Tipo: c.fields.Tipo, Modalidad: c.fields.Modalidad ?? 'presencial', Instructor: c.fields.Instructor ?? '', 'Fecha Programada': c.fields['Fecha Programada'] ?? '', Duracion: c.fields.Duracion?.toString() ?? '' }); setModalCap(true) }}
-                          className="flex-shrink-0 p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="flex-shrink-0 p-1.5 text-green-700 hover:bg-green-50 rounded-lg transition-colors"
                           title="Editar capacitación">
                           <Pencil size={14} />
                         </button>
@@ -385,7 +385,7 @@ export default function CapacitacionesPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalPrograma(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearPrograma} disabled={guardando || !formProg.Titulo}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : 'Crear'}
             </button>
           </div>
@@ -433,7 +433,7 @@ export default function CapacitacionesPage() {
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => { setModalCap(false); setEditCapId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
             <button onClick={crearCapacitacion} disabled={guardando || !formCap.Tema}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
+              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
               {guardando ? 'Guardando...' : editCapId ? 'Actualizar' : 'Crear'}
             </button>
           </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -56,7 +56,7 @@ function RolBadge({ rol }: { rol: string }) {
   // Claves fijas del sistema interno
   const fixed: Record<string, { label: string; cls: string }> = {
     superadmin:    { label: 'Superadmin',     cls: 'bg-red-100 text-red-700' },
-    administrador: { label: 'Administrador',  cls: 'bg-blue-100 text-blue-700' },
+    administrador: { label: 'Administrador',  cls: 'bg-green-100 text-green-800' },
     operativo:     { label: 'Operativo',      cls: 'bg-gray-100 text-gray-600' },
     'Sin rol':     { label: 'Sin rol',        cls: 'bg-yellow-50 text-yellow-600' },
   }
@@ -371,7 +371,7 @@ export default function UsuariosPage() {
         </div>
         <button
           onClick={() => setModalTipo('crear')}
-          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+          className="flex items-center gap-2 bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-800 transition-colors"
         >
           <Plus className="w-4 h-4" />
           Nuevo usuario
@@ -451,7 +451,7 @@ export default function UsuariosPage() {
                       <button
                         onClick={() => abrirEditar(u)}
                         title="Editar"
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        className="p-1.5 text-gray-400 hover:text-green-700 hover:bg-green-50 rounded transition-colors"
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -562,7 +562,7 @@ export default function UsuariosPage() {
               <button
                 type="submit"
                 disabled={crearLoading}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-800 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {crearLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Crear usuario
@@ -614,7 +614,7 @@ export default function UsuariosPage() {
               <button
                 type="submit"
                 disabled={editarLoading}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-800 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {editarLoading && <Loader2 className="w-4 h-4 animate-spin" />}
                 Guardar cambios

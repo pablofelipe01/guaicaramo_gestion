@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -103,7 +103,7 @@ export default function EvaluacionesMedicasPage() {
       key: 'acciones', header: '',
       render: r => (
         <div className="flex gap-1 justify-end">
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-blue-600" title="Editar"><Pencil size={14} /></button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-400 hover:text-green-700" title="Editar"><Pencil size={14} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={14} /></button>
         </div>
       ),
@@ -119,7 +119,7 @@ export default function EvaluacionesMedicasPage() {
         actions={
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800"
           >
             <Plus size={16} /> Nueva Evaluación
           </button>
@@ -249,7 +249,7 @@ export default function EvaluacionesMedicasPage() {
             <button
               onClick={handleSave}
               disabled={saving || !form['Trabajador ID'] || !form.Tipo || !form.Fecha || !form.Aptitud}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Guardar'}
             </button>

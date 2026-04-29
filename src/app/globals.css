@@ -144,7 +144,7 @@ select.input-field {
 
 /* Sistema de diseño — Badges PHVA */
 .badge-planear {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700;
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700;
 }
 .badge-hacer {
   @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700;

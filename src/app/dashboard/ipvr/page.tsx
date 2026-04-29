@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -105,7 +105,7 @@ export default function IpvrPage() {
       key: 'acciones', header: '',
       render: r => (
         <div className="flex gap-2 justify-end">
-          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-blue-600" title="Editar"><Pencil size={15} /></button>
+          <button onClick={() => handleEdit(r)} className="p-1 text-gray-500 hover:text-green-700" title="Editar"><Pencil size={15} /></button>
           <button onClick={() => setConfirmDelete(r.id)} className="p-1 text-gray-500 hover:text-red-600" title="Eliminar"><Trash2 size={15} /></button>
         </div>
       ),
@@ -123,7 +123,7 @@ export default function IpvrPage() {
         actions={
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800"
           >
             <Plus size={16} /> Nuevo Registro
           </button>
@@ -155,7 +155,7 @@ export default function IpvrPage() {
       <div className="flex gap-2">
         {(['todos', 'criticos'] as const).map(t => (
           <button key={t} onClick={() => setActiveTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === t ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+            className={`px-4 py-2 rounded-lg text-sm font-medium ${activeTab === t ? 'bg-green-700 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
             {t === 'todos' ? `Todos (${registros.length})` : `Nivel I — Críticos (${nivelI.length})`}
           </button>
         ))}
@@ -221,7 +221,7 @@ export default function IpvrPage() {
             </div>
           </div>
           {preview && nivelPreview && (
-            <div className={`p-3 rounded-lg border text-sm flex items-center justify-between ${nivelPreview === 'I' ? 'bg-red-50 border-red-200' : nivelPreview === 'II' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
+            <div className={`p-3 rounded-lg border text-sm flex items-center justify-between ${nivelPreview === 'I' ? 'bg-red-50 border-red-200' : nivelPreview === 'II' ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
               <span>NP = {preview.NP} · NR = <strong>{preview.NR}</strong></span>
               <StatusBadge label={`Nivel ${nivelPreview}`} variant={NIVEL_VARIANT[nivelPreview]} />
             </div>
@@ -237,7 +237,7 @@ export default function IpvrPage() {
             <button
               onClick={handleSave}
               disabled={saving || !form.Area || !form['Proceso Actividad'] || !form['Descripcion Peligro'] || form.ND == null || form.NE == null || form.NC == null}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-green-700 text-white rounded-lg text-sm hover:bg-green-800 disabled:opacity-50"
             >
               {saving ? 'Guardando...' : editId ? 'Actualizar' : 'Guardar'}
             </button>

@@ -1,4 +1,4 @@
-interface CardProps {
+﻿interface CardProps {
   children: React.ReactNode
   className?: string
   padding?: boolean
@@ -26,7 +26,7 @@ interface StatCardProps {
 }
 
 const COLORS: Record<NonNullable<StatCardProps['color']>, string> = {
-  blue: 'border-l-blue-500',
+  blue: 'border-l-green-600',
   green: 'border-l-green-500',
   yellow: 'border-l-yellow-500',
   red: 'border-l-red-500',
