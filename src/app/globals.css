@@ -1,9 +1,23 @@
 @import "tailwindcss";
 
-/* Sienna Accessibility Widget — posición derecha, botón compacto */
-.asw-menu-btn {
+/* Sienna Accessibility Widget — override de color primario con mayor especificidad */
+/* html .selector = 0-1-1 > .selector = 0-1-0 del widget (gana contra adoptedStyleSheets) */
+html .asw-widget {
+  --asw-primary: #166534 !important;
+}
+html .asw-menu {
+  --asw-primary: #166534 !important;
+}
+html .asw-menu-btn {
   --asw-btn-size: 44px !important;
   --asw-icon-size: 26px !important;
+  background: #166534 !important;
+  background-image: linear-gradient(96deg, #166534 0%, #166534 100%) !important;
+  outline-color: #166534 !important;
+}
+html .asw-menu-btn:hover {
+  background: #14532d !important;
+  background-image: linear-gradient(96deg, #14532d 0%, #14532d 100%) !important;
 }
 
 :root {
