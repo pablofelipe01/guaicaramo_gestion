@@ -1,28 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { listarAsistencias, registrarAsistencia, obtenerCapacitacion } from '@/lib/sst/cap'
+import { listarRegistros, crearRegistro, obtenerActividad } from '@/lib/sst/cap'
 import { verifyToken } from '@/lib/auth'
 
 type Ctx = { params: Promise<{ id: string }> }
 
+/** GET /api/sst/capacitaciones/[id]/asistencias — lista registros de ejecución de la actividad */
 export async function GET(request: NextRequest, ctx: Ctx) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
   if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { id } = await ctx.params
-  return NextResponse.json(await listarAsistencias(id))
+  const records = await listarRegistros({ actividadId: id })
+  return NextResponse.json({ records })
 }
 
+/** POST /api/sst/capacitaciones/[id]/asistencias — crea registro de ejecución */
 export async function POST(request: NextRequest, ctx: Ctx) {
   const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const usuario = token ? await verifyToken(token) : null
+  if (!usuario) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
   const { id } = await ctx.params
   const body = await request.json()
-  const cap = await obtenerCapacitacion(id)
-  return NextResponse.json({
-    record: await registrarAsistencia({
-      ...body,
-      'Capacitacion ID': id,
-      'Capacitacion Tema': cap?.fields.Tema,
-      'Fecha Registro': new Date().toISOString().split('T')[0],
-    }),
-  }, { status: 201 })
+  let actividad_tema: string | undefined
+  try {
+    const act = await obtenerActividad(id)
+    actividad_tema = act.fields.tema
+  } catch { /* continuar sin tema */ }
+  const record = await crearRegistro({
+    ...body,
+    actividad_id:    id,
+    actividad_tema,
+    registrado_por:  usuario.name,
+    fecha_ejecucion: body.fecha_ejecucion ?? new Date().toISOString().split('T')[0],
+  })
+  return NextResponse.json({ record }, { status: 201 })
 }

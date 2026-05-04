@@ -1,481 +1,327 @@
 ﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
-import { StatusBadge } from '@/components/ui/StatusBadge'
 import { Modal } from '@/components/ui/Modal'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { GraduationCap, Plus, BarChart2, CheckCircle2, XCircle, Trash2, Pencil } from 'lucide-react'
-import type { CapProgramaFields, CapCapacitacionFields, CapAsistenciaFields } from '@/types/sst/cap'
+import { CapacitacionesTable } from '@/components/sst/capacitaciones/CapacitacionesTable'
+import { KpiCard } from '@/components/sst/capacitaciones/KpiCard'
+import {
+  BookOpen, Plus, Calendar, ClipboardCheck, BarChart3, AlertTriangle, Award,
+} from 'lucide-react'
+import { CATEGORIAS_CAP, PROVEEDORES_CAP, calcularPct } from '@/lib/sst/cap-client'
+import type { CapActividadFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
-type Programa = AirtableRecord<CapProgramaFields>
-type Capacitacion = AirtableRecord<CapCapacitacionFields>
-type Asistencia = AirtableRecord<CapAsistenciaFields>
-interface Cobertura { totalAsistencias: number; asistieron: number; cobertura: number; totalCapacitaciones: number; realizadas: number; porCargo: Record<string, { total: number; asistieron: number }> }
-
-const CAP_ESTADO_VARIANT: Record<string, 'primary' | 'success' | 'neutral'> = {
-  programada: 'primary', realizada: 'success', cancelada: 'neutral',
-}
-const TIPOS_CAP = ['induccion', 'reinduccion', 'periodica', 'especifica']
-const MODALIDADES = ['presencial', 'virtual', 'mixta']
+type Actividad = AirtableRecord<CapActividadFields>
 
 function authHeaders() {
   const token = localStorage.getItem('authToken')
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
+const FORM_INICIAL = {
+  item_numero: '',
+  tema: '',
+  objetivo: '',
+  categoria: '',
+  proveedor: 'SST',
+  responsable: '',
+  dirigido_a: '',
+  normativa_aplicable: '',
+  requiere_certificacion: false,
+}
+
 export default function CapacitacionesPage() {
-  const { user } = useAuth()
-  const [programas, setProgramas] = useState<Programa[]>([])
-  const [programaActivo, setProgramaActivo] = useState<Programa | null>(null)
-  const [capacitaciones, setCapacitaciones] = useState<Capacitacion[]>([])
-  const [capActiva, setCapActiva] = useState<Capacitacion | null>(null)
-  const [asistencias, setAsistencias] = useState<Asistencia[]>([])
-  const [cobertura, setCobertura] = useState<Cobertura | null>(null)
+  useAuth()
+  const router = useRouter()
+  const [actividades, setActividades] = useState<Actividad[]>([])
   const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'lista' | 'cobertura'>('lista')
-  const [modalPrograma, setModalPrograma] = useState(false)
-  const [modalCap, setModalCap] = useState(false)
-  const [modalAsistencia, setModalAsistencia] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [modalNueva, setModalNueva] = useState(false)
   const [guardando, setGuardando] = useState(false)
-  const [editCapId, setEditCapId] = useState<string | null>(null)
-  const [confirmDeleteProg, setConfirmDeleteProg] = useState<string | null>(null)
-  const [formProg, setFormProg] = useState({ Titulo: '', 'Año': new Date().getFullYear() })
-  const [formCap, setFormCap] = useState({ Tema: '', Tipo: 'induccion', Modalidad: 'presencial', Instructor: '', 'Fecha Programada': '', Duracion: '' })
-  const [formAsist, setFormAsist] = useState({ 'Nombre Trabajador': '', 'Cargo Trabajador': '', Asistio: true })
+  const [form, setForm] = useState<typeof FORM_INICIAL>(FORM_INICIAL)
 
   const cargar = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
-      const [progRes, cobRes] = await Promise.all([
-        fetch('/api/sst/capacitaciones/programas', { headers: authHeaders() }),
-        fetch('/api/sst/capacitaciones?cobertura=true', { headers: authHeaders() }),
-      ])
-      
-      if (progRes.ok) {
-        const progs = await progRes.json()
-        setProgramas(progs.records ?? [])
-      }
-      if (cobRes.ok) {
-        const cob = await cobRes.json()
-        setCobertura(cob)
-      }
-    } catch (error) {
-      console.error('Error cargando capacitaciones:', error)
+      const res = await fetch('/api/sst/capacitaciones', { headers: authHeaders() })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setActividades(data.records ?? [])
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error cargando datos')
     }
     setLoading(false)
   }, [])
 
   useEffect(() => { cargar() }, [cargar])
 
-  const seleccionarPrograma = useCallback(async (p: Programa) => {
-    setProgramaActivo(p)
-    setCapActiva(null)
-    setAsistencias([])
-    try {
-      const res = await fetch(`/api/sst/capacitaciones?programaId=${p.id}`, { headers: authHeaders() })
-      if (res.ok) {
-        const data = await res.json()
-        setCapacitaciones(data.records ?? [])
-      }
-    } catch (error) {
-      console.error('Error cargando capacitaciones del programa:', error)
-    }
-  }, [])
+  // ── KPIs calculados en el cliente ──────────────────────────────────────────
+  const total       = actividades.length
+  const completadas = actividades.filter(a => a.fields.estado_general === 'Completado').length
+  const enEjecucion = actividades.filter(a => a.fields.estado_general === 'En ejecución').length
+  const sinFecha    = actividades.filter(a => a.fields.estado_general === 'Sin programar').length
+  const pctCumplimiento = calcularPct(completadas + enEjecucion, total)
 
-  const seleccionarCap = useCallback(async (c: Capacitacion) => {
-    setCapActiva(c)
-    try {
-      const res = await fetch(`/api/sst/capacitaciones/${c.id}/asistencias`, { headers: authHeaders() })
-      if (res.ok) {
-        const data = await res.json()
-        setAsistencias(data.records ?? [])
-      }
-    } catch (error) {
-      console.error('Error cargando asistencias:', error)
-    }
-  }, [])
-
-  const crearPrograma = async () => {
-    if (!formProg.Titulo) return
+  const crearActividad = async () => {
+    if (!form.tema || !form.categoria) return
     setGuardando(true)
+    setError(null)
     try {
-      await fetch('/api/sst/capacitaciones/programas', {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify({ ...formProg, Responsable: user?.name }),
+      const res = await fetch('/api/sst/capacitaciones', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          ...form,
+          item_numero: form.item_numero ? Number(form.item_numero) : 0,
+          anio: 2026,
+          requiere_certificacion: form.requiere_certificacion,
+        }),
       })
-      setModalPrograma(false)
+      if (!res.ok) {
+        let errMsg = `Error ${res.status}`
+        try {
+          const err = await res.json()
+          errMsg = err.message ?? errMsg
+        } catch { /* body vacío o no-JSON */ }
+        throw new Error(errMsg)
+      }
+      setModalNueva(false)
+      setForm(FORM_INICIAL)
       await cargar()
-    } catch (error) {
-      console.error('Error creando programa:', error)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al guardar')
     }
     setGuardando(false)
   }
 
-  const crearCapacitacion = async () => {
-    if (!programaActivo || !formCap.Tema) return
-    setGuardando(true)
-    try {
-      if (editCapId) {
-        await fetch(`/api/sst/capacitaciones/${editCapId}`, {
-          method: 'PUT', headers: authHeaders(),
-          body: JSON.stringify({
-            ...formCap,
-            Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
-          }),
-        })
-      } else {
-        await fetch('/api/sst/capacitaciones', {
-          method: 'POST', headers: authHeaders(),
-          body: JSON.stringify({
-            ...formCap,
-            'Programa ID': programaActivo.id,
-            'Programa Titulo': programaActivo.fields.Titulo,
-            Duracion: formCap.Duracion ? Number(formCap.Duracion) : undefined,
-          }),
-        })
-      }
-      setModalCap(false)
-      setEditCapId(null)
-      setFormCap({ Tema: '', Tipo: 'induccion', Modalidad: 'presencial', Instructor: '', 'Fecha Programada': '', Duracion: '' })
-      await seleccionarPrograma(programaActivo)
-    } catch (error) {
-      console.error('Error guardando capacitación:', error)
-    }
-    setGuardando(false)
-  }
-
-  const eliminarPrograma = async (id: string) => {
-    await fetch(`/api/sst/capacitaciones/programas/${id}`, { method: 'DELETE', headers: authHeaders() })
-    setConfirmDeleteProg(null)
-    if (programaActivo?.id === id) { setProgramaActivo(null); setCapacitaciones([]) }
-    await cargar()
-  }
-
-  const registrarAsistencia = async () => {
-    if (!capActiva || !formAsist['Nombre Trabajador']) return
-    setGuardando(true)
-    try {
-      await fetch(`/api/sst/capacitaciones/${capActiva.id}/asistencias`, {
-        method: 'POST', headers: authHeaders(),
-        body: JSON.stringify(formAsist),
-      })
-      setModalAsistencia(false)
-      setFormAsist({ 'Nombre Trabajador': '', 'Cargo Trabajador': '', Asistio: true })
-      await seleccionarCap(capActiva)
-      await cargar()
-    } catch (error) {
-      console.error('Error registrando asistencia:', error)
-    }
-    setGuardando(false)
-  }
-
-  const eliminarCapacitacion = async (cap: Capacitacion) => {
-    if (!confirm(`¿Eliminar capacitación "${cap.fields.Tema}"?`)) return
-    setGuardando(true)
-    try {
-      const res = await fetch(`/api/sst/capacitaciones/${cap.id}`, {
-        method: 'DELETE', headers: authHeaders(),
-      })
-      if (res.ok) {
-        if (programaActivo) await seleccionarPrograma(programaActivo)
-        await cargar()
-      } else {
-        alert('Error al eliminar la capacitación')
-      }
-    } catch (error) {
-      console.error('Error eliminando capacitación:', error)
-      alert('Error al eliminar la capacitación')
-    }
-    setGuardando(false)
-  }
+  const set = (field: string, value: string | boolean) =>
+    setForm(prev => ({ ...prev, [field]: value }))
 
   return (
-    <div className="h-full flex flex-col gap-4">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
       <PageHeader
-        icon={GraduationCap}
-        title="Programa de Capacitaciones"
-        description="Planeación y control del programa anual SST"
+        title="Plan de Capacitaciones SST 2026"
+        description="72 actividades formativas — Decreto 1072 de 2015 / Res. 0312 de 2019"
+        icon={BookOpen}
         actions={
-          <button onClick={() => setModalPrograma(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
-            <Plus size={16} /> Nuevo programa
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => router.push('/dashboard/capacitaciones/programacion')}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-blue-200 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors"
+            >
+              <Calendar className="w-4 h-4" /> Cronograma
+            </button>
+            <button
+              onClick={() => router.push('/dashboard/capacitaciones/indicadores')}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors"
+            >
+              <BarChart3 className="w-4 h-4" /> Indicadores
+            </button>
+            <button
+              onClick={() => setModalNueva(true)}
+              className="flex items-center gap-1.5 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              <Plus className="w-4 h-4" /> Nueva actividad
+            </button>
+          </div>
         }
       />
 
-      <div className="flex gap-2">
-        {['lista', 'cobertura'].map(t => (
-          <button key={t} onClick={() => setTab(t as 'lista' | 'cobertura')}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${tab === t ? 'bg-green-700 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
-            {t === 'lista' ? <><GraduationCap size={15} /> Capacitaciones</> : <><BarChart2 size={15} /> Cobertura</>}
-          </button>
-        ))}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Total actividades</span>
+            <BookOpen className="w-4 h-4 text-blue-500" />
+          </div>
+          <p className="text-3xl font-bold text-gray-900">{total}</p>
+          <p className="text-xs text-gray-400 mt-1">Plan anual 2026</p>
+        </Card>
+
+        <KpiCard
+          label="% Avance plan"
+          value={pctCumplimiento}
+          meta={80}
+          icon={BarChart3}
+          description={`${completadas + enEjecucion} activas / ${total} total`}
+        />
+
+        <Card className="p-4">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-gray-500 font-semibold uppercase tracking-wide">Completadas</span>
+            <ClipboardCheck className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-3xl font-bold text-green-600">{completadas}</p>
+          <p className="text-xs text-gray-400 mt-1">de {total}</p>
+        </Card>
+
+        <Card className="p-4 border-orange-200 bg-orange-50">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs text-orange-600 font-semibold uppercase tracking-wide">Sin programar</span>
+            <AlertTriangle className="w-4 h-4 text-orange-500" />
+          </div>
+          <p className="text-3xl font-bold text-orange-600">{sinFecha}</p>
+          <p className="text-xs text-orange-400 mt-1">requieren programación</p>
+        </Card>
       </div>
 
-      {tab === 'cobertura' ? (
-        <div className="flex-1 overflow-auto">
-          {!cobertura ? (
-            <div className="text-center text-gray-500 py-8">Cargando...</div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3">
-              <Card>
-                <div className="text-3xl font-bold text-green-700">{cobertura.cobertura}%</div>
-                <div className="text-sm text-gray-500 mt-1">Cobertura general</div>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div className="bg-green-600 h-2 rounded-full" style={{ width: `${cobertura.cobertura}%` }} />
-                </div>
-              </Card>
-              <Card>
-                <div className="grid grid-cols-2 gap-3 text-center">
-                  <div><div className="text-2xl font-bold text-green-600">{cobertura.realizadas}</div><div className="text-xs text-gray-500">Realizadas</div></div>
-                  <div><div className="text-2xl font-bold text-gray-400">{cobertura.totalCapacitaciones - cobertura.realizadas}</div><div className="text-xs text-gray-500">Pendientes</div></div>
-                  <div><div className="text-2xl font-bold text-green-700">{cobertura.asistieron}</div><div className="text-xs text-gray-500">Asistieron</div></div>
-                  <div><div className="text-2xl font-bold text-gray-400">{cobertura.totalAsistencias}</div><div className="text-xs text-gray-500">Registrados</div></div>
-                </div>
-              </Card>
-              {Object.keys(cobertura.porCargo).length > 0 && (
-                <Card className="col-span-2">
-                  <div className="text-sm font-semibold text-gray-700 mb-3">Cobertura por cargo</div>
-                  <div className="space-y-2">
-                    {Object.entries(cobertura.porCargo).map(([cargo, data]) => {
-                      const pct = data.total > 0 ? Math.round((data.asistieron / data.total) * 100) : 0
-                      return (
-                        <div key={cargo} className="flex items-center gap-3">
-                          <div className="w-36 text-sm text-gray-600 truncate">{cargo}</div>
-                          <div className="flex-1 bg-gray-200 rounded-full h-1.5">
-                            <div className="bg-green-600 h-1.5 rounded-full" style={{ width: `${pct}%` }} />
-                          </div>
-                          <span className="text-xs text-gray-500 w-16 text-right">{data.asistieron}/{data.total} ({pct}%)</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </Card>
-              )}
+      {/* Tabla principal */}
+      <Card className="p-4">
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+          </div>
+        ) : error ? (
+          <EmptyState
+            icon={AlertTriangle}
+            title="Error cargando actividades"
+            description={error}
+            action={<button onClick={cargar} className="mt-3 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Reintentar</button>}
+          />
+        ) : actividades.length === 0 ? (
+          <EmptyState
+            icon={BookOpen}
+            title="Sin actividades"
+            description="El catálogo de capacitaciones está vacío. Crea la primera actividad."
+            action={<button onClick={() => setModalNueva(true)} className="mt-3 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Nueva actividad</button>}
+          />
+        ) : (
+          <CapacitacionesTable
+            actividades={actividades}
+            onSelect={a => router.push(`/dashboard/capacitaciones/${a.id}`)}
+          />
+        )}
+      </Card>
+
+      {/* Modal nueva actividad */}
+      <Modal open={modalNueva} onClose={() => { setModalNueva(false); setError(null) }} title="Nueva actividad">
+        <div className="flex flex-col gap-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">N° ítem</label>
+              <input
+                type="number" min="1"
+                value={form.item_numero}
+                onChange={e => set('item_numero', e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-1 gap-4 min-h-0">
-          {/* Programas */}
-          <div className="w-56 flex-shrink-0">
-            <Card className="h-full overflow-auto p-0">
-              {loading ? <div className="p-4 text-center text-gray-500 text-sm">Cargando...</div>
-                : programas.length === 0 ? <EmptyState icon={GraduationCap} title="Sin programas" description="Crea el primer programa" />
-                : <ul>
-                    {programas.map(p => (
-                      <li key={p.id} onClick={() => seleccionarPrograma(p)}
-                        className={`p-3 border-b cursor-pointer hover:bg-gray-50 ${programaActivo?.id === p.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
-                        <div className="font-medium text-sm text-gray-900 truncate">{p.fields.Titulo}</div>
-                        <div className="flex items-center justify-between mt-0.5">
-                          <span className="text-xs text-gray-500">{p.fields['Año']}</span>
-                          <button onClick={e => { e.stopPropagation(); setConfirmDeleteProg(p.id) }}
-                            className="p-1 text-gray-400 hover:text-red-600" title="Eliminar"><Trash2 size={12} /></button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-              }
-            </Card>
-          </div>
-
-          {/* Capacitaciones */}
-          <div className="w-72 flex-shrink-0 flex flex-col gap-2">
-            {programaActivo && (
-              <div className="flex justify-end">
-                <button onClick={() => setModalCap(true)}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-700 text-white rounded-lg hover:bg-green-800">
-                  <Plus size={12} /> Capacitación
-                </button>
-              </div>
-            )}
-            <Card className="flex-1 overflow-auto p-0">
-              {!programaActivo ? <EmptyState icon={GraduationCap} title="Selecciona un programa" description="" />
-                : capacitaciones.length === 0 ? <EmptyState icon={GraduationCap} title="Sin capacitaciones" description="Agrega la primera capacitación" />
-                : <ul>
-                    {capacitaciones.map(c => (
-                      <li key={c.id}
-                        className={`p-3 border-b hover:bg-gray-50 flex items-center justify-between gap-2 ${capActiva?.id === c.id ? 'bg-green-50 border-l-4 border-l-green-600' : ''}`}>
-                        <div onClick={() => seleccionarCap(c)} className="flex-1 cursor-pointer">
-                          <div className="font-medium text-sm text-gray-800 truncate">{c.fields.Tema}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <StatusBadge variant={CAP_ESTADO_VARIANT[c.fields.Estado]} label={c.fields.Estado} />
-                            <span className="text-xs text-gray-400 capitalize">{c.fields.Tipo}</span>
-                          </div>
-                          {c.fields['Fecha Programada'] && <div className="text-xs text-gray-400 mt-0.5">{c.fields['Fecha Programada']}</div>}
-                        </div>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setEditCapId(c.id); setFormCap({ Tema: c.fields.Tema, Tipo: c.fields.Tipo, Modalidad: c.fields.Modalidad ?? 'presencial', Instructor: c.fields.Instructor ?? '', 'Fecha Programada': c.fields['Fecha Programada'] ?? '', Duracion: c.fields.Duracion?.toString() ?? '' }); setModalCap(true) }}
-                          className="flex-shrink-0 p-1.5 text-green-700 hover:bg-green-50 rounded-lg transition-colors"
-                          title="Editar capacitación">
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); eliminarCapacitacion(c) }}
-                          className="flex-shrink-0 p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Eliminar capacitación">
-                          <Trash2 size={16} />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-              }
-            </Card>
-          </div>
-
-          {/* Asistencias */}
-          <div className="flex-1 min-w-0 flex flex-col gap-2">
-            {capActiva && (
-              <div className="flex justify-end">
-                <button onClick={() => setModalAsistencia(true)}
-                  className="flex items-center gap-1 text-xs px-2.5 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                  <Plus size={12} /> Asistente
-                </button>
-              </div>
-            )}
-            <Card className="flex-1 overflow-auto p-0">
-              {!capActiva ? <EmptyState icon={GraduationCap} title="Selecciona una capacitación" description="" />
-                : asistencias.length === 0 ? <EmptyState icon={GraduationCap} title="Sin asistentes" description="Registra los asistentes" />
-                : (
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 sticky top-0">
-                      <tr>
-                        {['Trabajador', 'Cargo', 'Asistió', 'Nota'].map(h => (
-                          <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {asistencias.map(a => (
-                        <tr key={a.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 font-medium text-gray-800">{a.fields['Nombre Trabajador']}</td>
-                          <td className="px-4 py-3 text-gray-500 text-xs">{a.fields['Cargo Trabajador'] ?? '—'}</td>
-                          <td className="px-4 py-3">
-                            {a.fields.Asistio ? <CheckCircle2 size={16} className="text-green-500" /> : <XCircle size={16} className="text-red-400" />}
-                          </td>
-                          <td className="px-4 py-3 text-gray-500">{a.fields['Nota Evaluacion'] ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )
-              }
-            </Card>
-          </div>
-        </div>
-      )}
-
-      <Modal open={modalPrograma} onClose={() => setModalPrograma(false)} title="Nuevo programa de capacitación" size="md">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
-            <input type="text" value={formProg.Titulo} onChange={e => setFormProg(f => ({ ...f, Titulo: e.target.value }))}
-              className="input-field"
-              placeholder="Programa de Capacitaciones SST 2026" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Año</label>
-            <input type="number" value={formProg['Año']} onChange={e => setFormProg(f => ({ ...f, 'Año': Number(e.target.value) }))}
-              className="input-field" />
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalPrograma(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
-            <button onClick={crearPrograma} disabled={guardando || !formProg.Titulo}
-              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
-              {guardando ? 'Guardando...' : 'Crear'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      <Modal open={modalCap} onClose={() => { setModalCap(false); setEditCapId(null) }} title={editCapId ? 'Editar capacitación' : 'Nueva capacitación'} size="md">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tema *</label>
-            <input type="text" value={formCap.Tema} onChange={e => setFormCap(f => ({ ...f, Tema: e.target.value }))}
-              className="input-field" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-              <select value={formCap.Tipo} onChange={e => setFormCap(f => ({ ...f, Tipo: e.target.value }))}
-                className="input-field">
-                {TIPOS_CAP.map(t => <option key={t} value={t}>{t}</option>)}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Categoría *</label>
+              <select
+                value={form.categoria}
+                onChange={e => set('categoria', e.target.value)}
+                required
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Seleccionar…</option>
+                {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Modalidad</label>
-              <select value={formCap.Modalidad} onChange={e => setFormCap(f => ({ ...f, Modalidad: e.target.value }))}
-                className="input-field">
-                {MODALIDADES.map(m => <option key={m} value={m}>{m}</option>)}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Tema / Actividad *</label>
+            <input
+              type="text"
+              value={form.tema}
+              onChange={e => set('tema', e.target.value)}
+              required
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Objetivo formativo</label>
+            <textarea
+              rows={3}
+              value={form.objetivo}
+              onChange={e => set('objetivo', e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Proveedor</label>
+              <select
+                value={form.proveedor}
+                onChange={e => set('proveedor', e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {PROVEEDORES_CAP.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha programada</label>
-              <input type="date" value={formCap['Fecha Programada']} onChange={e => setFormCap(f => ({ ...f, 'Fecha Programada': e.target.value }))}
-                className="input-field" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duración (horas)</label>
-              <input type="number" value={formCap.Duracion} onChange={e => setFormCap(f => ({ ...f, Duracion: e.target.value }))}
-                className="input-field" />
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Responsable</label>
+              <input
+                type="text"
+                value={form.responsable}
+                onChange={e => set('responsable', e.target.value)}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Instructor</label>
-            <input type="text" value={formCap.Instructor} onChange={e => setFormCap(f => ({ ...f, Instructor: e.target.value }))}
-              className="input-field" />
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Dirigido a</label>
+            <input
+              type="text"
+              value={form.dirigido_a}
+              onChange={e => set('dirigido_a', e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => { setModalCap(false); setEditCapId(null) }} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
-            <button onClick={crearCapacitacion} disabled={guardando || !formCap.Tema}
-              className="px-4 py-2 text-sm bg-green-700 text-white rounded-lg hover:bg-green-800 disabled:opacity-50">
-              {guardando ? 'Guardando...' : editCapId ? 'Actualizar' : 'Crear'}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Normativa aplicable</label>
+            <input
+              type="text"
+              placeholder="Ej: Resolución 0312 Art. 11"
+              value={form.normativa_aplicable}
+              onChange={e => set('normativa_aplicable', e.target.value)}
+              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.requiere_certificacion}
+              onChange={e => set('requiere_certificacion', e.target.checked)}
+              className="w-4 h-4 rounded accent-blue-600"
+            />
+            <span className="flex items-center gap-1 text-sm text-gray-700">
+              <Award className="w-4 h-4 text-amber-500" /> Requiere certificación
+            </span>
+          </label>
+
+          {error && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>}
+
+          <div className="flex gap-3 pt-2 border-t border-gray-100">
+            <button
+              onClick={() => { setModalNueva(false); setError(null); setForm(FORM_INICIAL) }}
+              className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={crearActividad}
+              disabled={guardando || !form.tema || !form.categoria}
+              className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+            >
+              {guardando ? 'Guardando…' : 'Crear actividad'}
             </button>
           </div>
         </div>
       </Modal>
-
-      <Modal open={modalAsistencia} onClose={() => setModalAsistencia(false)} title="Registrar asistente" size="md">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre trabajador *</label>
-            <input type="text" value={formAsist['Nombre Trabajador']} onChange={e => setFormAsist(f => ({ ...f, 'Nombre Trabajador': e.target.value }))}
-              className="input-field" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
-            <input type="text" value={formAsist['Cargo Trabajador']} onChange={e => setFormAsist(f => ({ ...f, 'Cargo Trabajador': e.target.value }))}
-              className="input-field" />
-          </div>
-          <div className="flex items-center gap-2">
-            <input type="checkbox" id="asistio" checked={formAsist.Asistio} onChange={e => setFormAsist(f => ({ ...f, Asistio: e.target.checked }))}
-              className="rounded" />
-            <label htmlFor="asistio" className="text-sm text-gray-700">Asistió a la capacitación</label>
-          </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button onClick={() => setModalAsistencia(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
-            <button onClick={registrarAsistencia} disabled={guardando || !formAsist['Nombre Trabajador']}
-              className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50">
-              {guardando ? 'Guardando...' : 'Registrar'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {confirmDeleteProg && (
-        <Modal open={!!confirmDeleteProg} onClose={() => setConfirmDeleteProg(null)} title="Confirmar eliminación">
-          <p className="text-sm text-gray-600 mb-4">¿Eliminar este programa y todas sus capacitaciones? Esta acción no se puede deshacer.</p>
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setConfirmDeleteProg(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
-            <button onClick={() => eliminarPrograma(confirmDeleteProg)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
-          </div>
-        </Modal>
-      )}
     </div>
   )
 }
+

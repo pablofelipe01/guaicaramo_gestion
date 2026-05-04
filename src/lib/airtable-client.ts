@@ -102,7 +102,7 @@ export async function createRecords<T = Record<string, unknown>>(
   const res = await fetch(`${baseUrl}/${encodeURIComponent(table)}`, {
     method: 'POST',
     headers,
-    body: JSON.stringify({ records }),
+    body: JSON.stringify({ records, typecast: true }),
   })
   const data = await handleResponse<{ records: AirtableRecord<T>[] }>(res)
   return data.records
@@ -119,7 +119,7 @@ export async function updateRecord<T = Record<string, unknown>>(
     {
       method: 'PATCH',
       headers,
-      body: JSON.stringify({ fields }),
+      body: JSON.stringify({ fields, typecast: true }),
     }
   )
   return handleResponse<AirtableRecord<T>>(res)
