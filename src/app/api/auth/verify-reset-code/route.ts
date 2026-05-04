@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
 import { SignJWT, jwtVerify } from 'jose'
+import { verifyAndConsumeOtp, checkRateLimit } from '@/lib/auth/reset-store'
 
 function getSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET
@@ -15,6 +17,15 @@ function getSecret(): Uint8Array {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 5 intentos por IP cada 15 minutos
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    if (!checkRateLimit(`verify:${ip}`, 5, 15 * 60_000)) {
+      return NextResponse.json(
+        { success: false, message: 'Demasiados intentos. Espera 15 minutos.' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { resetToken, code } = body
 
@@ -27,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const secret = getSecret()
 
-    let payload: { email?: string; code?: string; purpose?: string }
+    let payload: { sessionId?: string; purpose?: string }
     try {
       const result = await jwtVerify(resetToken, secret)
       payload = result.payload as typeof payload
@@ -38,16 +49,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (payload.purpose !== 'reset-otp' || !payload.email || !payload.code) {
+    if (payload.purpose !== 'reset-otp' || !payload.sessionId) {
       return NextResponse.json({ success: false, message: 'Token inválido.' }, { status: 400 })
     }
 
-    if (payload.code !== code.trim()) {
-      return NextResponse.json({ success: false, message: 'Código incorrecto.' }, { status: 400 })
+    // Verifica y consume el OTP del servidor (single-use, timing-safe)
+    const email = verifyAndConsumeOtp(payload.sessionId, code.trim())
+    if (!email) {
+      return NextResponse.json({ success: false, message: 'Código incorrecto o expirado.' }, { status: 400 })
     }
 
-    const verifiedToken = await new SignJWT({ email: payload.email, purpose: 'reset-verified' })
+    // JTI único para prevenir reutilización del verifiedToken
+    const jti = randomUUID()
+    const verifiedToken = await new SignJWT({ email, purpose: 'reset-verified' })
       .setProtectedHeader({ alg: 'HS256' })
+      .setJti(jti)
       .setExpirationTime('5m')
       .setIssuedAt()
       .sign(secret)

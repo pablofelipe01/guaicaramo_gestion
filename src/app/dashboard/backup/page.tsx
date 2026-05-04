@@ -28,21 +28,6 @@ export default function BackupPage() {
   const [loadingModulos, setLoadingModulos] = useState(true)
   const [estado, setEstado] = useState<{ tipo: 'ok' | 'error'; mensaje: string } | null>(null)
 
-  if (!infraestructura) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center max-w-sm mx-auto p-8">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ShieldAlert className="w-8 h-8 text-red-600" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2">Acceso denegado</h2>
-          <p className="text-gray-500 text-sm mb-6">Solo el Superadmin puede acceder a las funciones de infraestructura.</p>
-          <button onClick={() => router.push('/dashboard')} className="btn-primary">Volver al inicio</button>
-        </div>
-      </div>
-    )
-  }
-
   useEffect(() => {
     const token = localStorage.getItem('authToken')
     fetch('/api/backup', { headers: { Authorization: `Bearer ${token}` } })

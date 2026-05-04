@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomInt, randomUUID } from 'crypto'
 import { SignJWT } from 'jose'
 import { listRecords } from '@/lib/airtable-client'
 import { sendResetCodeEmail } from '@/lib/email'
+import { storeOtpSession, checkRateLimit } from '@/lib/auth/reset-store'
 
 interface UserFields {
   Email: string
@@ -12,10 +14,6 @@ const EMAIL_REGEX = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/
 
 function escapeAirtableString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-}
-
-function generateCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000))
 }
 
 function getSecret(): Uint8Array {
@@ -31,6 +29,15 @@ const GENERIC_OK = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 3 solicitudes por IP cada 15 minutos
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    if (!checkRateLimit(`forgot:${ip}`, 3, 15 * 60_000)) {
+      return NextResponse.json(
+        { success: false, message: 'Demasiados intentos. Espera 15 minutos antes de solicitar otro código.' },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { email } = body
 
@@ -60,10 +67,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(GENERIC_OK)
     }
 
-    const code = generateCode()
     const normalizedEmail = email.trim().toLowerCase()
+    // CSPRNG — no Math.random()
+    const code = String(randomInt(100000, 1000000))
+    const sessionId = randomUUID()
+    // El OTP se guarda en el servidor; el cliente nunca lo recibe
+    storeOtpSession(sessionId, code, normalizedEmail)
 
-    const resetToken = await new SignJWT({ email: normalizedEmail, code, purpose: 'reset-otp' })
+    const resetToken = await new SignJWT({ sessionId, purpose: 'reset-otp' })
       .setProtectedHeader({ alg: 'HS256' })
       .setExpirationTime('10m')
       .setIssuedAt()

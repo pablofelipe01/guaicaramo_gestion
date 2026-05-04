@@ -132,6 +132,8 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
     e.preventDefault();
     setForgotError('');
     if (forgotPassword.length < 8) { setForgotError('La contraseña debe tener al menos 8 caracteres.'); return; }
+    if (!/[A-Z]/.test(forgotPassword)) { setForgotError('La contraseña debe incluir al menos una letra mayúscula.'); return; }
+    if (!/[0-9]/.test(forgotPassword)) { setForgotError('La contraseña debe incluir al menos un número.'); return; }
     if (forgotPassword !== forgotConfirm) { setForgotError('Las contraseñas no coinciden.'); return; }
     setForgotLoading(true);
     try {
