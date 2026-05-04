@@ -14,7 +14,10 @@ import {
   AlertCircle,
   CheckCircle2,
   Trash2,
+  ShieldAlert,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { usePermissions } from '@/hooks/usePermissions'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -107,6 +110,8 @@ function Alerta({ tipo, mensaje }: { tipo: 'ok' | 'error'; mensaje: string }) {
 // ─── Página principal ─────────────────────────────────────────────────────────
 
 export default function UsuariosPage() {
+  const router = useRouter()
+  const { adminUsuarios } = usePermissions()
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [roles, setRoles] = useState<RolOpcion[]>([])
   const [rolesLoading, setRolesLoading] = useState(true)
@@ -119,7 +124,7 @@ export default function UsuariosPage() {
   const [alerta, setAlerta] = useState<{ tipo: 'ok' | 'error'; mensaje: string } | null>(null)
 
   // Formulario crear — rolId es el record ID de Airtable
-  const [crearForm, setCrearForm] = useState({ name: '', email: '', password: '', rolId: '' })
+  const [crearForm, setCrearForm] = useState({ name: '', email: '', password: '', rolId: '', documento: '', telefono: '' })
   const [crearLoading, setCrearLoading] = useState(false)
 
   // Formulario editar
@@ -193,6 +198,22 @@ export default function UsuariosPage() {
     cargarRoles()
   }, [cargarUsuarios, cargarRoles])
 
+  // Guard de rol — después de todos los hooks
+  if (!adminUsuarios) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center max-w-sm mx-auto p-8">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ShieldAlert className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Acceso denegado</h2>
+          <p className="text-gray-500 text-sm mb-6">No tienes permisos para gestionar usuarios.</p>
+          <button onClick={() => router.push('/dashboard')} className="btn-primary">Volver al inicio</button>
+        </div>
+      </div>
+    )
+  }
+
   // Filtro
   const usuariosFiltrados = usuarios.filter((u) => {
     const matchBusqueda =
@@ -225,7 +246,7 @@ export default function UsuariosPage() {
         const rolNombre = roles.find((r) => r.id === data.user.rolId)?.nombre ?? ''
         setUsuarios((prev) => [...prev, { ...data.user, rol: rolNombre }])
         setModalTipo(null)
-        setCrearForm({ name: '', email: '', password: '', rolId: roles[0]?.id ?? '' })
+        setCrearForm({ name: '', email: '', password: '', rolId: roles[0]?.id ?? '', documento: '', telefono: '' })
         mostrarAlerta('ok', 'Usuario creado correctamente')
       } else {
         mostrarAlerta('error', data.message)
@@ -512,6 +533,30 @@ export default function UsuariosPage() {
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Ej. María López"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Documento</label>
+                <input
+                  type="text"
+                  value={crearForm.documento}
+                  onChange={(e) => setCrearForm((f) => ({ ...f, documento: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Cédula / NIT"
+                  maxLength={20}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input
+                  type="tel"
+                  value={crearForm.telefono}
+                  onChange={(e) => setCrearForm((f) => ({ ...f, telefono: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+57 300..."
+                  maxLength={20}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

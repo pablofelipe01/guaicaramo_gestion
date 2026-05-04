@@ -32,6 +32,8 @@ function normalizarUsuario(record: { id: string; fields: UsuarioFields; createdT
     id: record.id,
     nombre: record.fields['Nombre Completo'],
     email: record.fields.Email,
+    documento: record.fields.Documento,
+    telefono: record.fields.Telefono,
     estado: estadoNombre,
     rol: rolNombre,
     rolId,
@@ -57,6 +59,8 @@ export async function crearUsuario(data: {
   email: string
   password: string
   rolId?: string
+  documento?: string
+  telefono?: string
 }) {
   const hash = await bcrypt.hash(data.password, 12)
   const fields: Partial<UsuarioFields> = {
@@ -69,6 +73,8 @@ export async function crearUsuario(data: {
   if (data.rolId) {
     fields.Rol = [data.rolId]
   }
+  if (data.documento) fields.Documento = data.documento
+  if (data.telefono) fields.Telefono = data.telefono
   const [record] = await createRecords<UsuarioFields>(T_USUARIOS, [{ fields }])
   return normalizarUsuario(record)
 }

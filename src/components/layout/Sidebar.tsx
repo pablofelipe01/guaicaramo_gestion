@@ -1,8 +1,10 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
+import { modulosVisibles } from '@/types/usuarios'
 import {
   LayoutDashboard,
   ClipboardList,
@@ -33,6 +35,8 @@ import {
 
 interface Module {
   name: string
+  /** Clave usada para verificar permisos (cuando difiere del name). */
+  permKey?: string
   desc: string
   href: string
   icon: LucideIcon
@@ -69,7 +73,7 @@ const NAV: PhaseGroup[] = [
     modules: [
       { name: 'Evaluaciones Médicas', desc: 'Aptitud laboral — Res. 2346', href: '/dashboard/evaluaciones-medicas', icon: Stethoscope },
       { name: 'Perfiles de Cargo', desc: 'Peligros y EPPs por cargo', href: '/dashboard/perfiles-cargo', icon: UserCog },
-      { name: 'Casos Médicos', desc: 'Restricciones e incapacidades', href: '/dashboard/casos-medicos', icon: Activity },
+      { name: 'Casos Médicos', permKey: 'Seguimiento Casos Médicos', desc: 'Restricciones e incapacidades', href: '/dashboard/casos-medicos', icon: Activity },
       { name: 'Investigación Incidentes', desc: 'AT, incidentes y EL', href: '/dashboard/incidentes', icon: AlertTriangle },
       { name: 'Matriz IPVR', desc: 'Peligros GTC-45', href: '/dashboard/ipvr', icon: ShieldAlert },
       { name: 'Inspecciones', desc: 'Listas de chequeo', href: '/dashboard/inspecciones', icon: ClipboardCheck },
@@ -112,7 +116,11 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname()
+  const { user } = useAuth()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+
+  const rol = (user?.role ?? 'operativo').toLowerCase()
+  const visibles = new Set(modulosVisibles(rol))
 
   const togglePhase = (phase: string) => {
     setCollapsed((prev) => ({ ...prev, [phase]: !prev[phase] }))
@@ -160,6 +168,11 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           </Link>
 
           {NAV.map((group) => {
+            const modulosFiltrados = group.modules.filter((mod) =>
+              visibles.has(mod.permKey ?? mod.name)
+            )
+            if (modulosFiltrados.length === 0) return null
+
             const isCollapsed = collapsed[group.phase]
 
             return (
@@ -179,7 +192,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
                 {!isCollapsed && (
                   <ul className="mt-0.5 ml-1">
-                    {group.modules.map((mod) => {
+                    {modulosFiltrados.map((mod) => {
                       const Icon = mod.icon
                       const active = pathname.startsWith(mod.href)
                       return (

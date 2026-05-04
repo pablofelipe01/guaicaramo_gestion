@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 import { generarBackup, listarModulosDisponibles } from '@/lib/backup'
 
 export const maxDuration = 300
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token)))
-    return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, 'superadmin')
+  if ('error' in auth) return auth.error
   return NextResponse.json({ modulos: listarModulosDisponibles() })
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token)))
-    return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, 'superadmin')
+  if ('error' in auth) return auth.error
 
   const body = await request.json().catch(() => ({}))
   const modulos: string[] | undefined = Array.isArray(body.modulos) ? body.modulos : undefined

@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { email, password, name, rolId } = body
+    const { email, password, name, rolId, documento, telefono } = body
 
     if (!email || !password || !name) {
       return NextResponse.json(
@@ -165,9 +165,14 @@ export async function POST(request: NextRequest) {
       Estado: 'Activo',
       'Fecha Creacion': new Date().toISOString().split('T')[0],
     }
-    // rolId es el record ID de Airtable — usarlo directamente
     if (rolId && String(rolId).startsWith('rec')) {
       fieldsToCreate['Rol'] = [String(rolId)]
+    }
+    if (documento && String(documento).trim()) {
+      fieldsToCreate['Documento'] = String(documento).trim()
+    }
+    if (telefono && String(telefono).trim()) {
+      fieldsToCreate['Telefono'] = String(telefono).trim()
     }
 
     const [newUser] = await createRecords<UserFields>(TABLE(), [
