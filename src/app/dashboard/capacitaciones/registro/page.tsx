@@ -55,11 +55,11 @@ export default function RegistrosPage() {
     await cargar()
   }
 
-  // Ãndice de actividades para lookup
+  // Índice de actividades para lookup
   const actIdx = Object.fromEntries(actividades.map(a => [a.id, a.fields.tema]))
 
-  const totalConvocados = registros.reduce((s, r) => s + (r.fields.asistentes_convocados ?? 0), 0)
-  const totalPresentes  = registros.reduce((s, r) => s + (r.fields.asistentes_presentes ?? 0), 0)
+  const totalConvocados = registros.reduce((s, r) => s + (r.fields.convocados ?? 0), 0)
+  const totalPresentes  = registros.reduce((s, r) => s + (r.fields.presentes ?? 0), 0)
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -73,7 +73,7 @@ export default function RegistrosPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <ClipboardCheck className="w-5 h-5 text-green-600" />
-            <h1 className="text-lg font-bold text-gray-900">Registros de EjecuciÃ³n</h1>
+            <h1 className="text-lg font-bold text-gray-900">Registros de Ejecución</h1>
           </div>
           <p className="text-sm text-gray-500">Listado de todas las ejecuciones registradas</p>
         </div>
@@ -85,7 +85,7 @@ export default function RegistrosPage() {
         </button>
       </div>
 
-      {/* KPIs rÃ¡pidos */}
+      {/* KPIs rápidos */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="p-3">
           <p className="text-xs text-gray-500 uppercase tracking-wide">Total registros</p>
@@ -109,7 +109,7 @@ export default function RegistrosPage() {
         ) : registros.length === 0 ? (
           <div className="text-center py-12">
             <ClipboardCheck className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500">Sin registros de ejecuciÃ³n</p>
+            <p className="text-gray-500">Sin registros de ejecución</p>
             <button
               onClick={() => setModalNuevo(true)}
               className="mt-3 text-sm text-green-600 hover:underline"
@@ -133,8 +133,8 @@ export default function RegistrosPage() {
               <tbody className="divide-y divide-gray-100">
                 {registros.map((r, i) => {
                   const rf = r.fields
-                  const pct = rf.asistentes_convocados && rf.asistentes_presentes
-                    ? Math.round((rf.asistentes_presentes / rf.asistentes_convocados) * 100)
+                  const pct = rf.convocados && rf.presentes
+                    ? Math.round((rf.presentes / rf.convocados) * 100)
                     : null
                   const pctE = rf.evaluaciones_realizadas && rf.evaluaciones_aprobadas
                     ? Math.round((rf.evaluaciones_aprobadas / rf.evaluaciones_realizadas) * 100)
@@ -152,17 +152,17 @@ export default function RegistrosPage() {
                           {rf.fecha_ejecucion}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-gray-600">{rf.facilitador ?? 'â€”'}</td>
+                      <td className="px-3 py-2.5 text-gray-600">{rf.facilitador ?? '—'}</td>
                       <td className="px-3 py-2.5 text-center">
-                        {rf.asistentes_presentes != null ? (
+                        {rf.presentes != null ? (
                           <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
                             pct != null && pct >= 80 ? 'bg-green-100 text-green-700' :
                             pct != null && pct >= 60 ? 'bg-yellow-100 text-yellow-700' :
                             'bg-red-100 text-red-700'
                           }`}>
-                            {rf.asistentes_presentes}/{rf.asistentes_convocados ?? '?'} ({pct ?? '?'}%)
+                            {rf.presentes}/{rf.convocados ?? '?'} ({pct ?? '?'}%)
                           </span>
-                        ) : 'â€”'}
+                        ) : '—'}
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         {rf.evaluaciones_realizadas != null ? (
@@ -171,9 +171,9 @@ export default function RegistrosPage() {
                           }`}>
                             {rf.evaluaciones_aprobadas}/{rf.evaluaciones_realizadas} ({pctE ?? '?'}%)
                           </span>
-                        ) : 'â€”'}
+                        ) : '—'}
                       </td>
-                      <td className="px-3 py-2.5 text-gray-500 hidden md:table-cell text-xs">{rf.lugar ?? 'â€”'}</td>
+                      <td className="px-3 py-2.5 text-gray-500 hidden md:table-cell text-xs">{rf.lugar ?? '—'}</td>
                     </tr>
                   )
                 })}

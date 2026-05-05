@@ -63,8 +63,8 @@ export interface CapRegistroFields {
   duracion_horas?: number
   lugar?: string
   facilitador?: string
-  asistentes_convocados?: number
-  asistentes_presentes?: number
+  convocados?: number
+  presentes?: number
   evaluaciones_realizadas?: number
   evaluaciones_aprobadas?: number
   observaciones?: string

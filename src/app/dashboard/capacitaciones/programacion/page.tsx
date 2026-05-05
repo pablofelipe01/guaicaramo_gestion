@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/Card'
-import { CronogramaSemanal } from '@/components/sst/capacitaciones/CronogramaSemanal'
-import { CATEGORIAS_CAP } from '@/lib/sst/cap-client'
-import { ArrowLeft, Calendar, Filter } from 'lucide-react'
+import { CronogramaContainer } from '@/components/sst/capacitaciones/CronogramaContainer'
+import { ArrowLeft, Calendar } from 'lucide-react'
 import type { CapActividadFields, CapProgramacionFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -13,7 +12,7 @@ type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
 
 function authHeaders() {
-  const token = localStorage.getItem('authToken')
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
@@ -22,7 +21,6 @@ export default function CronogramaPage() {
   const [actividades, setActividades] = useState<Actividad[]>([])
   const [programaciones, setProgramaciones] = useState<Prog[]>([])
   const [loading, setLoading] = useState(true)
-  const [catFiltro, setCatFiltro] = useState('')
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -54,9 +52,9 @@ export default function CronogramaPage() {
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-blue-600" />
-            <h1 className="text-lg font-bold text-gray-900">Cronograma Semanal 2026</h1>
+            <h1 className="text-lg font-bold text-gray-900">Cronograma de Capacitaciones 2026</h1>
           </div>
-          <p className="text-sm text-gray-500">Programación P/E por semana y mes</p>
+          <p className="text-sm text-gray-500">Panel de control visual del programa anual SST</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <span className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1 rounded-full">
@@ -68,43 +66,16 @@ export default function CronogramaPage() {
         </div>
       </div>
 
-      {/* Filtro categoría */}
-      <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-gray-400" />
-        <span className="text-xs text-gray-500">Filtrar por categoría:</span>
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setCatFiltro('')}
-            className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-              catFiltro === '' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            Todas
-          </button>
-          {CATEGORIAS_CAP.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setCatFiltro(cat === catFiltro ? '' : cat)}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                catFiltro === cat ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
       <Card className="p-4">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
           </div>
         ) : (
-          <CronogramaSemanal
+          <CronogramaContainer
             actividades={actividades}
             programaciones={programaciones}
-            categoriaFiltro={catFiltro || undefined}
+            onUpdate={cargar}
           />
         )}
       </Card>

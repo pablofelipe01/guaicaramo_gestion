@@ -4,14 +4,26 @@ import type { CapEstadoGeneral, CapEstadoProgramacion } from '@/types/sst/cap'
 
 type EstadoUnion = CapEstadoGeneral | CapEstadoProgramacion
 
-const ESTADO_STYLES: Record<string, string> = {
-  'Sin programar':  'bg-gray-100 text-gray-700 border-gray-200',
-  'Programado':     'bg-blue-100 text-blue-800 border-blue-200',
-  'En ejecución':   'bg-orange-100 text-orange-800 border-orange-200',
-  'Completado':     'bg-green-100 text-green-800 border-green-200',
-  'Cancelado':      'bg-red-100 text-red-800 border-red-200',
-  'Ejecutado':      'bg-green-100 text-green-800 border-green-200',
-  'Reprogramado':   'bg-yellow-100 text-yellow-800 border-yellow-200',
+type EstadoConfig = {
+  bg: string
+  border: string
+  text: string
+  dot: string
+  dotAnimate?: boolean
+}
+
+const ESTADOS: Record<string, EstadoConfig> = {
+  'Sin programar':  { bg: 'bg-gray-50',     border: 'border-gray-200',  text: 'text-gray-600',   dot: 'bg-gray-400' },
+  'Programado':     { bg: 'bg-blue-50',     border: 'border-blue-200',  text: 'text-blue-700',   dot: 'bg-blue-500' },
+  'En ejecución':  { bg: 'bg-orange-50',   border: 'border-orange-200', text: 'text-orange-700', dot: 'bg-orange-500', dotAnimate: true },
+  'Completado':     { bg: 'bg-green-50',    border: 'border-green-200', text: 'text-green-700',  dot: 'bg-green-500' },
+  'Cancelado':      { bg: 'bg-red-50',      border: 'border-red-200',   text: 'text-red-700',    dot: 'bg-red-400' },
+  'Ejecutado':      { bg: 'bg-green-50',    border: 'border-green-200', text: 'text-green-700',  dot: 'bg-green-500' },
+  'Reprogramado':   { bg: 'bg-yellow-50',   border: 'border-yellow-200', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+}
+
+const DEFAULT_CONFIG: EstadoConfig = {
+  bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-600', dot: 'bg-gray-400',
 }
 
 interface Props {
@@ -20,15 +32,21 @@ interface Props {
 }
 
 export function EstadoBadge({ estado, size = 'sm' }: Props) {
-  const cls = ESTADO_STYLES[estado] ?? 'bg-gray-100 text-gray-700 border-gray-200'
+  const c = ESTADOS[estado] ?? DEFAULT_CONFIG
   return (
     <span
       className={[
-        'inline-flex items-center border rounded-full font-medium',
-        size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm',
-        cls,
+        'inline-flex items-center gap-1.5 border rounded-full font-medium',
+        size === 'sm' ? 'px-2.5 py-0.5 text-xs' : 'px-3 py-1 text-sm',
+        c.bg, c.border, c.text,
       ].join(' ')}
     >
+      <span className="relative flex items-center justify-center">
+        {c.dotAnimate && (
+          <span className={`absolute inline-flex h-2.5 w-2.5 rounded-full ${c.dot} opacity-75 animate-ping`} />
+        )}
+        <span className={`relative inline-block w-1.5 h-1.5 rounded-full ${c.dot}`} />
+      </span>
       {estado}
     </span>
   )

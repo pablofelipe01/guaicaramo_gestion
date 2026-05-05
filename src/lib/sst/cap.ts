@@ -145,12 +145,22 @@ export async function listarRegistros(filtros?: {
 }
 
 export async function crearRegistro(fields: Partial<CapRegistroFields>) {
-  const payload: CapRegistroFields = {
-    actividad_id: fields.actividad_id ?? '',
-    fecha_ejecucion: fields.fecha_ejecucion ?? new Date().toISOString().split('T')[0],
-    ...fields,
+  // Solo enviar campos escribibles — fecha_ejecucion y actividad_tema son
+  // campos computed/lookup en Airtable y no pueden escribirse directamente.
+  const writableFields: Record<string, unknown> = {}
+  const writable = [
+    'actividad_id', 'programacion_id', 'duracion_horas', 'lugar',
+    'facilitador', 'convocados', 'presentes',
+    'evaluaciones_realizadas', 'evaluaciones_aprobadas', 'observaciones',
+  ] as const
+
+  for (const key of writable) {
+    const val = fields[key as keyof CapRegistroFields]
+    if (val !== undefined && val !== null && val !== '') writableFields[key] = val
   }
-  const [record] = await createRecords<CapRegistroFields>(T_REGISTROS, [{ fields: payload }])
+  if (!writableFields.actividad_id) writableFields.actividad_id = ''
+
+  const [record] = await createRecords<CapRegistroFields>(T_REGISTROS, [{ fields: writableFields as unknown as CapRegistroFields }])
 
   // Actualizar estado de programación a 'Ejecutado'
   if (fields.programacion_id) {
@@ -215,8 +225,8 @@ export async function calcularIndicadoresTrimestre(trimestre: string) {
   for (const actId of actividadesIds) {
     const registros = await listarRegistros({ actividadId: actId })
     for (const reg of registros) {
-      totalConvocados += reg.fields.asistentes_convocados  ?? 0
-      totalPresentes  += reg.fields.asistentes_presentes   ?? 0
+      totalConvocados += reg.fields.convocados  ?? 0
+      totalPresentes  += reg.fields.presentes   ?? 0
       evalRealizadas  += reg.fields.evaluaciones_realizadas ?? 0
       evalAprobadas   += reg.fields.evaluaciones_aprobadas  ?? 0
     }

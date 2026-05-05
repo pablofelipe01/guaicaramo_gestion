@@ -26,8 +26,8 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
     duracion_horas:          '',
     lugar:                   '',
     facilitador:             '',
-    asistentes_convocados:   '',
-    asistentes_presentes:    '',
+    convocados:   '',
+    presentes:    '',
     evaluaciones_realizadas: '',
     evaluaciones_aprobadas:  '',
     observaciones:           '',
@@ -46,11 +46,11 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
     if (!form.actividad_id) return 'Selecciona una actividad'
     if (!form.fecha_ejecucion) return 'La fecha de ejecución es requerida'
     if (form.fecha_ejecucion > hoy) return 'La fecha de ejecución no puede ser futura'
-    const conv = Number(form.asistentes_convocados)
-    const pres = Number(form.asistentes_presentes)
+    const conv = Number(form.convocados)
+    const pres = Number(form.presentes)
     const evalR = Number(form.evaluaciones_realizadas)
     const evalA = Number(form.evaluaciones_aprobadas)
-    if (form.asistentes_presentes && form.asistentes_convocados && pres > conv)
+    if (form.presentes && form.convocados && pres > conv)
       return 'Asistentes presentes no puede superar convocados'
     if (form.evaluaciones_aprobadas && form.evaluaciones_realizadas && evalA > evalR)
       return 'Evaluaciones aprobadas no puede superar realizadas'
@@ -67,8 +67,8 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
       await onGuardar({
         ...form,
         duracion_horas:          form.duracion_horas          ? Number(form.duracion_horas)          : undefined,
-        asistentes_convocados:   form.asistentes_convocados   ? Number(form.asistentes_convocados)   : undefined,
-        asistentes_presentes:    form.asistentes_presentes    ? Number(form.asistentes_presentes)    : undefined,
+        convocados:   form.convocados   ? Number(form.convocados)   : undefined,
+        presentes:    form.presentes    ? Number(form.presentes)    : undefined,
         evaluaciones_realizadas: form.evaluaciones_realizadas ? Number(form.evaluaciones_realizadas) : undefined,
         evaluaciones_aprobadas:  form.evaluaciones_aprobadas  ? Number(form.evaluaciones_aprobadas)  : undefined,
         programacion_id:         form.programacion_id || undefined,
@@ -175,8 +175,8 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
           <label className="text-xs font-semibold text-gray-600">Convocados</label>
           <input
             type="number" min="0"
-            value={form.asistentes_convocados}
-            onChange={e => set('asistentes_convocados', e.target.value)}
+            value={form.convocados}
+            onChange={e => set('convocados', e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -184,8 +184,8 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
           <label className="text-xs font-semibold text-gray-600">Presentes</label>
           <input
             type="number" min="0"
-            value={form.asistentes_presentes}
-            onChange={e => set('asistentes_presentes', e.target.value)}
+            value={form.presentes}
+            onChange={e => set('presentes', e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

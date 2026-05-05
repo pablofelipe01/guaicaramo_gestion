@@ -1,25 +1,80 @@
 'use client'
 
-import { BarChart3, Users, CheckCircle2, GraduationCap } from 'lucide-react'
-import { KpiCard } from './KpiCard'
+import { Bar } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale, LinearScale, BarElement, Tooltip, Legend,
+} from 'chart.js'
+import { Users, CheckCircle2, GraduationCap, BarChart3 } from 'lucide-react'
+import { KpiRing } from './KpiRing'
 import type { CapIndicadorFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 interface Props {
   indicador: AirtableRecord<CapIndicadorFields> | null
   trimestre: string
 }
 
+const KPI_LIST = [
+  { key: 'pct_cumplimiento',       label: '% Cumplimiento',   icon: BarChart3,   meta: 80,  color: '#2C5F8D' },
+  { key: 'pct_cobertura',          label: '% Cobertura',      icon: Users,       meta: 80,  color: '#28A745' },
+  { key: 'pct_eficacia',           label: '% Eficacia',       icon: CheckCircle2, meta: 80, color: '#FF8C42' },
+  { key: 'pct_cobertura_induccion',label: '% Inducción',      icon: GraduationCap, meta: 100, color: '#534AB7' },
+] as const
+
+const DETALLE_LIST = [
+  { prog: 'programadas',           ejec: 'ejecutadas',           label: 'Actividades',   color: '#2C5F8D' },
+  { prog: 'trabajadores_objetivo', ejec: 'trabajadores_capacitados', label: 'Trabajadores', color: '#28A745' },
+  { prog: 'evaluaciones_realizadas', ejec: 'evaluaciones_aprobadas', label: 'Evaluaciones', color: '#FF8C42' },
+] as const
+
 export function KpiDashboard({ indicador, trimestre }: Props) {
   const f = indicador?.fields
 
-  const pctCumplimiento     = f?.pct_cumplimiento      ?? 0
-  const pctCobertura        = f?.pct_cobertura         ?? 0
-  const pctEficacia         = f?.pct_eficacia          ?? 0
-  const pctCoberturaInd     = f?.pct_cobertura_induccion ?? 0
+  // ── Datos para Chart.js ──────────────────────────────────────────────────
+  const barLabels = DETALLE_LIST.map(d => d.label)
+  const barProg   = DETALLE_LIST.map(d => f ? (f[d.prog] ?? 0) : 0)
+  const barEjec   = DETALLE_LIST.map(d => f ? (f[d.ejec] ?? 0) : 0)
+
+  const chartData = {
+    labels: barLabels,
+    datasets: [
+      {
+        label: 'Programado / Objetivo',
+        data: barProg,
+        backgroundColor: 'rgba(44, 95, 141, 0.15)',
+        borderColor: '#2C5F8D',
+        borderWidth: 1.5,
+        borderRadius: 6,
+      },
+      {
+        label: 'Ejecutado / Capacitado',
+        data: barEjec,
+        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+        borderColor: '#28A745',
+        borderWidth: 1.5,
+        borderRadius: 6,
+      },
+    ],
+  }
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' as const, labels: { font: { size: 11 }, boxWidth: 12, padding: 12 } },
+      tooltip: { mode: 'index' as const, intersect: false },
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+      y: { beginAtZero: true, grid: { color: '#F3F4F6' }, ticks: { font: { size: 10 } } },
+    },
+  }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
+      {/* Título + semáforo meta */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">KPIs — {trimestre}</h3>
         {f && (
@@ -35,66 +90,33 @@ export function KpiDashboard({ indicador, trimestre }: Props) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiCard
-          label="% Cumplimiento"
-          value={pctCumplimiento}
-          meta={80}
-          icon={BarChart3}
-          description={f ? `${f.ejecutadas} / ${f.programadas} actividades` : 'Sin datos'}
-        />
-        <KpiCard
-          label="% Cobertura"
-          value={pctCobertura}
-          meta={80}
-          icon={Users}
-          description={f ? `${f.trabajadores_capacitados} / ${f.trabajadores_objetivo} trabajadores` : 'Sin datos'}
-        />
-        <KpiCard
-          label="% Eficacia"
-          value={pctEficacia}
-          meta={80}
-          icon={CheckCircle2}
-          description={f ? `${f.evaluaciones_aprobadas} / ${f.evaluaciones_realizadas} evaluaciones` : 'Sin datos'}
-        />
-        <KpiCard
-          label="% Inducción"
-          value={pctCoberturaInd}
-          meta={100}
-          icon={GraduationCap}
-          description={f ? `${f.inducciones_realizadas} / ${f.ingresos_periodo} ingresos` : 'Sin datos'}
-        />
-      </div>
+      {/* Rings de KPI */}
+      {f ? (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {KPI_LIST.map(({ key, label, meta }) => {
+            const val = (f[key] ?? 0) as number
+            return (
+              <div key={key} className="rounded-xl border border-gray-100 bg-white p-4 flex flex-col items-center gap-2 hover:shadow-sm transition-shadow">
+                <KpiRing value={val} meta={meta} size={80} strokeWidth={7} />
+                <span className="text-xs font-semibold text-gray-600 text-center leading-tight">{label}</span>
+                <span className="text-[10px] text-gray-400">meta {meta}%</span>
+              </div>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-8 text-center">
+          <p className="text-sm text-gray-400">Sin datos para {trimestre}. Haz clic en <b>Recalcular</b> para generar los KPIs.</p>
+        </div>
+      )}
 
-      {/* Barra comparativa programadas vs ejecutadas */}
+      {/* Gráfico de barras */}
       {f && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Programadas vs. Ejecutadas
+            Programado vs. Ejecutado
           </h4>
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-24 text-right">Programadas</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-4 relative overflow-hidden">
-                <div className="h-4 rounded-full bg-blue-400" style={{ width: '100%' }} />
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                  {f.programadas}
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 w-24 text-right">Ejecutadas</span>
-              <div className="flex-1 bg-gray-100 rounded-full h-4 relative overflow-hidden">
-                <div
-                  className="h-4 rounded-full bg-green-500"
-                  style={{ width: f.programadas > 0 ? `${(f.ejecutadas / f.programadas) * 100}%` : '0%' }}
-                />
-                <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                  {f.ejecutadas}
-                </span>
-              </div>
-            </div>
-          </div>
+          <Bar data={chartData} options={chartOptions} height={140} />
         </div>
       )}
 
