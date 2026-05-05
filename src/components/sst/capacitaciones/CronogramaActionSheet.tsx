@@ -147,7 +147,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
                 type="date"
                 value={fecha}
                 onChange={e => { setFecha(e.target.value); setError('') }}
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               />
             </div>
             <div>
@@ -157,7 +157,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
                 onChange={e => setObservaciones(e.target.value)}
                 rows={2}
                 placeholder="Opcional..."
-                className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field resize-none"
               />
             </div>
           </div>
@@ -171,7 +171,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
         <div className="px-5 pb-5 flex gap-2">
           <button
             onClick={handleClose}
-            className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            className="btn btn-secondary flex-1 py-2.5"
           >
             Cancelar
           </button>
@@ -179,7 +179,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
             onClick={handleGuardar}
             disabled={!estadoSel || loading}
             className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-150 disabled:opacity-40"
-            style={{ backgroundColor: estadoSel ? '#3B82F6' : '#9CA3AF' }}
+            style={{ backgroundColor: estadoSel ? 'var(--sst-green-700)' : '#9CA3AF' }}
           >
             {loading ? 'Guardando…' : 'Guardar'}
           </button>

@@ -151,25 +151,25 @@ export default function CapacitacionesPage() {
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => router.push('/dashboard/capacitaciones/programacion')}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+              className="btn btn-secondary"
             >
               <Calendar className="w-4 h-4" /> Cronograma
             </button>
             <button
               onClick={() => router.push('/dashboard/capacitaciones/registro')}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors"
+              className="btn btn-secondary"
             >
               <ClipboardCheck className="w-4 h-4" /> Registros
             </button>
             <button
               onClick={() => router.push('/dashboard/capacitaciones/indicadores')}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm border border-green-200 text-green-700 rounded-lg hover:bg-green-50 transition-colors"
+              className="btn btn-ghost"
             >
               <BarChart3 className="w-4 h-4" /> Indicadores
             </button>
             <button
               onClick={() => setModalNueva(true)}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[#2C5F8D] text-white rounded-lg hover:opacity-90 transition-opacity shadow-sm"
+              className="btn btn-primary"
             >
               <Plus className="w-4 h-4" /> Nueva actividad
             </button>
@@ -183,46 +183,46 @@ export default function CapacitacionesPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex flex-col gap-1">
+          <div className="card p-4 flex flex-col gap-1" style={{ borderLeft: '3px solid var(--phase-planear)' }}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Total actividades</span>
-              <BookMarked className="w-4 h-4 text-blue-500" />
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--phase-planear)' }}>Total actividades</span>
+              <BookMarked className="w-4 h-4" style={{ color: 'var(--phase-planear)' }} />
             </div>
-            <p className="text-4xl font-bold text-blue-700 tabular-nums">{total}</p>
-            <p className="text-xs text-blue-400">Plan anual 2026</p>
+            <p className="text-4xl font-bold tabular-nums" style={{ color: 'var(--sst-dark-900)' }}>{total}</p>
+            <p className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>Plan anual 2026</p>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-4 flex items-center gap-3">
+          <div className="card p-4 flex items-center gap-3">
             <KpiRing value={pctAvance} meta={80} size={72} strokeWidth={6} />
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide leading-tight mb-0.5">Avance</p>
-              <p className="text-xs text-gray-400">{completadas + enEjecucion} activas</p>
-              <p className="text-xs text-gray-300">meta 80%</p>
+              <p className="text-xs font-semibold uppercase tracking-wide leading-tight mb-0.5" style={{ color: 'var(--sst-dark-500)' }}>Avance</p>
+              <p className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>{completadas + enEjecucion} activas</p>
+              <p className="text-xs" style={{ color: 'var(--sst-dark-300)' }}>meta 80%</p>
             </div>
           </div>
 
-          <div className="rounded-xl border border-green-200 bg-green-50 p-4 flex flex-col gap-1">
+          <div className="card p-4 flex flex-col gap-1" style={{ borderLeft: '3px solid var(--sst-cumple)' }}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-green-600 uppercase tracking-wide">Completadas</span>
-              <ClipboardCheck className="w-4 h-4 text-green-500" />
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-cumple)' }}>Completadas</span>
+              <ClipboardCheck className="w-4 h-4" style={{ color: 'var(--sst-cumple)' }} />
             </div>
             <div className="flex items-end gap-1.5">
-              <p className="text-4xl font-bold text-green-700 tabular-nums">{completadas}</p>
-              <p className="text-sm text-green-500 mb-0.5">/{total}</p>
+              <p className="text-4xl font-bold tabular-nums" style={{ color: 'var(--sst-dark-900)' }}>{completadas}</p>
+              <p className="text-sm mb-0.5" style={{ color: 'var(--sst-cumple)' }}>/{total}</p>
             </div>
-            <div className="w-full bg-green-100 rounded-full h-1">
-              <div className="h-1 rounded-full bg-green-500 transition-all duration-700" style={{ width: `${pctCompl}%` }} />
+            <div className="w-full rounded-full h-1" style={{ background: 'var(--sst-green-100)' }}>
+              <div className="h-1 rounded-full transition-all duration-700" style={{ width: `${pctCompl}%`, background: 'var(--sst-cumple)' }} />
             </div>
           </div>
 
-          <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 flex flex-col gap-2">
+          <div className="card p-4 flex flex-col gap-2" style={{ borderLeft: '3px solid var(--sst-riesgo)' }}>
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-orange-600 uppercase tracking-wide">En ejecución</span>
-              <PlayCircle className="w-4 h-4 text-orange-500" />
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-riesgo)' }}>En ejecución</span>
+              <PlayCircle className="w-4 h-4" style={{ color: 'var(--sst-riesgo)' }} />
             </div>
-            <p className="text-4xl font-bold text-orange-700 tabular-nums">{enEjecucion}</p>
+            <p className="text-4xl font-bold tabular-nums" style={{ color: 'var(--sst-dark-900)' }}>{enEjecucion}</p>
             {sinProg > 0 && (
-              <div className="flex items-center gap-1 text-xs text-orange-500">
+              <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--sst-riesgo)' }}>
                 <AlertTriangle className="w-3 h-3" />
                 {sinProg} sin programar
               </div>
@@ -236,7 +236,7 @@ export default function CapacitacionesPage() {
           {distCat.map(([cat, n]) => (
             <div
               key={cat}
-              className="rounded-xl border border-gray-100 bg-white px-3 py-2.5 flex items-center gap-2 hover:shadow-sm transition-shadow"
+              className="card card-hover px-3 py-2.5 flex items-center gap-2"
             >
               <span
                 className="w-2.5 h-2.5 rounded-full shrink-0"
@@ -257,7 +257,7 @@ export default function CapacitacionesPage() {
           <button
             onClick={cargar}
             disabled={loading}
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 transition-colors px-2 py-1 rounded-md hover:bg-blue-50 disabled:opacity-50"
+            className="btn btn-ghost text-xs gap-1 disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
@@ -273,7 +273,7 @@ export default function CapacitacionesPage() {
             <p className="text-xs text-gray-400">Crea la primera actividad del plan de capacitaciones.</p>
             <button
               onClick={() => setModalNueva(true)}
-              className="mt-1 flex items-center gap-1.5 px-4 py-2 text-sm bg-[#2C5F8D] text-white rounded-lg hover:opacity-90 transition-opacity"
+              className="btn btn-primary mt-1"
             >
               <Plus className="w-4 h-4" /> Nueva actividad
             </button>
@@ -300,7 +300,7 @@ export default function CapacitacionesPage() {
                 value={form.item_numero}
                 onChange={e => set('item_numero', e.target.value)}
                 placeholder="Ej: 1"
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -308,7 +308,7 @@ export default function CapacitacionesPage() {
               <select
                 value={form.categoria}
                 onChange={e => set('categoria', e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               >
                 <option value="">Seleccionar...</option>
                 {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
@@ -323,7 +323,7 @@ export default function CapacitacionesPage() {
               value={form.tema}
               onChange={e => set('tema', e.target.value)}
               placeholder="Ej: Uso correcto de EPP para trabajo en alturas"
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="input-field"
             />
           </div>
 
@@ -333,7 +333,7 @@ export default function CapacitacionesPage() {
               rows={2}
               value={form.objetivo}
               onChange={e => set('objetivo', e.target.value)}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+              className="input-field resize-none"
             />
           </div>
 
@@ -343,7 +343,7 @@ export default function CapacitacionesPage() {
               <select
                 value={form.proveedor}
                 onChange={e => set('proveedor', e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               >
                 {PROVEEDORES_CAP.map(p => <option key={p} value={p}>{p}</option>)}
               </select>
@@ -354,7 +354,7 @@ export default function CapacitacionesPage() {
                 type="text"
                 value={form.responsable}
                 onChange={e => set('responsable', e.target.value)}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               />
             </div>
           </div>
@@ -367,8 +367,8 @@ export default function CapacitacionesPage() {
                 value={form.dirigido_a}
                 onChange={e => set('dirigido_a', e.target.value)}
                 placeholder="Ej: Todo el personal"
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-              />
+                className="input-field"
+            />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Normativa aplicable</label>
@@ -377,7 +377,7 @@ export default function CapacitacionesPage() {
                 value={form.normativa_aplicable}
                 onChange={e => set('normativa_aplicable', e.target.value)}
                 placeholder="Ej: Res. 0312 Art. 11"
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               />
             </div>
           </div>
@@ -387,7 +387,7 @@ export default function CapacitacionesPage() {
               type="checkbox"
               checked={form.requiere_certificacion}
               onChange={e => set('requiere_certificacion', e.target.checked)}
-              className="w-4 h-4 rounded accent-blue-600"
+              className="w-4 h-4 rounded" style={{ accentColor: 'var(--sst-green-700)' }}
             />
             <span className="flex items-center gap-1.5 text-sm text-gray-700">
               <Award className="w-4 h-4 text-amber-500" />
@@ -405,14 +405,14 @@ export default function CapacitacionesPage() {
           <div className="flex gap-3 pt-2 border-t border-gray-100">
             <button
               onClick={() => { setModalNueva(false); setFormError(null); setForm(FORM_INICIAL) }}
-              className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+              className="btn btn-secondary flex-1"
             >
               Cancelar
             </button>
             <button
               onClick={crearActividad}
               disabled={guardando || !form.tema || !form.categoria}
-              className="flex-1 px-4 py-2 text-sm bg-[#2C5F8D] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60 font-medium"
+              className="btn btn-primary flex-1 disabled:opacity-60"
             >
               {guardando ? (
                 <span className="flex items-center justify-center gap-2">

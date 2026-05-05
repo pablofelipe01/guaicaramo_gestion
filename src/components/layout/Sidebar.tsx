@@ -45,7 +45,7 @@ interface Module {
 interface PhaseGroup {
   phase: string
   label: string
-  dotColor: string
+  phaseColor: string
   modules: Module[]
 }
 
@@ -53,7 +53,7 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'PLANEAR',
     label: 'Planear',
-    dotColor: 'bg-teal-400',
+    phaseColor: '#60A5FA',
     modules: [
       { name: 'Evaluación Inicial', desc: 'Diagnóstico Res. 0312', href: '/dashboard/evaluacion-inicial', icon: ClipboardList },
       { name: 'Plan de Trabajo Anual', desc: 'Actividades y seguimiento', href: '/dashboard/plan-trabajo', icon: Calendar },
@@ -69,7 +69,7 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'HACER',
     label: 'Hacer',
-    dotColor: 'bg-emerald-400',
+    phaseColor: '#4ADE80',
     modules: [
       { name: 'Evaluaciones Médicas', desc: 'Aptitud laboral — Res. 2346', href: '/dashboard/evaluaciones-medicas', icon: Stethoscope },
       { name: 'Perfiles de Cargo', desc: 'Peligros y EPPs por cargo', href: '/dashboard/perfiles-cargo', icon: UserCog },
@@ -84,7 +84,7 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'VERIFICAR',
     label: 'Verificar',
-    dotColor: 'bg-amber-400',
+    phaseColor: '#FBBF24',
     modules: [
       { name: 'Indicadores', desc: 'KPIs y semáforo de metas', href: '/dashboard/indicadores', icon: TrendingUp },
       { name: 'Auditorías', desc: 'Internas y externas', href: '/dashboard/auditorias', icon: BarChart2 },
@@ -93,7 +93,7 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'ACTUAR',
     label: 'Actuar',
-    dotColor: 'bg-red-400',
+    phaseColor: '#F87171',
     modules: [
       { name: 'Acciones Correctivas', desc: 'Mejora continua — verificación de eficacia', href: '/dashboard/acciones-correctivas', icon: CheckSquare },
     ],
@@ -101,7 +101,7 @@ const NAV: PhaseGroup[] = [
   {
     phase: 'ADMIN',
     label: 'Administración',
-    dotColor: 'bg-gray-400',
+    phaseColor: '#94A3B8',
     modules: [
       { name: 'Gestión de Usuarios', desc: 'Roles y permisos del sistema', href: '/dashboard/usuarios', icon: Users },
       { name: 'Backup', desc: 'Respaldo de datos', href: '/dashboard/backup', icon: Database },
@@ -128,42 +128,62 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
+      {/* Overlay móvil */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/40 z-20 lg:hidden"
+          className="fixed inset-0 z-20 lg:hidden"
+          style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(2px)' }}
           onClick={onClose}
         />
       )}
 
       <aside
         className={[
-          'fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-100 z-30 flex flex-col transition-transform duration-300',
+          'fixed top-0 left-0 h-full w-64 z-30 flex flex-col transition-transform duration-300',
           'lg:static lg:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         ].join(' ')}
+        style={{ background: 'linear-gradient(180deg, #0B2E1A 0%, #081F10 100%)' }}
       >
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 shrink-0">
-          <div className="w-8 h-8 bg-green-800 rounded-lg flex items-center justify-center shadow-sm">
-            <span className="text-white font-bold text-sm">G</span>
+        {/* ── Logo ────────────────────────────────────────────── */}
+        <div
+          className="flex items-center gap-3 px-5 py-4 shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm shrink-0"
+            style={{ background: '#166534' }}
+          >
+            <span className="font-bold text-sm" style={{ color: '#4ADE80' }}>G</span>
           </div>
           <div>
-            <p className="font-semibold text-gray-800 text-sm leading-tight">Guaicaramo</p>
-            <p className="text-xs text-green-700 font-medium">SG-SST</p>
+            <p className="font-bold text-sm leading-tight text-white">Guaicaramo</p>
+            <p
+              className="font-medium uppercase tracking-widest"
+              style={{ fontSize: '9px', color: '#4ADE80' }}
+            >
+              SG-SST
+            </p>
           </div>
         </div>
 
+        {/* ── Nav ─────────────────────────────────────────────── */}
         <nav className="flex-1 overflow-y-auto py-3 px-2">
           <Link
             href="/dashboard"
             onClick={onClose}
-            className={[
-              'flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium mb-3 transition-all duration-150',
-              pathname === '/dashboard'
-                ? 'bg-green-50 text-green-800 border-l-[3px] border-green-700'
-                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700',
-            ].join(' ')}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium mb-3 transition-all duration-150"
+            style={{
+              color: pathname === '/dashboard' ? '#ffffff' : 'rgba(255,255,255,0.55)',
+              background: pathname === '/dashboard' ? 'rgba(74,222,128,0.1)' : 'transparent',
+              borderLeft: pathname === '/dashboard' ? '2px solid #4ADE80' : '2px solid transparent',
+            }}
           >
-            <LayoutDashboard className="w-4 h-4 shrink-0" />
+            <LayoutDashboard
+              className="w-[18px] h-[18px] shrink-0"
+              strokeWidth={1.5}
+              style={{ color: pathname === '/dashboard' ? '#4ADE80' : 'inherit' }}
+            />
             Inicio
           </Link>
 
@@ -179,15 +199,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <div key={group.phase} className="mb-1">
                 <button
                   onClick={() => togglePhase(group.phase)}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md transition-colors hover:bg-white/5"
                 >
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${group.dotColor}`} />
-                  <span className="flex-1 text-xs font-semibold text-gray-400 uppercase tracking-wider text-left">
+                  <span
+                    className="rounded-full shrink-0"
+                    style={{ width: '5px', height: '5px', background: group.phaseColor }}
+                  />
+                  <span
+                    className="flex-1 font-medium uppercase text-left"
+                    style={{ fontSize: '9px', letterSpacing: '0.1em', color: group.phaseColor, opacity: 0.85 }}
+                  >
                     {group.label}
                   </span>
                   {isCollapsed
-                    ? <ChevronRight className="w-3 h-3 text-gray-300" />
-                    : <ChevronDown className="w-3 h-3 text-gray-300" />}
+                    ? <ChevronRight className="w-3 h-3 text-white opacity-30" />
+                    : <ChevronDown className="w-3 h-3 text-white opacity-30" />}
                 </button>
 
                 {!isCollapsed && (
@@ -203,12 +229,23 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                             title={mod.desc}
                             className={[
                               'flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-xs transition-all duration-150',
-                              active
-                                ? 'bg-green-50 text-green-800 font-semibold border-l-[3px] border-green-700'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-normal',
+                              active ? '' : 'hover:bg-white/5',
                             ].join(' ')}
+                            style={{
+                              color: active ? '#ffffff' : 'rgba(255,255,255,0.55)',
+                              fontWeight: active ? 500 : 400,
+                              background: active ? 'rgba(74,222,128,0.1)' : undefined,
+                              borderLeft: active ? '2px solid #4ADE80' : '2px solid transparent',
+                            }}
                           >
-                            <Icon className="w-3.5 h-3.5 shrink-0" />
+                            <Icon
+                              className="shrink-0"
+                              style={{
+                                width: '18px', height: '18px',
+                                color: active ? '#4ADE80' : 'inherit',
+                              }}
+                              strokeWidth={1.5}
+                            />
                             <span className="truncate">{mod.name}</span>
                           </Link>
                         </li>
@@ -221,10 +258,33 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           })}
         </nav>
 
-        <div className="px-4 py-3 border-t border-gray-100 shrink-0">
-          <p className="text-xs text-gray-400 text-center">
-            Ciclo PHVA — Res. 0312/2019
-          </p>
+        {/* ── Footer usuario ─────────────────────────────────────── */}
+        <div
+          className="px-4 py-3 shrink-0"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: '#081F10' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 font-bold"
+              style={{ background: '#166534', color: '#86EFAC', fontSize: '10px' }}
+            >
+              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            </div>
+            <div className="min-w-0">
+              <p
+                className="truncate font-medium leading-tight"
+                style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}
+              >
+                {user?.name ?? '—'}
+              </p>
+              <p
+                className="uppercase tracking-wider"
+                style={{ fontSize: '9px', color: '#4ADE80' }}
+              >
+                {user?.role ?? ''}
+              </p>
+            </div>
+          </div>
         </div>
       </aside>
     </>

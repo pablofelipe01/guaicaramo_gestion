@@ -30,14 +30,26 @@ export function calcularPct(num: number, den: number): number {
 
 export function getCategoriaColor(categoria: string): string {
   const colores: Record<string, string> = {
-    'Alturas y espacios confinados': '#2C5F8D',
-    'Seguridad vial y emergencias': '#FF8C42',
-    'Salud y riesgo biológico': '#28A745',
-    'Riesgos físicos y químicos': '#DC3545',
-    'Psicosocial y bienestar': '#6C757D',
-    'Ergonomía, mecánica y EPI': '#6f42c1',
+    'Alturas y espacios confinados': '#E85D30',
+    'Seguridad vial y emergencias':  '#FF8C42',
+    'Salud y riesgo biológico':      '#1D9E75',
+    'Riesgos físicos y químicos':    '#3B8BD4',
+    'Psicosocial y bienestar':       '#7C3AED',
+    'Ergonomía, mecánica y EPI':     '#64748B',
   }
-  return colores[categoria] ?? '#6C757D'
+  return colores[categoria] ?? '#64748B'
+}
+
+export function getCategoriaBg(categoria: string): string {
+  const fondos: Record<string, string> = {
+    'Alturas y espacios confinados': 'rgba(232,93,48,0.08)',
+    'Seguridad vial y emergencias':  'rgba(255,140,66,0.08)',
+    'Salud y riesgo biológico':      'rgba(29,158,117,0.08)',
+    'Riesgos físicos y químicos':    'rgba(59,139,212,0.08)',
+    'Psicosocial y bienestar':       'rgba(124,58,237,0.08)',
+    'Ergonomía, mecánica y EPI':     'rgba(100,116,139,0.08)',
+  }
+  return fondos[categoria] ?? 'rgba(100,116,139,0.08)'
 }
 
 export function getColorEstadoMeta(pct: number, meta = 80): string {

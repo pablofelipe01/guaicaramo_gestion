@@ -21,53 +21,121 @@ html .asw-menu-btn:hover {
 }
 
 :root {
-  /* Paleta Verde Bosque + Crema */
-  --primary: #166534;        /* Verde bosque oscuro */
-  --primary-dark: #14532d;   /* Verde muy oscuro */
-  --primary-light: #15803d;  /* Verde medio */
-  --primary-muted: #f0fdf4;  /* Verde muy pálido (crema verde) */
-  --secondary: #ca8a04;      /* Dorado/ámbar cálido */
-  --cream: #fefce8;          /* Crema cálida */
-  --success: #16a34a;        /* Verde éxito */
-  --error: #dc2626;          /* Rojo */
-  --warning: #d97706;        /* Ámbar */
-  --info: #0284c7;           /* Azul info */
+  /* ── Verde SST ─────────────────────────────────────────────── */
+  --sst-green-900: #052E16;
+  --sst-green-800: #0B5B2D;
+  --sst-green-700: #166534;
+  --sst-green-500: #22C55E;
+  --sst-green-400: #4ADE80;
+  --sst-green-100: #DCFCE7;
+  --sst-green-50:  #F0FDF4;
 
-  /* Grises Neutros */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
+  /* ── Grafito ───────────────────────────────────────────────── */
+  --sst-dark-900: #0F172A;
+  --sst-dark-800: #1A2332;
+  --sst-dark-700: #334155;
+  --sst-dark-500: #64748B;
+  --sst-dark-300: #CBD5E1;
+  --sst-dark-100: #F1F5F9;
 
-  --background: #f5f7fa;     /* Gris muy claro */
-  --surface: #ffffff;        /* Superficie de cards */
-  --foreground: #1f2937;
-  --border: #e5e7eb;
+  /* ── Semáforo SST — solo para datos ───────────────────────── */
+  --sst-cumple:  #166534;
+  --sst-riesgo:  #D97706;
+  --sst-critico: #DC3545;
+
+  /* ── Fases PHVA ────────────────────────────────────────────── */
+  --phase-planear:   #3B82F6;
+  --phase-hacer:     #22C55E;
+  --phase-verificar: #F59E0B;
+  --phase-actuar:    #EF4444;
+
+  /* ── Categorías temáticas ──────────────────────────────────── */
+  --cat-alturas:     #E85D30;
+  --cat-vial:        #FF8C42;
+  --cat-biologico:   #1D9E75;
+  --cat-fisico:      #3B8BD4;
+  --cat-psicosocial: #7C3AED;
+  --cat-ergonomia:   #64748B;
+
+  /* ── Fondos semitransparentes por categoría ────────────────── */
+  --cat-alturas-bg:     rgba(232, 93, 48,  0.08);
+  --cat-vial-bg:        rgba(255, 140, 66, 0.08);
+  --cat-biologico-bg:   rgba(29,  158, 117,0.08);
+  --cat-fisico-bg:      rgba(59,  139, 212,0.08);
+  --cat-psicosocial-bg: rgba(124, 58,  237,0.08);
+  --cat-ergonomia-bg:   rgba(100, 116, 139,0.08);
+
+  /* ── Estados de programación ───────────────────────────────── */
+  --estado-programado:   #3B82F6;
+  --estado-ejecutado:    #22C55E;
+  --estado-vencido:      #EF4444;
+  --estado-reprogramado: #F59E0B;
+  --estado-cancelado:    #9CA3AF;
+
+  /* ── Fondos semitransparentes semáforo ─────────────────────── */
+  --sst-cumple-bg:   rgba(22,  101, 52,  0.08);
+  --sst-riesgo-bg:   rgba(245, 158, 11,  0.08);
+  --sst-critico-bg:  rgba(220, 53,  69,  0.08);
+
+  /* ── Extras del design system ──────────────────────────────── */
+  --sst-white:   #FFFFFF;
+  --sst-surface: #F8FAF9;
+  --sst-dark-200: #E2E8F0;
+
+  /* ── Radios y transiciones ─────────────────────────────────── */
+  --radius-btn:  10px;
+  --radius-card: 12px;
+  --radius-pill: 20px;
+  --transition-fast:   150ms ease;
+  --transition-normal: 200ms ease;
+
+  /* ── Tokens de layout ──────────────────────────────────────── */
+  --background: #F8FAF9;
+  --surface:    #ffffff;
+  --foreground: #0F172A;
+  --border:     #CBD5E1;
+
+  /* ── Aliases legacy (compatibilidad con clases existentes) ─── */
+  --primary:       #166534;
+  --primary-dark:  #0B5B2D;
+  --primary-light: #22C55E;
+  --primary-muted: #F0FDF4;
+  --secondary:     #D97706;
+  --cream:         #F0FDF4;
+  --success:       #166534;
+  --error:         #DC3545;
+  --warning:       #D97706;
+  --info:          #3B82F6;
+  --gray-50:  #F8FAF9;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
+  --gray-900: #0F172A;
+
   color-scheme: light only;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-dark: var(--primary-dark);
+  --color-background:    var(--background);
+  --color-foreground:    var(--foreground);
+  --color-surface:       var(--surface);
+  --color-border:        var(--border);
+  --color-primary:       var(--primary);
+  --color-primary-dark:  var(--primary-dark);
   --color-primary-light: var(--primary-light);
   --color-primary-muted: var(--primary-muted);
-  --color-secondary: var(--secondary);
-  --color-cream: var(--cream);
-  --color-success: var(--success);
-  --color-error: var(--error);
-  --color-warning: var(--warning);
-  --color-info: var(--info);
-  --color-surface: var(--surface);
-  --color-border: var(--border);
-  --color-gray-50: var(--gray-50);
+  --color-secondary:     var(--secondary);
+  --color-cream:         var(--cream);
+  --color-success:       var(--success);
+  --color-error:         var(--error);
+  --color-warning:       var(--warning);
+  --color-info:          var(--info);
+  --color-gray-50:  var(--gray-50);
   --color-gray-100: var(--gray-100);
   --color-gray-200: var(--gray-200);
   --color-gray-300: var(--gray-300);
@@ -87,101 +155,180 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-poppins), 'Poppins', sans-serif;
+  font-family: var(--font-poppins), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
 }
 
-/* Garantizar colores explícitos en todos los controles de formulario */
 input,
 textarea,
 select {
-  color: #1f2937;
+  color: var(--sst-dark-900);
   background-color: #ffffff;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #9ca3af;
+  color: var(--sst-dark-300);
 }
 
-/* Forzar modo claro en toda la UI */
 :root {
   color-scheme: light;
 }
 
-/* Sistema de diseño — Botones */
-.btn-primary {
-  @apply bg-green-800 hover:bg-green-900 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-sm;
+/* ── Botones ──────────────────────────────────────────────────── */
+.btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  line-height: 1;
+  text-decoration: none;
 }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled              { opacity: 0.5; cursor: not-allowed; }
+.btn:hover:not(:disabled)  { transform: translateY(-1px); }
 
-.btn-primary:disabled {
-  @apply bg-gray-300 cursor-not-allowed shadow-none;
+.btn-primary {
+  background: var(--sst-green-800);
+  color: #ffffff;
 }
+.btn-primary:hover:not(:disabled) { background: #094d26; }
 
 .btn-secondary {
-  @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg border border-gray-200 transition-all duration-200;
+  background: transparent;
+  color: var(--sst-green-700);
+  border: 1.5px solid var(--sst-green-700);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--sst-green-50); }
+
+.btn-danger {
+  background: rgba(220, 53, 69, 0.08);
+  color: #DC3545;
+  border: 1.5px solid rgba(220, 53, 69, 0.2);
+}
+.btn-danger:hover:not(:disabled) { background: rgba(220, 53, 69, 0.14); }
+
+.btn-ghost {
+  background: var(--sst-dark-100);
+  color: var(--sst-dark-500);
+  border: 0.5px solid var(--sst-dark-300);
+}
+.btn-ghost:hover:not(:disabled) { background: #dde6f0; }
+
+/* Alias legacy */
+.btn-primary.btn-primary {
+  @apply shadow-none;
 }
 
-/* Sistema de diseño — Inputs */
+/* ── Inputs ───────────────────────────────────────────────────── */
 .input-field {
-  @apply w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700 focus:border-transparent transition-all duration-200 bg-white text-gray-800;
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--sst-dark-300);
+  font-size: 13px;
+  background: white;
+  transition: border-color 150ms, box-shadow 150ms;
+  color: var(--sst-dark-900);
+  outline: none;
 }
-
+.input-field::placeholder { color: var(--sst-dark-300); }
+.input-field:focus {
+  border-color: var(--sst-green-700);
+  box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.1);
+}
 .input-field:disabled {
-  @apply bg-gray-50 cursor-not-allowed text-gray-400;
+  background: var(--sst-dark-100);
+  cursor: not-allowed;
+  color: var(--sst-dark-500);
 }
-
-select.input-field {
-  @apply appearance-none cursor-pointer;
-}
-
+select.input-field { appearance: none; cursor: pointer; }
 .input-error {
-  @apply border-red-400 focus:ring-red-500;
+  border-color: #DC3545 !important;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1) !important;
 }
 
-/* Sistema de diseño — Cards */
+/* ── Cards ────────────────────────────────────────────────────── */
 .card {
-  @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  background: white;
+  border-radius: 12px;
+  border: 0.5px solid var(--sst-dark-300);
+  overflow: hidden;
 }
-
 .card-hover {
-  @apply bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200;
+  background: white;
+  border-radius: 12px;
+  border: 0.5px solid var(--sst-dark-300);
+  overflow: hidden;
+  transition: all 200ms ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* Sistema de diseño — Textos de estado */
-.text-error {
-  @apply text-red-600 text-sm mt-1;
-}
+/* ── Helpers de texto ─────────────────────────────────────────── */
+.text-error   { color: var(--sst-critico); font-size: 12px; margin-top: 4px; }
+.text-success { color: var(--sst-cumple);  font-size: 13px; }
+.text-muted   { color: var(--sst-dark-500); font-size: 12px; }
 
-.text-success {
-  @apply text-green-700 text-sm;
-}
-
-/* Sistema de diseño — Badges PHVA */
+/* ── Badges PHVA ──────────────────────────────────────────────── */
 .badge-planear {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  background: rgba(59, 130, 246, 0.08); color: #2563EB;
 }
 .badge-hacer {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  background: rgba(22, 101, 52, 0.08); color: #166534;
 }
 .badge-verificar {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  background: rgba(245, 158, 11, 0.08); color: #D97706;
 }
 .badge-actuar {
-  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500;
+  background: rgba(239, 68, 68, 0.08); color: #DC3545;
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+/* ── Animaciones ──────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
 }
-::-webkit-scrollbar-track {
-  background: transparent;
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
 }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up { animation: fadeInUp 240ms ease both; }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in { animation: fadeIn 200ms ease both; }
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--sst-dark-300);
   border-radius: 99px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
+::-webkit-scrollbar-thumb:hover { background: var(--sst-dark-500); }

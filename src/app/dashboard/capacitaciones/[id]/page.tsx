@@ -163,7 +163,7 @@ export default function CapacitacionDetallePage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--sst-green-700)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
@@ -254,13 +254,13 @@ export default function CapacitacionDetallePage() {
           <div className="flex items-center gap-1.5 shrink-0 mt-0.5">
             <button
               onClick={abrirEditar}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+              className="btn btn-secondary text-xs"
             >
               <Pencil className="w-3.5 h-3.5" /> Editar
             </button>
             <button
               onClick={() => setConfirmEliminar(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+              className="btn btn-danger text-xs"
             >
               <Trash2 className="w-3.5 h-3.5" /> Eliminar
             </button>
@@ -308,7 +308,7 @@ export default function CapacitacionDetallePage() {
               </h2>
               <button
                 onClick={() => setModalRegistro(true)}
-                className="flex items-center gap-1 text-xs px-3 py-1.5 bg-[#28A745] text-white rounded-lg hover:opacity-90 transition-opacity"
+                className="btn btn-primary text-xs"
               >
                 <Plus className="w-3.5 h-3.5" /> Registrar ejecución
               </button>
@@ -332,7 +332,7 @@ export default function CapacitacionDetallePage() {
               </h2>
               <button
                 onClick={() => setModalProg(true)}
-                className="flex items-center gap-1 text-xs text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-md transition-colors"
+                className="btn btn-ghost text-xs"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar
               </button>
@@ -352,7 +352,7 @@ export default function CapacitacionDetallePage() {
                 <p className="text-xs text-gray-400 mb-2">Sin fechas programadas</p>
                 <button
                   onClick={() => setModalProg(true)}
-                  className="text-xs text-blue-600 hover:underline"
+                  className="btn btn-ghost text-xs mt-1"
                 >
                   Programar ahora
                 </button>
@@ -399,7 +399,7 @@ export default function CapacitacionDetallePage() {
               <select
                 value={formProg.mes}
                 onChange={e => setFormProg(p => ({ ...p, mes: e.target.value }))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               >
                 {MESES.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -409,7 +409,7 @@ export default function CapacitacionDetallePage() {
               <select
                 value={formProg.semana}
                 onChange={e => setFormProg(p => ({ ...p, semana: e.target.value }))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               >
                 {[1, 2, 3, 4, 5].map(s => <option key={s} value={s}>Semana {s}</option>)}
               </select>
@@ -421,17 +421,17 @@ export default function CapacitacionDetallePage() {
               type="date"
               value={formProg.fecha_programada}
               onChange={e => setFormProg(p => ({ ...p, fecha_programada: e.target.value }))}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="input-field"
             />
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={() => setModalProg(false)} className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors">
+            <button onClick={() => setModalProg(false)} className="btn btn-secondary flex-1">
               Cancelar
             </button>
             <button
               onClick={crearProgramacion}
               disabled={guardandoProg}
-              className="flex-1 px-4 py-2 text-sm bg-[#2C5F8D] text-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-60"
+              className="btn btn-primary flex-1 disabled:opacity-60"
             >
               {guardandoProg ? 'Guardando…' : 'Agregar'}
             </button>
@@ -448,7 +448,7 @@ export default function CapacitacionDetallePage() {
               type="text"
               value={formEdit.tema ?? ''}
               onChange={e => setFormEdit(p => ({ ...p, tema: e.target.value }))}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="input-field"
             />
           </div>
           <div className="flex flex-col gap-1">
@@ -457,7 +457,7 @@ export default function CapacitacionDetallePage() {
               rows={2}
               value={formEdit.objetivo ?? ''}
               onChange={e => setFormEdit(p => ({ ...p, objetivo: e.target.value }))}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="input-field resize-none"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -466,7 +466,7 @@ export default function CapacitacionDetallePage() {
               <select
                 value={formEdit.categoria ?? ''}
                 onChange={e => setFormEdit(p => ({ ...p, categoria: e.target.value as CapCategoria }))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               >
                 {(['Alturas y espacios confinados','Seguridad vial y emergencias','Salud y riesgo biológico','Riesgos físicos y químicos','Psicosocial y bienestar','Ergonomía, mecánica y EPI'] as CapCategoria[]).map(c => (
                   <option key={c} value={c}>{c}</option>
@@ -478,7 +478,7 @@ export default function CapacitacionDetallePage() {
               <select
                 value={formEdit.proveedor ?? ''}
                 onChange={e => setFormEdit(p => ({ ...p, proveedor: e.target.value as CapProveedor }))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               >
                 {(['Proveedor externo','ARL SURA','SENA','SST','Enfermería','Bienestar Social','SURA'] as CapProveedor[]).map(v => (
                   <option key={v} value={v}>{v}</option>
@@ -491,7 +491,7 @@ export default function CapacitacionDetallePage() {
                 type="text"
                 value={formEdit.responsable ?? ''}
                 onChange={e => setFormEdit(p => ({ ...p, responsable: e.target.value }))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -500,7 +500,7 @@ export default function CapacitacionDetallePage() {
                 type="text"
                 value={formEdit.dirigido_a ?? ''}
                 onChange={e => setFormEdit(p => ({ ...p, dirigido_a: e.target.value }))}
-                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="input-field"
               />
             </div>
           </div>
@@ -510,8 +510,8 @@ export default function CapacitacionDetallePage() {
               type="text"
               value={formEdit.normativa_aplicable ?? ''}
               onChange={e => setFormEdit(p => ({ ...p, normativa_aplicable: e.target.value }))}
-              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+                className="input-field"
+              />
           </div>
           <div className="flex items-center gap-2 py-1">
             <input
@@ -519,21 +519,22 @@ export default function CapacitacionDetallePage() {
               type="checkbox"
               checked={formEdit.requiere_certificacion ?? false}
               onChange={e => setFormEdit(p => ({ ...p, requiere_certificacion: e.target.checked }))}
-              className="w-4 h-4 rounded accent-amber-500"
+              className="w-4 h-4 rounded"
+              style={{ accentColor: 'var(--sst-green-700)' }}
             />
             <label htmlFor="req-cert" className="text-sm text-gray-700">Requiere certificación</label>
           </div>
           <div className="flex gap-2 pt-1">
             <button
               onClick={() => setModalEditar(false)}
-              className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+              className="btn btn-secondary flex-1"
             >
               Cancelar
             </button>
             <button
               onClick={guardarEditar}
               disabled={guardandoEdit || !formEdit.tema}
-              className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+              className="btn btn-primary flex-1 disabled:opacity-60"
             >
               {guardandoEdit ? 'Guardando…' : 'Guardar cambios'}
             </button>

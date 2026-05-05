@@ -22,7 +22,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
   }
 
   return (
-    <header className="h-14 bg-white border-b border-gray-100 flex items-center justify-between px-4 shrink-0">
+    <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 shrink-0">
       {/* Izquierda: menú móvil + botón volver o inicio */}
       <div className="flex items-center gap-2">
         <button
@@ -57,8 +57,11 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       {/* Derecha: usuario y logout */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <div className="w-7 h-7 bg-green-100 rounded-full flex items-center justify-center">
-            <User className="w-4 h-4 text-green-700" />
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center"
+            style={{ background: 'var(--sst-green-50)' }}
+          >
+            <User className="w-4 h-4" style={{ color: 'var(--sst-green-700)' }} />
           </div>
           <span className="hidden sm:block font-medium">{user?.name ?? '...'}</span>
           {user?.role && (

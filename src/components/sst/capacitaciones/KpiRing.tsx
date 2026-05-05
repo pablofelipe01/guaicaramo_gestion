@@ -12,9 +12,9 @@ interface KpiRingProps {
 }
 
 function getColor(value: number, meta: number) {
-  if (value >= meta) return '#28A745'
-  if (value >= meta * 0.75) return '#FF8C42'
-  return '#DC3545'
+  if (value >= meta) return 'var(--sst-cumple)'      // #166534
+  if (value >= meta * 0.75) return 'var(--sst-riesgo)' // #D97706
+  return 'var(--sst-critico)'                          // #DC3545
 }
 
 function easeOutCubic(t: number) {

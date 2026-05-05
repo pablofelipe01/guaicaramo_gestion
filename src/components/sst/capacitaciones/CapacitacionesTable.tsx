@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search, Award, ChevronRight, X } from 'lucide-react'
 import { EstadoBadge } from './EstadoBadge'
+import { CategoriaBadge } from './CategoriaBadge'
 import { getCategoriaColor, CATEGORIAS_CAP, PROVEEDORES_CAP } from '@/lib/sst/cap-client'
 import type { CapActividadFields, CapEstadoGeneral } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
@@ -56,14 +57,14 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
             placeholder="Buscar tema o responsable…"
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
           />
         </div>
 
         <select
           value={catFiltro}
           onChange={e => setCatFiltro(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
         >
           <option value="">Todas las categorías</option>
           {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
@@ -72,7 +73,7 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
         <select
           value={estadoFiltro}
           onChange={e => setEstado(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
         >
           <option value="">Todos los estados</option>
           {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
@@ -81,7 +82,7 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
         <select
           value={provFiltro}
           onChange={e => setProv(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
         >
           <option value="">Todos los proveedores</option>
           {PROVEEDORES_CAP.map(p => <option key={p} value={p}>{p}</option>)}
@@ -119,7 +120,7 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
       {/* Tabla */}
       <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
         <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead style={{ background: 'var(--sst-dark-100)' }} className="border-b border-gray-200">
             <tr>
               <th className="pl-4 pr-2 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide w-8">#</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Tema</th>
@@ -147,8 +148,10 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
                 <tr
                   key={a.id}
                   onClick={() => onSelect(a)}
-                  className="cursor-pointer hover:bg-blue-50/60 transition-colors group"
+                  className="cursor-pointer transition-colors group"
                   style={{ borderLeft: `3px solid ${catColor}` }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--sst-dark-100)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '')}
                 >
                   <td className="pl-3 pr-2 py-3 font-mono text-xs text-gray-400 w-8">{f.item_numero}</td>
 
@@ -164,12 +167,7 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
                   </td>
 
                   <td className="px-3 py-3 hidden md:table-cell">
-                    <span
-                      className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full text-white font-medium whitespace-nowrap"
-                      style={{ backgroundColor: catColor }}
-                    >
-                      {f.categoria}
-                    </span>
+                    <CategoriaBadge categoria={f.categoria} size="xs" />
                   </td>
 
                   <td className="px-3 py-3 text-xs text-gray-500 hidden lg:table-cell">{f.proveedor ?? '—'}</td>
@@ -185,8 +183,8 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
                     ) : <span className="text-gray-200 text-xs">—</span>}
                   </td>
 
-                  <td className="px-2 py-3 text-gray-300 group-hover:text-blue-400 transition-colors">
-                    <ChevronRight className="w-4 h-4" />
+                  <td className="px-2 py-3" style={{ color: 'var(--sst-dark-300)' }}>
+                    <ChevronRight className="w-4 h-4 group-hover:text-[var(--sst-green-700)] transition-colors" />
                   </td>
                 </tr>
               )

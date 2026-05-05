@@ -74,9 +74,10 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
               onClick={() => cambiarModo(key)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
                 modo === key
-                  ? 'bg-white text-blue-700 shadow-sm'
+                  ? 'bg-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
+              style={modo === key ? { color: 'var(--sst-green-700)' } : undefined}
             >
               <Icon className="w-3.5 h-3.5" />
               {label}
@@ -92,7 +93,7 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
             placeholder="Buscar actividad..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 rounded-xl border border-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="input-field pl-8 py-2 text-xs max-w-xs"
           />
         </div>
 
@@ -101,14 +102,15 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
           onClick={() => setShowFiltros(p => !p)}
           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
             showFiltros || catFiltro || filtroEstados.length > 0
-              ? 'bg-blue-50 border-blue-300 text-blue-700'
+              ? 'border-[var(--sst-green-700)] text-[var(--sst-green-700)]'
               : 'border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
+          style={showFiltros || catFiltro || filtroEstados.length > 0 ? { background: 'var(--sst-cumple-bg)' } : undefined}
         >
           <SlidersHorizontal className="w-3.5 h-3.5" />
           Filtros
           {(catFiltro || filtroEstados.length > 0) && (
-            <span className="bg-blue-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+            <span style={{ background: 'var(--sst-green-700)' }} className="text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
               {(catFiltro ? 1 : 0) + filtroEstados.length}
             </span>
           )}
@@ -125,8 +127,9 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
               <button
                 onClick={() => setCatFiltro('')}
                 className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  catFiltro === '' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                  catFiltro === '' ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
+                style={catFiltro === '' ? { background: 'var(--sst-green-700)' } : undefined}
               >
                 Todas
               </button>
@@ -135,8 +138,9 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
                   key={cat}
                   onClick={() => setCatFiltro(cat === catFiltro ? '' : cat)}
                   className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                    catFiltro === cat ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    catFiltro === cat ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                   }`}
+                  style={catFiltro === cat ? { background: 'var(--sst-green-700)' } : undefined}
                 >
                   {cat}
                 </button>
