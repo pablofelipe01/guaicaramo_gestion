@@ -1,8 +1,10 @@
 'use client'
 
+import { useState } from 'react'
 import type { CapRegistroFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
-import { CheckCircle, Clock, AlertCircle, User, Calendar, FileText } from 'lucide-react'
+import { CheckCircle, Clock, AlertCircle, User, Calendar, FileText, Trash2 } from 'lucide-react'
+import { ConfirmModal } from '@/components/ui/ConfirmModal'
 
 type Registro = AirtableRecord<CapRegistroFields>
 
@@ -42,9 +44,12 @@ function mapRegistroToNode(r: Registro): TimelineNode {
 interface Props {
   registros: Registro[]
   emptyText?: string
+  onDelete?: (id: string) => Promise<void>
 }
 
-export function TimelineActividad({ registros, emptyText = 'No hay registros de ejecución aún.' }: Props) {
+export function TimelineActividad({ registros, emptyText = 'No hay registros de ejecución aún.', onDelete }: Props) {
+  const [confirmNode, setConfirmNode] = useState<TimelineNode | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const nodes = registros.map(mapRegistroToNode).sort((a, b) => {
     if (!a.fecha) return 1
     if (!b.fecha) return -1
@@ -61,6 +66,7 @@ export function TimelineActividad({ registros, emptyText = 'No hay registros de 
   }
 
   return (
+  <>
     <ol className="relative flex flex-col gap-0">
       {nodes.map((node, idx) => {
         const s = NODE_STYLES[node.tipo]
@@ -90,13 +96,24 @@ export function TimelineActividad({ registros, emptyText = 'No hay registros de 
                     <p className="text-xs text-gray-500">{node.descripcion}</p>
                   )}
                 </div>
-                {node.fecha && (
-                  <span className="text-xs text-gray-400 shrink-0 mt-0.5">
-                    {new Date(node.fecha + 'T00:00:00').toLocaleDateString('es-CO', {
-                      day: '2-digit', month: 'short', year: 'numeric',
-                    })}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {node.fecha && (
+                    <span className="text-xs text-gray-400 mt-0.5">
+                      {new Date(node.fecha + 'T00:00:00').toLocaleDateString('es-CO', {
+                        day: '2-digit', month: 'short', year: 'numeric',
+                      })}
+                    </span>
+                  )}
+                  {onDelete && (
+                      <button
+                        onClick={() => setConfirmNode(node)}
+                        className="p-1 rounded-md text-gray-300 hover:text-red-400 hover:bg-red-50 transition-colors"
+                        title="Eliminar registro"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                  )}
+                </div>
               </div>
 
               <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-gray-500">
@@ -124,5 +141,28 @@ export function TimelineActividad({ registros, emptyText = 'No hay registros de 
         )
       })}
     </ol>
+
+    {onDelete && (
+      <ConfirmModal
+        open={!!confirmNode}
+        title="Eliminar registro de ejecución"
+        description={
+          confirmNode
+            ? `Se eliminará el registro "${confirmNode.titulo}"${confirmNode.fecha ? ` del ${new Date(confirmNode.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' })}` : ''}. Esta acción no se puede deshacer.`
+            : ''
+        }
+        confirmLabel="Eliminar registro"
+        loading={deleting}
+        onCancel={() => setConfirmNode(null)}
+        onConfirm={async () => {
+          if (!confirmNode) return
+          setDeleting(true)
+          await onDelete(confirmNode.id)
+          setDeleting(false)
+          setConfirmNode(null)
+        }}
+      />
+    )}
+  </>
   )
 }

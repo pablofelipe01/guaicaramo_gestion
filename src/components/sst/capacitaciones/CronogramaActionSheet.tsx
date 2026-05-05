@@ -56,9 +56,12 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
       const res = await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify({ fields: body }),
+        body: JSON.stringify(body),
       })
-      if (!res.ok) throw new Error('Error al guardar')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody.message || `Error ${res.status}`)
+      }
       onSuccess()
       handleClose()
     } catch {

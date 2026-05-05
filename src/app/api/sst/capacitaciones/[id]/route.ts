@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { obtenerActividad, actualizarActividad } from '@/lib/sst/cap'
+import { obtenerActividad, actualizarActividad, eliminarActividad } from '@/lib/sst/cap'
 import { verifyToken } from '@/lib/auth'
 
 type Ctx = { params: Promise<{ id: string }> }
@@ -34,11 +34,10 @@ export async function DELETE(request: NextRequest, ctx: Ctx) {
     const token = request.headers.get('authorization')?.replace('Bearer ', '')
     if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
     const { id } = await ctx.params
-    // Soft delete: actualizar estado a Cancelado
-    await actualizarActividad(id, { estado_general: 'Cancelado' })
-    return NextResponse.json({ message: 'Actividad cancelada' })
+    await eliminarActividad(id)
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
-    console.error('Error cancelando actividad:', error)
+    console.error('Error eliminando actividad:', error)
     return NextResponse.json({ message: 'Error interno del servidor' }, { status: 500 })
   }
 }

@@ -1,5 +1,5 @@
 import 'server-only'
-import { listRecords, createRecords, updateRecord, getRecord } from '@/lib/airtable-client'
+import { listRecords, createRecords, updateRecord, getRecord, deleteRecord } from '@/lib/airtable-client'
 import type {
   CapActividadFields,
   CapProgramacionFields,
@@ -72,6 +72,10 @@ export async function actualizarActividad(id: string, fields: Partial<CapActivid
   return updateRecord<CapActividadFields>(T_ACTIVIDADES, id, fields)
 }
 
+export async function eliminarActividad(id: string) {
+  return deleteRecord(T_ACTIVIDADES, id)
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // PROGRAMACIÓN — Calendarización semanal
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -118,7 +122,22 @@ export async function crearProgramacion(fields: Partial<CapProgramacionFields>) 
 }
 
 export async function actualizarProgramacion(id: string, fields: Partial<CapProgramacionFields>) {
-  return updateRecord<CapProgramacionFields>(T_PROGRAMACION, id, fields)
+  // fecha_ejecucion y actividad_tema son campos computed en sst_cap_programacion — no escribibles
+  const { actividad_tema: _at, fecha_ejecucion: _fe, ...writableFields } = fields
+  const record = await updateRecord<CapProgramacionFields>(T_PROGRAMACION, id, writableFields as Partial<CapProgramacionFields>)
+  if (fields.estado === 'Ejecutado') {
+    const actividadId = record.fields?.actividad_id
+    if (actividadId) await verificarYCompletarActividad(actividadId)
+  }
+  return record
+}
+
+// Marca la actividad como Completado si todas sus programaciones están Ejecutado
+async function verificarYCompletarActividad(actividadId: string) {
+  const programaciones = await listarProgramacion({ actividadId })
+  if (programaciones.length > 0 && programaciones.every(p => p.fields.estado === 'Ejecutado')) {
+    await updateRecord<CapActividadFields>(T_ACTIVIDADES, actividadId, { estado_general: 'Completado' })
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -164,17 +183,28 @@ export async function crearRegistro(fields: Partial<CapRegistroFields>) {
 
   // Actualizar estado de programación a 'Ejecutado'
   if (fields.programacion_id) {
-    await updateRecord<CapProgramacionFields>(T_PROGRAMACION, fields.programacion_id, {
-      estado: 'Ejecutado',
-      fecha_ejecucion: fields.fecha_ejecucion,
-    })
+    try {
+      await updateRecord<CapProgramacionFields>(T_PROGRAMACION, fields.programacion_id, {
+        estado: 'Ejecutado',
+      })
+    } catch (e) {
+      console.error('[crearRegistro] update programacion failed:', e)
+    }
   }
 
-  // Actualizar estado de actividad a 'En ejecución'
+  // Fix 3: no sobreescribir estado si la actividad ya está Completado
   if (fields.actividad_id) {
-    await updateRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id, {
-      estado_general: 'En ejecución',
-    })
+    try {
+      const act = await getRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id)
+      if (act.fields.estado_general !== 'Completado') {
+        await updateRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id, {
+          estado_general: 'En ejecución',
+        })
+      }
+    } catch { /* actividad no encontrada, continuar */ }
+
+    // Fix 1: verificar si todas las programaciones de la actividad están ejecutadas
+    await verificarYCompletarActividad(fields.actividad_id)
   }
 
   return record
@@ -182,6 +212,10 @@ export async function crearRegistro(fields: Partial<CapRegistroFields>) {
 
 export async function actualizarRegistro(id: string, fields: Partial<CapRegistroFields>) {
   return updateRecord<CapRegistroFields>(T_REGISTROS, id, fields)
+}
+
+export async function eliminarRegistro(id: string) {
+  return deleteRecord(T_REGISTROS, id)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -222,9 +256,24 @@ export async function calcularIndicadoresTrimestre(trimestre: string) {
   const actividadesIds = [...new Set(delTrimestre.map(r => r.fields.actividad_id))]
   let totalConvocados = 0, totalPresentes = 0, evalRealizadas = 0, evalAprobadas = 0
 
+  // Fix 2: rango de fechas por trimestre para no mezclar registros de otros períodos
+  const rangoFechas: Record<string, { desde: string; hasta: string }> = {
+    'Q1 2026': { desde: '2026-01-01', hasta: '2026-03-31' },
+    'Q2 2026': { desde: '2026-04-01', hasta: '2026-06-30' },
+    'Q3 2026': { desde: '2026-07-01', hasta: '2026-09-30' },
+    'Q4 2026': { desde: '2026-10-01', hasta: '2026-12-31' },
+  }
+  const rango = rangoFechas[trimestre]
+
   for (const actId of actividadesIds) {
     const registros = await listarRegistros({ actividadId: actId })
-    for (const reg of registros) {
+    const delPeriodo = rango
+      ? registros.filter(r => {
+          const f = r.fields.fecha_ejecucion
+          return f != null && f >= rango.desde && f <= rango.hasta
+        })
+      : registros
+    for (const reg of delPeriodo) {
       totalConvocados += reg.fields.convocados  ?? 0
       totalPresentes  += reg.fields.presentes   ?? 0
       evalRealizadas  += reg.fields.evaluaciones_realizadas ?? 0

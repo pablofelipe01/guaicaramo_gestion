@@ -27,7 +27,7 @@ const RESULTADO_ICON: Record<string, React.ReactNode> = {
 }
 
 function authHeaders() {
-  const token = localStorage.getItem('authToken')
+  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
@@ -48,10 +48,20 @@ export default function EvaluacionInicialPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/evaluaciones', { headers: authHeaders() })
-    const data = await res.json()
-    setEvaluaciones(data.records ?? [])
-    setLoading(false)
+    try {
+      const res = await fetch('/api/sst/evaluaciones', { headers: authHeaders() })
+      if (!res.ok) {
+        const text = await res.text()
+        console.error('[cargar evaluaciones]', res.status, text)
+      } else {
+        const data = await res.json()
+        setEvaluaciones(data.records ?? [])
+      }
+    } catch (err) {
+      console.error('[cargar evaluaciones]', err)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { cargar() }, [cargar])

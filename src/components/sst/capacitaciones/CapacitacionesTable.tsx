@@ -175,7 +175,9 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
                   <td className="px-3 py-3 text-xs text-gray-500 hidden lg:table-cell">{f.proveedor ?? '—'}</td>
                   <td className="px-3 py-3 text-xs text-gray-600 hidden lg:table-cell">{f.responsable ?? '—'}</td>
 
-                  <td className="px-3 py-3"><EstadoBadge estado={f.estado_general} /></td>
+                  <td className="px-3 py-3">
+                    <EstadoBadge estado={f.estado_general} />
+                  </td>
 
                   <td className="px-3 py-3 text-center hidden sm:table-cell">
                     {f.requiere_certificacion ? (

@@ -86,12 +86,15 @@ export function CronogramaCelda({ prog, actividad, semana, mes, onAction, onSucc
     setExecuting(true)
     try {
       const today = new Date().toISOString().split('T')[0]
-      await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
+      const res = await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
         method: 'PUT',
         headers: authHeaders(),
-        body: JSON.stringify({ fields: { estado: 'Ejecutado', fecha_ejecucion: today } }),
+        body: JSON.stringify({ estado: 'Ejecutado', fecha_ejecucion: today }),
       })
+      if (!res.ok) throw new Error(await res.text())
       onSuccess?.()
+    } catch (err) {
+      console.error('[quickExecute]', err)
     } finally {
       setExecuting(false)
       setHovered(false)
