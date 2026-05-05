@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
-import { TrendingUp, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
+import { TrendingUp, CheckCircle, XCircle, RefreshCw, AlertTriangle } from 'lucide-react'
 import type { IndKpiResult } from '@/types/sst/ind'
 
 function authHeaders() {
@@ -49,12 +49,26 @@ export default function IndicadoresPage() {
   useAuth()
   const [kpis, setKpis] = useState<IndKpiResult[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [anio, setAnio] = useState(new Date().getFullYear())
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch(`/api/sst/indicadores?vista=kpis&anio=${anio}`, { headers: authHeaders() })
-    if (res.ok) setKpis((await res.json()).kpis)
+    setError(null)
+    try {
+      const res = await fetch(`/api/sst/indicadores?vista=kpis&anio=${anio}`, { headers: authHeaders() })
+      if (res.ok) {
+        const data = await res.json()
+        setKpis(data.kpis ?? [])
+      } else {
+        const body = await res.json().catch(() => ({}))
+        setError(body.message ?? `Error ${res.status}`)
+        setKpis([])
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error de conexión')
+      setKpis([])
+    }
     setLoading(false)
   }, [anio])
 
@@ -110,11 +124,30 @@ export default function IndicadoresPage() {
         </Card>
       </div>
 
+      {/* Banner de error */}
+      {error && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border" style={{ borderColor: '#DC3545', backgroundColor: 'rgba(220,53,69,0.06)', color: '#DC3545' }}>
+          <AlertTriangle size={16} className="shrink-0" />
+          <p className="text-sm font-medium">{error}</p>
+          <button onClick={load} className="ml-auto text-xs underline">Reintentar</button>
+        </div>
+      )}
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="bg-white rounded-xl border shadow-sm p-4 animate-pulse h-24" />
           ))}
+        </div>
+      ) : kpis.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <TrendingUp size={48} style={{ color: 'var(--sst-dark-300)', opacity: 0.5 }} />
+          <p className="text-sm font-medium" style={{ color: 'var(--sst-dark-500)' }}>
+            No hay datos de indicadores para {anio}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--sst-dark-300)' }}>
+            Los indicadores se calculan automáticamente a partir de los registros de otros módulos
+          </p>
         </div>
       ) : (
         <>

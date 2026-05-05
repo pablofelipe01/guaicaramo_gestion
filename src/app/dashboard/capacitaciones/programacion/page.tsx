@@ -35,8 +35,11 @@ export default function CronogramaPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
-  const totalProgramadas = programaciones.length
-  const totalEjecutadas  = programaciones.filter(p => p.fields.estado === 'Ejecutado').length
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+  const mesActual = MESES[new Date().getMonth()]
+  const progsDelMes = programaciones.filter(p => p.fields.mes === mesActual)
+  const totalProgramadas = progsDelMes.length
+  const totalEjecutadas  = progsDelMes.filter(p => p.fields.estado === 'Ejecutado').length
   const pct = totalProgramadas > 0 ? Math.round((totalEjecutadas / totalProgramadas) * 100) : 0
 
   return (
@@ -45,22 +48,31 @@ export default function CronogramaPage() {
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/dashboard/capacitaciones')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="p-1.5 rounded-lg transition-colors"
+          style={{ color: 'var(--sst-dark-500)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)'; e.currentTarget.style.color = 'var(--sst-dark-900)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sst-dark-500)' }}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-blue-600" />
-            <h1 className="text-lg font-bold text-gray-900">Cronograma de Capacitaciones 2026</h1>
+            <Calendar className="w-5 h-5" style={{ color: 'var(--sst-green-700)' }} />
+            <h1 className="text-lg font-bold" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>Cronograma de Capacitaciones 2026</h1>
           </div>
-          <p className="text-sm text-gray-500">Panel de control visual del programa anual SST</p>
+          <p className="text-sm" style={{ color: 'var(--sst-dark-500)' }}>Panel de control visual del programa anual SST</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-1 rounded-full">
-            {totalProgramadas} programadas
+          <span
+            className="px-3 py-1 rounded-full text-xs font-semibold"
+            style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: 'var(--phase-planear)' }}
+          >
+            {totalProgramadas} en {mesActual}
           </span>
-          <span className="bg-green-50 border border-green-200 text-green-700 px-3 py-1 rounded-full">
+          <span
+            className="px-3 py-1 rounded-full text-xs font-semibold"
+            style={{ background: 'var(--sst-cumple-bg)', border: '1px solid rgba(22,101,52,0.18)', color: 'var(--sst-cumple)' }}
+          >
             {totalEjecutadas} ejecutadas ({pct}%)
           </span>
         </div>
@@ -69,7 +81,7 @@ export default function CronogramaPage() {
       <Card className="p-4">
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--sst-green-700)', borderTopColor: 'transparent' }} />
           </div>
         ) : (
           <CronogramaContainer

@@ -109,35 +109,73 @@ export async function crearProgramacion(fields: Partial<CapProgramacionFields>) 
   }
   const [record] = await createRecords<CapProgramacionFields>(T_PROGRAMACION, [{ fields: payload }])
 
-  // Si la actividad estaba 'Sin programar', actualizar a 'Programado'
+  // Recalcular el estado de la actividad basado en todas sus programaciones
   if (fields.actividad_id) {
-    try {
-      const act = await getRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id)
-      if (act.fields.estado_general === 'Sin programar') {
-        await updateRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id, { estado_general: 'Programado' })
-      }
-    } catch { /* actividad no encontrada, continuar */ }
+    await recalcularEstadoActividad(fields.actividad_id)
   }
   return record
 }
 
 export async function actualizarProgramacion(id: string, fields: Partial<CapProgramacionFields>) {
-  // fecha_ejecucion y actividad_tema son campos computed en sst_cap_programacion — no escribibles
-  const { actividad_tema: _at, fecha_ejecucion: _fe, ...writableFields } = fields
-  const record = await updateRecord<CapProgramacionFields>(T_PROGRAMACION, id, writableFields as Partial<CapProgramacionFields>)
-  if (fields.estado === 'Ejecutado') {
-    const actividadId = record.fields?.actividad_id
-    if (actividadId) await verificarYCompletarActividad(actividadId)
-  }
+  // actividad_tema es un campo lookup de Airtable — no escribible
+  const { actividad_tema: _at, ...writableFields } = fields
+
+  const record = await updateRecord<CapProgramacionFields>(T_PROGRAMACION, id, writableFields)
+
+  const actividadId = record.fields?.actividad_id
+  if (actividadId) await recalcularEstadoActividad(actividadId)
   return record
 }
 
-// Marca la actividad como Completado si todas sus programaciones están Ejecutado
-async function verificarYCompletarActividad(actividadId: string) {
+/**
+ * Recalcula y persiste el estado_general de una actividad según el conjunto
+ * actual de sus programaciones:
+ *
+ *  - Sin programaciones          → "Sin programar"
+ *  - Todas Cancelado             → "Cancelado"
+ *  - Todas Ejecutado             → "Completado"
+ *  - Al menos una Ejecutado      → "En ejecución"
+ *  - Al menos una Programado/Reprogramado, ninguna Ejecutado → "Programado"
+ */
+async function recalcularEstadoActividad(actividadId: string): Promise<void> {
   const programaciones = await listarProgramacion({ actividadId })
-  if (programaciones.length > 0 && programaciones.every(p => p.fields.estado === 'Ejecutado')) {
-    await updateRecord<CapActividadFields>(T_ACTIVIDADES, actividadId, { estado_general: 'Completado' })
+
+  let nuevoEstado: import('@/types/sst/cap').CapEstadoGeneral
+
+  if (programaciones.length === 0) {
+    nuevoEstado = 'Sin programar'
+  } else {
+    const estados = programaciones.map(p => p.fields.estado)
+    const todasCancelado   = estados.every(e => e === 'Cancelado')
+    const todasEjecutado   = estados.every(e => e === 'Ejecutado')
+    const algunaEjecutado  = estados.some(e => e === 'Ejecutado')
+
+    if (todasCancelado)  nuevoEstado = 'Cancelado'
+    else if (todasEjecutado)  nuevoEstado = 'Completado'
+    else if (algunaEjecutado) nuevoEstado = 'En ejecución'
+    else                      nuevoEstado = 'Programado'
   }
+
+  // Solo actualizar si cambió, para evitar escrituras innecesarias
+  try {
+    const act = await getRecord<CapActividadFields>(T_ACTIVIDADES, actividadId)
+    if (act.fields.estado_general !== nuevoEstado) {
+      await updateRecord<CapActividadFields>(T_ACTIVIDADES, actividadId, { estado_general: nuevoEstado })
+    }
+  } catch { /* actividad no encontrada, continuar */ }
+}
+
+export async function eliminarProgramacion(id: string): Promise<void> {
+  // Obtener el actividad_id antes de eliminar para recalcular el estado
+  let actividadId: string | undefined
+  try {
+    const prog = await getRecord<CapProgramacionFields>(T_PROGRAMACION, id)
+    actividadId = prog.fields.actividad_id
+  } catch { /* no encontrado */ }
+
+  await deleteRecord(T_PROGRAMACION, id)
+
+  if (actividadId) await recalcularEstadoActividad(actividadId)
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -203,8 +241,8 @@ export async function crearRegistro(fields: Partial<CapRegistroFields>) {
       }
     } catch { /* actividad no encontrada, continuar */ }
 
-    // Fix 1: verificar si todas las programaciones de la actividad están ejecutadas
-    await verificarYCompletarActividad(fields.actividad_id)
+    // Recalcular estado basado en todas las programaciones
+    await recalcularEstadoActividad(fields.actividad_id)
   }
 
   return record

@@ -197,7 +197,10 @@ export default function CapacitacionDetallePage() {
         <div className="flex items-start gap-3">
           <button
             onClick={() => router.push('/dashboard/capacitaciones')}
-            className="mt-0.5 p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors shrink-0"
+            className="mt-0.5 p-1.5 rounded-lg transition-colors shrink-0"
+            style={{ color: 'var(--sst-dark-500)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)'; e.currentTarget.style.color = 'var(--sst-dark-900)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sst-dark-500)' }}
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -212,8 +215,8 @@ export default function CapacitacionDetallePage() {
                 Ítem #{f.item_numero}
               </span>
               <span
-                className="text-xs px-2 py-0.5 rounded-full font-medium text-white"
-                style={{ backgroundColor: catColor + 'aa' }}
+                className="text-xs px-2 py-0.5 rounded-full font-semibold"
+                style={{ backgroundColor: catColor, color: '#fff', opacity: 0.75 }}
               >
                 {f.categoria}
               </span>
@@ -225,25 +228,25 @@ export default function CapacitacionDetallePage() {
               <EstadoBadge estado={f.estado_general} size="md" />
             </div>
 
-            <h1 className="text-lg font-bold text-gray-900 leading-tight">{f.tema}</h1>
+            <h1 className="text-lg font-bold leading-tight" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>{f.tema}</h1>
             {f.objetivo && (
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">{f.objetivo}</p>
+              <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--sst-dark-500)' }}>{f.objetivo}</p>
             )}
 
             {/* Mini stats */}
-            <div className="flex flex-wrap gap-4 mt-3 text-xs text-gray-500">
+            <div className="flex flex-wrap gap-4 mt-3 text-xs" style={{ color: 'var(--sst-dark-500)' }}>
               {f.proveedor && (
                 <span className="flex items-center gap-1">
-                  <Target className="w-3.5 h-3.5 text-gray-400" /> {f.proveedor}
+                  <Target className="w-3.5 h-3.5" style={{ color: 'var(--sst-dark-300)' }} /> {f.proveedor}
                 </span>
               )}
               {f.responsable && (
                 <span className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5 text-gray-400" /> {f.responsable}
+                  <Users className="w-3.5 h-3.5" style={{ color: 'var(--sst-dark-300)' }} /> {f.responsable}
                 </span>
               )}
               {totalAsistentes > 0 && (
-                <span className="flex items-center gap-1 text-green-600 font-medium">
+                <span className="flex items-center gap-1 font-medium" style={{ color: 'var(--sst-cumple)' }}>
                   <ClipboardCheck className="w-3.5 h-3.5" /> {totalAsistentes} asistentes acumulados
                 </span>
               )}
@@ -273,26 +276,29 @@ export default function CapacitacionDetallePage() {
         <div className="lg:col-span-2 flex flex-col gap-4">
           {/* Información detallada */}
           <Card className="p-4">
-            <h2 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-1.5">
-              <BookOpen className="w-4 h-4 text-blue-500" /> Información
+            <h2 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
+              <BookOpen className="w-4 h-4" style={{ color: 'var(--phase-planear)' }} /> Información
             </h2>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Proveedor</span>
-                <p className="font-medium text-gray-700 mt-0.5">{f.proveedor || '—'}</p>
+                <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Proveedor</span>
+                <p className="font-medium mt-0.5" style={{ color: 'var(--sst-dark-700)' }}>{f.proveedor || '—'}</p>
               </div>
               <div>
-                <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Responsable</span>
-                <p className="font-medium text-gray-700 mt-0.5">{f.responsable || '—'}</p>
+                <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Responsable</span>
+                <p className="font-medium mt-0.5" style={{ color: 'var(--sst-dark-700)' }}>{f.responsable || '—'}</p>
               </div>
               <div className="col-span-2">
-                <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Dirigido a</span>
-                <p className="font-medium text-gray-700 mt-0.5">{f.dirigido_a || '—'}</p>
+                <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Dirigido a</span>
+                <p className="font-medium mt-0.5" style={{ color: 'var(--sst-dark-700)' }}>{f.dirigido_a || '—'}</p>
               </div>
               {f.normativa_aplicable && (
                 <div className="col-span-2">
-                  <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wide">Normativa</span>
-                  <p className="font-medium text-gray-700 mt-0.5 text-xs bg-blue-50 border border-blue-100 rounded-lg px-2.5 py-1 inline-block">{f.normativa_aplicable}</p>
+                  <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Normativa</span>
+                  <p
+                    className="font-medium mt-0.5 text-xs rounded-lg px-2.5 py-1 inline-block"
+                    style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: 'var(--phase-planear)' }}
+                  >{f.normativa_aplicable}</p>
                 </div>
               )}
             </div>
@@ -301,10 +307,10 @@ export default function CapacitacionDetallePage() {
           {/* Timeline de ejecuciones */}
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <ClipboardCheck className="w-4 h-4 text-green-500" />
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
+                <ClipboardCheck className="w-4 h-4" style={{ color: 'var(--sst-cumple)' }} />
                 Historial de ejecución
-                <span className="ml-1 text-xs text-gray-400">({registros.length})</span>
+                <span className="ml-1 text-xs" style={{ color: 'var(--sst-dark-500)' }}>({registros.length})</span>
               </h2>
               <button
                 onClick={() => setModalRegistro(true)}
@@ -325,10 +331,10 @@ export default function CapacitacionDetallePage() {
         <div className="flex flex-col gap-4">
           <Card className="p-4">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-blue-500" />
+              <h2 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
+                <Calendar className="w-4 h-4" style={{ color: 'var(--phase-planear)' }} />
                 Programación
-                <span className="text-xs text-gray-400">({programaciones.length})</span>
+                <span className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>({programaciones.length})</span>
               </h2>
               <button
                 onClick={() => setModalProg(true)}
@@ -342,7 +348,7 @@ export default function CapacitacionDetallePage() {
             {programaciones.length > 0 && (
               <div className="mb-3">
                 <BarraMensual value={pctProg} meta={80} height="sm" showLabel showMeta />
-                <p className="text-[10px] text-gray-400 mt-1">{progEjecutadas}/{programaciones.length} sesiones ejecutadas</p>
+                <p className="text-[10px] mt-1" style={{ color: 'var(--sst-dark-500)' }}>{progEjecutadas}/{programaciones.length} sesiones ejecutadas</p>
               </div>
             )}
 
@@ -362,13 +368,16 @@ export default function CapacitacionDetallePage() {
                 {programaciones.map(p => (
                   <div
                     key={p.id}
-                    className="flex items-center justify-between text-sm border border-gray-100 rounded-xl px-3 py-2 hover:bg-gray-50 transition-colors"
+                    className="flex items-center justify-between text-sm rounded-xl px-3 py-2 transition-colors"
+                    style={{ border: '1px solid var(--border)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '' }}
                   >
                     <div>
-                      <span className="font-medium text-gray-800">{p.fields.mes}</span>
-                      <span className="text-gray-400 ml-1 text-xs">Sem. {p.fields.semana}</span>
+                      <span className="font-semibold" style={{ color: 'var(--sst-dark-800)' }}>{p.fields.mes}</span>
+                      <span className="ml-1 text-xs" style={{ color: 'var(--sst-dark-500)' }}>Sem. {p.fields.semana}</span>
                       {p.fields.fecha_programada && (
-                        <p className="text-[10px] text-gray-400">{p.fields.fecha_programada}</p>
+                        <p className="text-[10px]" style={{ color: 'var(--sst-dark-500)' }}>{p.fields.fecha_programada}</p>
                       )}
                     </div>
                     <EstadoBadge estado={p.fields.estado} />

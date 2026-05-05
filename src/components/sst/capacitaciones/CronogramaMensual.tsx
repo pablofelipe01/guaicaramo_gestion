@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { ChevronLeft, ChevronRight, CheckCircle2, Clock } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { CATEGORIAS_CAP } from '@/lib/sst/cap-client'
 import { CronogramaCelda } from './CronogramaCelda'
 import { CronogramaSeparadorCategoria } from './CronogramaSeparadorCategoria'
@@ -21,14 +21,20 @@ const MESES_IDX = [
 const HOY = new Date()
 const HOY_STR = HOY.toISOString().split('T')[0]
 
-/** Fecha de inicio de cada semana en un mes dado (año fijo 2026) */
+/** Rango de fechas (inicio – fin) de cada semana en un mes dado (año fijo 2026) */
 function fechasSemana(mes: string): string[] {
   const mesIdx = MESES_IDX.indexOf(mes as typeof MESES_IDX[number])
   if (mesIdx === -1) return ['S1', 'S2', 'S3', 'S4']
   const results: string[] = []
+  // Último día del mes para no exceder en S4
+  const ultimoDia = new Date(2026, mesIdx + 1, 0).getDate()
   for (let s = 0; s < 4; s++) {
-    const d = new Date(2026, mesIdx, 1 + s * 7)
-    results.push(d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' }))
+    const inicioDia = 1 + s * 7
+    const finDia = s === 3 ? ultimoDia : Math.min(inicioDia + 6, ultimoDia)
+    const dIni = new Date(2026, mesIdx, inicioDia)
+    const dFin = new Date(2026, mesIdx, finDia)
+    const mesAbrev = dFin.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')
+    results.push(`${dIni.getDate()} – ${dFin.getDate()} ${mesAbrev}`)
   }
   return results
 }
@@ -115,50 +121,107 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
         <button
           onClick={() => setMesIdx(prev => Math.max(0, prev - 1))}
           disabled={mesIdx === 0}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 transition-colors"
+          className="p-2 rounded-lg disabled:opacity-30 transition-colors"
+          style={{ color: 'var(--sst-dark-500)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = '' }}
         >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <div className="text-center">
-          <h2 className="text-sm font-bold text-gray-900 flex items-center justify-center gap-2">
+          <h2 className="text-sm font-bold flex items-center justify-center gap-2" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>
             {mes} 2026
             {mesIdx === HOY.getMonth() && (
-              <span className="w-2 h-2 rounded-full bg-green-500 inline-block" title="Mes actual" />
+              <span className="w-2 h-2 rounded-full inline-block" style={{ background: 'var(--sst-green-500)' }} title="Mes actual" />
             )}
           </h2>
-          <p className="text-xs text-gray-400">{progDelMes.length} programaciones este mes</p>
+          <p className="text-xs font-medium" style={{ color: 'var(--sst-dark-700)' }}>{progDelMes.length} programaciones este mes</p>
         </div>
         <button
           onClick={() => setMesIdx(prev => Math.min(11, prev + 1))}
           disabled={mesIdx === 11}
-          className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-30 transition-colors"
+          className="p-2 rounded-lg disabled:opacity-30 transition-colors"
+          style={{ color: 'var(--sst-dark-500)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = '' }}
         >
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>
 
+      {/* Resumen semanal — arriba para visión rápida */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {resumenSemanal.map(r => {
+          const pct = r.total > 0 ? Math.round((r.ejecutadas / r.total) * 100) : 0
+          const esCurrent = esSemanaCurrent(mes, r.s)
+          return (
+            <div
+              key={r.s}
+              className="rounded-xl p-3 flex items-center gap-3 transition-all"
+              style={{
+                border: esCurrent ? '1.5px solid var(--sst-green-700)' : '1px solid var(--border)',
+                background: esCurrent
+                  ? 'linear-gradient(135deg, var(--sst-cumple-bg), rgba(255,255,255,0.6))'
+                  : '#fff',
+                boxShadow: esCurrent ? '0 4px 16px rgba(22,101,52,0.12)' : '0 1px 3px rgba(15,23,42,0.04)',
+              }}
+            >
+              <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg flex-shrink-0" style={{ background: esCurrent ? 'var(--sst-green-700)' : 'var(--sst-dark-100)' }}>
+                <span className="text-[9px] font-semibold uppercase" style={{ color: esCurrent ? 'rgba(255,255,255,0.85)' : 'var(--sst-dark-500)' }}>Sem</span>
+                <span className="text-sm font-bold leading-none" style={{ color: esCurrent ? '#fff' : 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>{r.s}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-base font-bold" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>{r.ejecutadas}</span>
+                  <span className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>/ {r.total}</span>
+                  <span className="ml-auto text-[11px] font-bold" style={{ color: pct >= 80 ? 'var(--sst-cumple)' : pct >= 50 ? 'var(--sst-riesgo)' : 'var(--sst-critico)' }}>{pct}%</span>
+                </div>
+                <div className="mt-1 w-full rounded-full h-1" style={{ background: 'var(--sst-dark-200)' }}>
+                  <div
+                    className="h-1 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: pct >= 80 ? 'var(--sst-green-500)' : pct >= 50 ? 'var(--sst-riesgo)' : 'var(--sst-critico)',
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
       {/* Tabla */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200">
+      <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid var(--border)' }}>
         <table className="w-full border-collapse text-xs">
           <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="px-3 py-2.5 text-left text-gray-500 font-semibold sticky left-0 bg-gray-50 z-10 min-w-[220px] border-r border-gray-200">
-                Actividad
+            <tr style={{ background: 'var(--sst-dark-100)', borderBottom: '1px solid var(--border)' }}>
+              <th
+                className="px-4 py-3 text-left font-semibold sticky left-0 z-10 min-w-[260px]"
+                style={{ color: 'var(--sst-dark-500)', background: 'var(--sst-dark-100)', borderRight: '1px solid var(--border)' }}
+              >
+                <span className="text-[10px] uppercase tracking-wider">Actividad</span>
               </th>
               {[1, 2, 3, 4].map(s => {
                 const esCurrent = esSemanaCurrent(mes, s)
                 return (
                   <th
                     key={s}
-                    className={`px-2 py-2.5 text-center font-semibold border-l border-gray-200 min-w-[120px] ${
-                      esCurrent ? 'text-blue-600 bg-blue-50/60' : 'text-gray-500'
-                    }`}
+                    className="px-2 py-3 text-center font-semibold min-w-[140px]"
+                    style={{
+                      color: esCurrent ? 'var(--sst-green-700)' : 'var(--sst-dark-500)',
+                      background: esCurrent ? 'var(--sst-cumple-bg)' : undefined,
+                      borderLeft: '1px solid var(--border)',
+                      fontFamily: 'var(--font-poppins)',
+                    }}
                   >
-                    <div>Semana {s}</div>
-                    <div className="text-[10px] font-normal text-gray-400">{semanaHeaders[s - 1]}</div>
-                    {esCurrent && (
-                      <div className="mt-0.5 h-0.5 bg-blue-400 rounded-full mx-2" />
-                    )}
+                    <div className="flex items-center justify-center gap-1.5">
+                      <span className="text-xs">Semana {s}</span>
+                      {esCurrent && (
+                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: 'var(--sst-green-700)', color: '#fff' }}>Hoy</span>
+                      )}
+                    </div>
+                    <div className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--sst-dark-500)' }}>{semanaHeaders[s - 1]}</div>
                   </th>
                 )
               })}
@@ -184,16 +247,34 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                   const anyVisible = progsDeAct.some(p => pasaFiltroEstado(p))
                   if (filtroEstados.length > 0 && !anyVisible) return null
                   return (
-                    <tr key={a.id} className={`group transition-colors ${i % 2 === 0 ? 'bg-white hover:bg-green-50/30' : 'bg-gray-50/40 hover:bg-green-50/30'}`}>
-                      <td className="px-3 py-1.5 sticky left-0 bg-inherit z-10 border-r border-gray-200">
+                    <tr key={a.id} className="group transition-all duration-150" style={{ background: i % 2 !== 0 ? 'var(--sst-dark-100)' : '#fff' }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = 'var(--sst-cumple-bg)'
+                        const firstTd = e.currentTarget.querySelector('td')
+                        if (firstTd) firstTd.style.borderLeft = '3px solid #22C55E'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = i % 2 !== 0 ? 'var(--sst-dark-100)' : '#fff'
+                        const firstTd = e.currentTarget.querySelector('td')
+                        if (firstTd) firstTd.style.borderLeft = ''
+                      }}
+                    >
+                      <td className="px-4 py-3 sticky left-0 z-10 border-r" style={{ borderColor: 'var(--border)', background: 'inherit' }}>
                         <button
                           onClick={() => router.push(`/dashboard/capacitaciones/${a.id}`)}
-                          className="flex items-center gap-1.5 w-full text-left hover:underline"
+                          className="flex items-start gap-2 w-full text-left transition-colors"
+                          onMouseEnter={e => { const span = e.currentTarget.querySelectorAll('span')[1]; if (span) (span as HTMLElement).style.color = 'var(--sst-green-700)' }}
+                          onMouseLeave={e => { const span = e.currentTarget.querySelectorAll('span')[1]; if (span) (span as HTMLElement).style.color = 'var(--sst-dark-700)' }}
                         >
-                          <span className="text-gray-400 text-[10px] flex-shrink-0">#{a.fields.item_numero}</span>
-                          <span className="text-gray-700 line-clamp-2 leading-tight">{a.fields.tema}</span>
+                          <span className="text-[10px] font-semibold flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded" style={{ color: 'var(--sst-dark-500)', background: 'var(--sst-dark-100)' }}>#{a.fields.item_numero}</span>
+                          <div className="flex-1 min-w-0">
+                            <span className="line-clamp-2 leading-snug font-medium transition-colors block" style={{ color: 'var(--sst-dark-700)' }}>{a.fields.tema}</span>
+                            {a.fields.responsable && (
+                              <span className="text-[10px] block mt-0.5 truncate" style={{ color: 'var(--sst-dark-500)' }}>{a.fields.responsable}</span>
+                            )}
+                          </div>
                           {a.fields.requiere_certificacion && (
-                            <span className="text-yellow-500 font-bold flex-shrink-0" title="Requiere certificación">*</span>
+                            <span className="font-bold flex-shrink-0" style={{ color: 'var(--sst-riesgo)' }} title="Requiere certificación">*</span>
                           )}
                         </button>
                       </td>
@@ -201,7 +282,7 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                         const prog = idx[`${a.id}|${mes}|${s}`] ?? null
                         const mostrar = pasaFiltroEstado(prog)
                         return (
-                          <td key={s} className="p-1 border-l border-gray-100">
+                          <td key={s} className="p-2" style={{ borderLeft: '1px solid var(--sst-dark-100)' }}>
                             {mostrar ? (
                               <CronogramaCelda
                                 prog={prog}
@@ -212,7 +293,7 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                                 onSuccess={onUpdate}
                               />
                             ) : (
-                              <div className="w-full h-9 rounded-md bg-gray-50" />
+                              <div className="w-full h-9 rounded-md" style={{ background: 'var(--sst-dark-100)' }} />
                             )}
                           </td>
                         )
@@ -225,44 +306,6 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
             })}
           </tbody>
         </table>
-      </div>
-
-      {/* Resumen semanal */}
-      <div className="grid grid-cols-4 gap-3">
-        {resumenSemanal.map(r => {
-          const pct = r.total > 0 ? Math.round((r.ejecutadas / r.total) * 100) : 0
-          const esCurrent = esSemanaCurrent(mes, r.s)
-          return (
-            <div
-              key={r.s}
-              className={`rounded-xl border p-3 text-center transition-all ${
-                esCurrent ? 'border-blue-300 bg-blue-50/50' : 'border-gray-200 bg-gray-50'
-              }`}
-            >
-              <p className={`text-xs font-semibold ${esCurrent ? 'text-blue-600' : 'text-gray-500'}`}>
-                Semana {r.s}
-              </p>
-              <div className="flex items-center justify-center gap-1 mt-1">
-                <Clock className="w-3 h-3 text-blue-400" />
-                <span className="text-sm font-bold text-gray-700">{r.total}</span>
-              </div>
-              <div className="flex items-center justify-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-green-500" />
-                <span className="text-xs text-green-600">{r.ejecutadas}</span>
-              </div>
-              <div className="mt-1.5 w-full bg-gray-200 rounded-full h-1">
-                <div
-                  className="h-1 rounded-full transition-all duration-500"
-                  style={{
-                    width: `${pct}%`,
-                    backgroundColor: pct >= 80 ? '#22C55E' : pct >= 50 ? '#F59E0B' : '#EF4444',
-                  }}
-                />
-              </div>
-              <p className="text-[10px] text-gray-400 mt-0.5">{pct}%</p>
-            </div>
-          )
-        })}
       </div>
 
       {/* ActionSheet */}

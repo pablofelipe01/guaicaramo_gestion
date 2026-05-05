@@ -57,3 +57,17 @@ export function getColorEstadoMeta(pct: number, meta = 80): string {
   if (pct >= meta * 0.75) return 'text-orange-500'
   return 'text-red-600'
 }
+
+/**
+ * Lee el campo de observaciones de un registro de programación
+ * tolerando cualquier variante de nombre que use Airtable
+ * (Observaciones, observaciones, notas, Notas, comentarios, Comentarios).
+ */
+export function getObservacionesProg(fields: Record<string, unknown>): string {
+  const candidatos = ['Observaciones', 'observaciones', 'notas', 'Notas', 'comentarios', 'Comentarios']
+  for (const k of candidatos) {
+    const v = fields[k]
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return ''
+}

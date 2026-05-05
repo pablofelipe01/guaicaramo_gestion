@@ -13,11 +13,11 @@ function esVencido(p: Prog): boolean {
 }
 
 const ESTADOS = [
-  { key: 'Programado', label: 'Programado', color: '#3B82F6', Icon: Clock },
-  { key: 'Ejecutado', label: 'Ejecutado', color: '#22C55E', Icon: CheckCircle2 },
-  { key: 'Vencido', label: 'Vencido', color: '#EF4444', Icon: AlertCircle },
-  { key: 'Reprogramado', label: 'Reprogramado', color: '#F59E0B', Icon: RotateCcw },
-  { key: 'Cancelado', label: 'Cancelado', color: '#9CA3AF', Icon: XCircle },
+  { key: 'Programado',   label: 'Programado',   color: '#2563EB', Icon: Clock },
+  { key: 'Ejecutado',    label: 'Ejecutado',    color: '#15803D', Icon: CheckCircle2 },
+  { key: 'Vencido',      label: 'Vencido',      color: '#DC2626', Icon: AlertCircle },
+  { key: 'Reprogramado', label: 'Reprogramado', color: '#7C3AED', Icon: RotateCcw },
+  { key: 'Cancelado',    label: 'Cancelado',    color: '#64748B', Icon: XCircle },
 ] as const
 
 interface Props {

@@ -14,18 +14,26 @@ type Prog = AirtableRecord<CapProgramacionFields>
 const HOY = new Date()
 const HOY_STR = HOY.toISOString().split('T')[0]
 
+/** Parsea "YYYY-MM-DD" como medianoche local (evita desplazamiento UTC→local) */
+function parseFechaLocal(fecha: string): Date {
+  const [y, m, d] = fecha.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/** Diferencia en días enteros entre una fecha y hoy (positivo = futuro) */
 function diasDesde(fecha: string): number {
-  return Math.round((new Date(fecha).getTime() - HOY.getTime()) / (1000 * 60 * 60 * 24))
+  const hoyLocal = new Date(HOY.getFullYear(), HOY.getMonth(), HOY.getDate())
+  return Math.round((parseFechaLocal(fecha).getTime() - hoyLocal.getTime()) / (1000 * 60 * 60 * 24))
 }
 
 function semanaRelativa(fecha: string): string {
-  const d = new Date(fecha)
   const diff = diasDesde(fecha)
   if (diff < 0) return 'VENCIDO'
   if (diff === 0) return 'HOY'
   if (diff === 1) return 'MAÑANA'
   if (diff <= 7) return 'ESTA SEMANA'
   if (diff <= 14) return 'PRÓXIMA SEMANA'
+  const d = parseFechaLocal(fecha)
   const mes = d.toLocaleDateString('es-CO', { month: 'long' }).toUpperCase()
   return mes
 }
@@ -37,7 +45,7 @@ const ESTADO_CONFIG: Record<string, { color: string; Icon: React.FC<{ className?
   Programado: { color: '#3B82F6', Icon: Clock },
   Vencido: { color: '#EF4444', Icon: AlertCircle },
   Reprogramado: { color: '#F59E0B', Icon: RotateCcw },
-  Cancelado: { color: '#9CA3AF', Icon: XCircle },
+  Cancelado: { color: '#DC3545', Icon: XCircle },
 }
 
 interface ItemLista {
@@ -113,9 +121,9 @@ export function CronogramaLista({ actividades, programaciones, filtroEstados, ca
 
   if (items.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-400">
-        <CalendarDays className="w-10 h-10 mx-auto mb-2 opacity-30" />
-        <p className="text-sm">No hay programaciones con los filtros seleccionados</p>
+      <div className="text-center py-16">
+        <CalendarDays className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--sst-dark-300)' }} />
+        <p className="text-sm" style={{ color: 'var(--sst-dark-500)' }}>No hay programaciones con los filtros seleccionados</p>
       </div>
     )
   }
@@ -126,16 +134,22 @@ export function CronogramaLista({ actividades, programaciones, filtroEstados, ca
         <div key={grupo}>
           {/* Encabezado de grupo */}
           <div className="flex items-center gap-2 mb-3">
-            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full ${
-              grupo === 'VENCIDO' ? 'bg-red-100 text-red-600' :
-              grupo === 'HOY' || grupo === 'MAÑANA' ? 'bg-blue-100 text-blue-700' :
-              grupo === 'ESTA SEMANA' ? 'bg-indigo-100 text-indigo-700' :
-              'bg-gray-100 text-gray-600'
-            }`}>
+            <span
+              className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+              style={{
+                background: grupo === 'VENCIDO' ? 'var(--sst-critico-bg)' :
+                  grupo === 'HOY' || grupo === 'MAÑANA' ? 'rgba(59,130,246,0.1)' :
+                  grupo === 'ESTA SEMANA' ? 'rgba(59,130,246,0.06)' :
+                  'var(--sst-dark-100)',
+                color: grupo === 'VENCIDO' ? 'var(--sst-critico)' :
+                  grupo === 'HOY' || grupo === 'MAÑANA' || grupo === 'ESTA SEMANA' ? 'var(--phase-planear)' :
+                  'var(--sst-dark-700)',
+              }}
+            >
               {grupo}
             </span>
-            <span className="text-xs text-gray-400">{gItems.length} actividades</span>
-            <div className="flex-1 h-px bg-gray-100" />
+            <span className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>{gItems.length} actividades</span>
+            <div className="flex-1 h-px" style={{ background: 'var(--sst-dark-200)' }} />
           </div>
 
           {/* Cards */}
@@ -148,8 +162,8 @@ export function CronogramaLista({ actividades, programaciones, filtroEstados, ca
               return (
                 <div
                   key={prog.id}
-                  className="rounded-xl border border-gray-200 bg-white hover:shadow-md transition-all duration-150 overflow-hidden"
-                  style={{ borderLeft: `3px solid ${catColor}` }}
+                  className="rounded-xl bg-white hover:shadow-md transition-all duration-150 overflow-hidden"
+                  style={{ border: '1px solid var(--border)', borderLeft: `3px solid ${catColor}` }}
                 >
                   <div className="px-4 py-3 flex items-start gap-3">
                     {/* Estado icon */}
@@ -169,7 +183,8 @@ export function CronogramaLista({ actividades, programaciones, filtroEstados, ca
                           </p>
                           <button
                             onClick={() => router.push(`/dashboard/capacitaciones/${actividad.id}`)}
-                            className="text-sm font-semibold text-gray-800 line-clamp-2 hover:underline text-left"
+                            className="text-sm font-semibold line-clamp-2 hover:underline text-left"
+                            style={{ color: 'var(--sst-dark-800)' }}
                           >
                             {actividad.fields.tema}
                           </button>
@@ -182,13 +197,13 @@ export function CronogramaLista({ actividades, programaciones, filtroEstados, ca
                         </span>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px] text-gray-500">
+                      <div className="flex flex-wrap items-center gap-3 mt-2 text-[11px]" style={{ color: 'var(--sst-dark-500)' }}>
                         {prog.fields.fecha_programada && (
                           <span className="flex items-center gap-1">
                             <CalendarDays className="w-3 h-3" />
                             {prog.fields.fecha_programada}
                             {diff !== null && diff >= 0 && diff <= 14 && (
-                              <span className="text-blue-500 font-medium">
+                              <span className="font-medium" style={{ color: 'var(--phase-planear)' }}>
                                 {diff === 0 ? '(hoy)' : `(en ${diff}d)`}
                               </span>
                             )}
@@ -214,13 +229,14 @@ export function CronogramaLista({ actividades, programaciones, filtroEstados, ca
                     <div className="flex flex-col gap-1 flex-shrink-0 mt-0.5">
                       <button
                         onClick={() => openAction(prog, actividad)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+                        className="btn btn-secondary text-xs px-3 py-1.5"
                       >
                         Editar
                       </button>
                       <button
                         onClick={() => router.push(`/dashboard/capacitaciones/${actividad.id}`)}
-                        className="text-xs px-3 py-1.5 rounded-lg border border-blue-200 hover:bg-blue-50 text-blue-600 transition-colors"
+                        className="btn btn-ghost text-xs px-3 py-1.5"
+                        style={{ color: 'var(--phase-planear)' }}
                       >
                         Ver detalle
                       </button>

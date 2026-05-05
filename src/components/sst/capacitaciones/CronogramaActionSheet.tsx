@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { X, CheckCircle2, RotateCcw, XCircle, Clock, CalendarDays } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, CheckCircle2, RotateCcw, XCircle, Clock, CalendarDays, MessageSquare } from 'lucide-react'
 import { getCategoriaColor } from '@/lib/sst/cap-client'
 import type { CapActividadFields, CapProgramacionFields, CapEstadoProgramacion } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
@@ -27,7 +27,7 @@ function authHeaders() {
 const OPCIONES: { estado: CapEstadoProgramacion; label: string; color: string; Icon: React.FC<{ className?: string }> }[] = [
   { estado: 'Ejecutado', label: 'Marcar ejecutado', color: '#22C55E', Icon: CheckCircle2 },
   { estado: 'Reprogramado', label: 'Reprogramar', color: '#F59E0B', Icon: RotateCcw },
-  { estado: 'Cancelado', label: 'Cancelar', color: '#9CA3AF', Icon: XCircle },
+  { estado: 'Cancelado', label: 'Cancelar', color: '#DC3545', Icon: XCircle },
   { estado: 'Programado', label: 'Restablecer como programado', color: '#3B82F6', Icon: Clock },
 ]
 
@@ -38,10 +38,45 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  useEffect(() => {
+    if (open && prog) {
+      setObservaciones(prog.fields.observaciones ?? '')
+      setEstadoSel(null)
+      setFecha('')
+      setError('')
+    }
+  }, [open, prog])
+
+  async function guardarEstadoDirecto(estadoNuevo: CapEstadoProgramacion) {
+    if (!prog) return
+    setLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          estado: estadoNuevo,
+          ...(observaciones ? { observaciones } : {}),
+        }),
+      })
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        throw new Error(errBody.message || `Error ${res.status}`)
+      }
+      onSuccess()
+      handleClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar. Intenta de nuevo.')
+      setLoading(false)
+    }
+  }
+
   if (!open || !prog || !actividad) return null
 
   const catColor = getCategoriaColor(actividad.fields.categoria)
   const necesitaFecha = estadoSel === 'Ejecutado' || estadoSel === 'Reprogramado'
+  const mostrarObservaciones = necesitaFecha || estadoSel === 'Cancelado'
 
   async function handleGuardar() {
     if (!prog || !estadoSel) return
@@ -64,8 +99,8 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
       }
       onSuccess()
       handleClose()
-    } catch {
-      setError('No se pudo guardar. Intenta de nuevo.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar. Intenta de nuevo.')
     } finally {
       setLoading(false)
     }
@@ -76,6 +111,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
     setFecha('')
     setObservaciones('')
     setError('')
+    setLoading(false)
     onClose()
   }
 
@@ -100,8 +136,18 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
               {prog.fields.mes} — Semana {prog.fields.semana}
               {prog.fields.fecha_programada && ` — ${prog.fields.fecha_programada}`}
             </p>
+            {prog.fields.observaciones && (
+              <div className="flex items-start gap-1.5 mt-1.5 rounded-lg px-2 py-1.5" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5" style={{ color: catColor }} />
+                <p className="text-[11px] text-gray-600 italic leading-snug">{prog.fields.observaciones}</p>
+              </div>
+            )}
           </div>
-          <button onClick={handleClose} className="p-1.5 rounded-lg hover:bg-white/60 text-gray-400 transition-colors">
+          <button
+            onClick={handleClose}
+            className="p-1.5 rounded-lg hover:bg-white/60 transition-colors"
+            style={{ color: prog.fields.estado === 'Cancelado' ? '#DC3545' : 'var(--sst-dark-500)' }}
+          >
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -116,7 +162,11 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
               return (
                 <button
                   key={estado}
-                  onClick={() => { setEstadoSel(estado); setFecha('') }}
+                  disabled={loading}
+                  onClick={() => {
+                    setEstadoSel(estado)
+                    setFecha('')
+                  }}
                   className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-medium transition-all duration-150 ${
                     sel ? 'shadow-md' : 'hover:opacity-80'
                   }`}
@@ -135,21 +185,23 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
         </div>
 
         {/* Campos adicionales */}
-        {necesitaFecha && (
+        {mostrarObservaciones && (
           <div className="px-5 pb-4 space-y-3">
-            <div>
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5 mb-1.5">
-                <CalendarDays className="w-3.5 h-3.5" />
-                {estadoSel === 'Ejecutado' ? 'Fecha de ejecución' : 'Nueva fecha programada'}
-                <span className="text-red-400">*</span>
-              </label>
-              <input
-                type="date"
-                value={fecha}
-                onChange={e => { setFecha(e.target.value); setError('') }}
-                className="input-field"
-              />
-            </div>
+            {necesitaFecha && (
+              <div>
+                <label className="text-xs font-semibold text-gray-600 flex items-center gap-1.5 mb-1.5">
+                  <CalendarDays className="w-3.5 h-3.5" />
+                  {estadoSel === 'Ejecutado' ? 'Fecha de ejecución' : 'Nueva fecha programada'}
+                  <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={fecha}
+                  onChange={e => { setFecha(e.target.value); setError('') }}
+                  className="input-field"
+                />
+              </div>
+            )}
             <div>
               <label className="text-xs font-semibold text-gray-600 mb-1.5 block">Observaciones</label>
               <textarea

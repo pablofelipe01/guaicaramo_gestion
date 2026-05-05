@@ -1,5 +1,6 @@
 import 'server-only'
 import { listRecords, createRecords } from '@/lib/airtable-client'
+import type { AirtableRecord } from '@/lib/airtable-client'
 import type { IndIndicadorFields, IndSnapshotFields, IndKpiResult } from '@/types/sst/ind'
 import type { IncIncidenteFields } from '@/types/sst/inc'
 import type { CapAsistenciaFields } from '@/types/sst/cap'
@@ -26,7 +27,7 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
   const inicio = `${anio}-01-01`
   const fin = `${anio}-12-31`
 
-  const [incidentesRes, asistenciasRes, actividadesRes, rubrosRes, ejecucionesRes, accionesRes, inspeccionesRes, usuariosRes] = await Promise.all([
+  const settled = await Promise.allSettled([
     listRecords<IncIncidenteFields>('sst_incidentes', {
       filterByFormula: `AND(IS_AFTER({Fecha Ocurrencia},'${inicio}'),IS_BEFORE({Fecha Ocurrencia},'${fin}'))`,
     }),
@@ -42,25 +43,30 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
     }),
   ])
 
-  const incidentes = incidentesRes.records
+  // Extraer registros — tabla vacía si alguna falla
+  function extractRecords<T>(s: PromiseSettledResult<{ records: AirtableRecord<T>[] }>): AirtableRecord<T>[] {
+    return s.status === 'fulfilled' ? s.value.records : []
+  }
+
+  const incidentes = extractRecords<IncIncidenteFields>(settled[0] as PromiseSettledResult<{ records: AirtableRecord<IncIncidenteFields>[] }>)
   const ats = incidentes.filter(r => r.fields.Tipo === 'accidente_trabajo')
   const els = incidentes.filter(r => r.fields.Tipo === 'enfermedad_laboral')
   const diasPerdidos = ats.reduce((s, r) => s + (r.fields['Dias Perdidos'] ?? 0), 0)
 
-  const asistencias = asistenciasRes.records
+  const asistencias = extractRecords<CapAsistenciaFields>(settled[1] as PromiseSettledResult<{ records: AirtableRecord<CapAsistenciaFields>[] }>)
   const totalAsistentes = asistencias.length
   const asistentesConFirma = asistencias.filter(r => r.fields['Firma URL']).length
 
-  const actividades = actividadesRes.records
+  const actividades = extractRecords<PlanActividadFields>(settled[2] as PromiseSettledResult<{ records: AirtableRecord<PlanActividadFields>[] }>)
   const totalActs = actividades.length
   const actsCerradas = actividades.filter(r => r.fields.Estado === 'completada').length
 
-  const rubros = rubrosRes.records
-  const ejecuciones = ejecucionesRes.records
+  const rubros = extractRecords<PptoRubroFields>(settled[3] as PromiseSettledResult<{ records: AirtableRecord<PptoRubroFields>[] }>)
+  const ejecuciones = extractRecords<PptoEjecucionFields>(settled[4] as PromiseSettledResult<{ records: AirtableRecord<PptoEjecucionFields>[] }>)
   const totalPresupuestado = rubros.reduce((s, r) => s + (r.fields['Valor Presupuestado'] ?? 0), 0)
   const totalEjecutado = ejecuciones.reduce((s, r) => s + (r.fields.Valor ?? 0), 0)
 
-  const acciones = accionesRes.records
+  const acciones = extractRecords<AcAccionFields>(settled[5] as PromiseSettledResult<{ records: AirtableRecord<AcAccionFields>[] }>)
   const totalAcciones = acciones.length
   const accionesCerradasATiempo = acciones.filter(r =>
     r.fields.Estado === 'cerrada' &&
@@ -69,12 +75,11 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
     r.fields['Fecha Cierre'] <= r.fields['Fecha Limite']
   ).length
 
-  const inspecciones = inspeccionesRes.records
+  const inspecciones = extractRecords<InspInspeccionFields>(settled[6] as PromiseSettledResult<{ records: AirtableRecord<InspInspeccionFields>[] }>)
   const inspeccionesTotal = inspecciones.length
   const inspeccionesRealizadas = inspecciones.filter(r => r.fields.Estado === 'realizada').length
 
-  // Total de trabajadores activos — consultado dinámicamente
-  const nTrabajadores = usuariosRes.records.length || 1  // mínimo 1 para evitar división por cero
+  const nTrabajadores = (extractRecords<Record<string, unknown>>(settled[7] as PromiseSettledResult<{ records: AirtableRecord<Record<string, unknown>>[] }>)).length || 1
 
   const kpis: IndKpiResult[] = [
     {

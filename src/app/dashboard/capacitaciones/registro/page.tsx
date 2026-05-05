@@ -63,56 +63,61 @@ export default function RegistrosPage() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
+      {/* ── Header ── */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => router.push('/dashboard/capacitaciones')}
-          className="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          className="p-1.5 rounded-lg transition-colors"
+          style={{ color: 'var(--sst-dark-500)' }}
+          onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)'; e.currentTarget.style.color = 'var(--sst-dark-900)' }}
+          onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sst-dark-500)' }}
         >
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <ClipboardCheck className="w-5 h-5 text-green-600" />
-            <h1 className="text-lg font-bold text-gray-900">Registros de Ejecución</h1>
+            <ClipboardCheck className="w-5 h-5" style={{ color: 'var(--sst-cumple)' }} />
+            <h1 className="text-lg font-bold" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>Registros de Ejecución</h1>
           </div>
-          <p className="text-sm text-gray-500">Listado de todas las ejecuciones registradas</p>
+          <p className="text-sm" style={{ color: 'var(--sst-dark-500)' }}>Listado de todas las ejecuciones registradas</p>
         </div>
         <button
           onClick={() => setModalNuevo(true)}
-          className="flex items-center gap-1.5 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+          className="btn btn-primary"
         >
           <Plus className="w-4 h-4" /> Nuevo registro
         </button>
       </div>
 
-      {/* KPIs rápidos */}
+      {/* ── KPIs rápidos ── */}
       <div className="grid grid-cols-3 gap-3">
         <Card className="p-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Total registros</p>
-          <p className="text-2xl font-bold text-gray-900">{registros.length}</p>
+          <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Total registros</p>
+          <p className="text-2xl font-bold" style={{ color: 'var(--sst-dark-900)' }}>{registros.length}</p>
         </Card>
         <Card className="p-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Convocados</p>
-          <p className="text-2xl font-bold text-blue-600">{totalConvocados}</p>
+          <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Convocados</p>
+          <p className="text-2xl font-bold" style={{ color: 'var(--phase-planear)' }}>{totalConvocados}</p>
         </Card>
         <Card className="p-3">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">Presentes</p>
-          <p className="text-2xl font-bold text-green-600">{totalPresentes}</p>
+          <p className="text-xs uppercase tracking-wide font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Presentes</p>
+          <p className="text-2xl font-bold" style={{ color: 'var(--sst-cumple)' }}>{totalPresentes}</p>
         </Card>
       </div>
 
       <Card className="p-4">
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin w-6 h-6 border-2 border-green-600 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--sst-green-700)', borderTopColor: 'transparent' }} />
           </div>
         ) : registros.length === 0 ? (
           <div className="text-center py-12">
-            <ClipboardCheck className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-            <p className="text-gray-500">Sin registros de ejecución</p>
+            <ClipboardCheck className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--sst-dark-300)' }} />
+            <p style={{ color: 'var(--sst-dark-500)' }}>Sin registros de ejecución</p>
             <button
               onClick={() => setModalNuevo(true)}
-              className="mt-3 text-sm text-green-600 hover:underline"
+              className="mt-3 text-sm hover:underline"
+              style={{ color: 'var(--sst-cumple)' }}
             >
               Crear primer registro
             </button>
@@ -120,14 +125,14 @@ export default function RegistrosPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
-              <thead className="bg-gray-50">
+              <thead style={{ background: 'var(--sst-dark-100)' }}>
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Actividad</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Fecha</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Facilitador</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Asistentes</th>
-                  <th className="px-3 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Evaluaciones</th>
-                  <th className="px-3 py-2 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">Lugar</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Actividad</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Fecha</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Facilitador</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Asistentes</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Evaluaciones</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide hidden md:table-cell" style={{ color: 'var(--sst-dark-500)' }}>Lugar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -140,40 +145,48 @@ export default function RegistrosPage() {
                     ? Math.round((rf.evaluaciones_aprobadas / rf.evaluaciones_realizadas) * 100)
                     : null
                   return (
-                    <tr key={r.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/40'}>
-                      <td className="px-3 py-2.5 font-medium text-gray-800 max-w-[200px]">
+                    <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : 'var(--sst-dark-100)' }}>
+                      <td className="px-3 py-2.5 font-medium max-w-[200px]" style={{ color: 'var(--sst-dark-800)' }}>
                         <span className="line-clamp-2">
                           {rf.actividad_tema ?? actIdx[rf.actividad_id] ?? rf.actividad_id}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-gray-600">
+                      <td className="px-3 py-2.5" style={{ color: 'var(--sst-dark-700)' }}>
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                          <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--sst-dark-500)' }} />
                           {rf.fecha_ejecucion}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5 text-gray-600">{rf.facilitador ?? '—'}</td>
+                      <td className="px-3 py-2.5" style={{ color: 'var(--sst-dark-700)' }}>{rf.facilitador ?? '—'}</td>
                       <td className="px-3 py-2.5 text-center">
                         {rf.presentes != null ? (
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            pct != null && pct >= 80 ? 'bg-green-100 text-green-700' :
-                            pct != null && pct >= 60 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
+                          <span
+                            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                            style={{
+                              background: pct != null && pct >= 80 ? 'var(--sst-cumple-bg)' : pct != null && pct >= 60 ? 'var(--sst-riesgo-bg)' : 'var(--sst-critico-bg)',
+                              color: pct != null && pct >= 80 ? 'var(--sst-cumple)' : pct != null && pct >= 60 ? 'var(--sst-riesgo)' : 'var(--sst-critico)',
+                              border: `1px solid ${pct != null && pct >= 80 ? 'rgba(22,101,52,0.2)' : pct != null && pct >= 60 ? 'rgba(217,119,6,0.2)' : 'rgba(220,53,69,0.2)'}`,
+                            }}
+                          >
                             {rf.presentes}/{rf.convocados ?? '?'} ({pct ?? '?'}%)
                           </span>
                         ) : '—'}
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         {rf.evaluaciones_realizadas != null ? (
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                            pctE != null && pctE >= 80 ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                          }`}>
+                          <span
+                            className="text-xs font-semibold px-2 py-0.5 rounded-full"
+                            style={{
+                              background: pctE != null && pctE >= 80 ? 'var(--sst-cumple-bg)' : 'var(--sst-riesgo-bg)',
+                              color: pctE != null && pctE >= 80 ? 'var(--sst-cumple)' : 'var(--sst-riesgo)',
+                              border: `1px solid ${pctE != null && pctE >= 80 ? 'rgba(22,101,52,0.2)' : 'rgba(217,119,6,0.2)'}`,
+                            }}
+                          >
                             {rf.evaluaciones_aprobadas}/{rf.evaluaciones_realizadas} ({pctE ?? '?'}%)
                           </span>
                         ) : '—'}
                       </td>
-                      <td className="px-3 py-2.5 text-gray-500 hidden md:table-cell text-xs">{rf.lugar ?? '—'}</td>
+                      <td className="px-3 py-2.5 hidden md:table-cell text-xs" style={{ color: 'var(--sst-dark-500)' }}>{rf.lugar ?? '—'}</td>
                     </tr>
                   )
                 })}

@@ -42,11 +42,11 @@ interface EstadoCfg {
 }
 
 const ESTADO_CONFIG: Record<EstadoVisual, EstadoCfg> = {
-  Programado:   { bg: 'rgba(59,130,246,0.1)',  border: 'rgba(59,130,246,0.3)',  color: '#3B82F6', label: 'Programado',   symbol: 'P' },
-  Ejecutado:    { bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.3)',   color: '#22C55E', label: 'Ejecutado',    symbol: '✓' },
-  Vencido:      { bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)',   color: '#EF4444', label: 'Vencido',      symbol: '!' },
-  Reprogramado: { bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.3)',  color: '#F59E0B', label: 'Reprogramado', symbol: '↻' },
-  Cancelado:    { bg: 'rgba(156,163,175,0.08)', border: 'rgba(156,163,175,0.15)', color: '#9CA3AF', label: 'Cancelado',  symbol: '✕' },
+  Programado:   { bg: 'rgba(37,99,235,0.08)',  border: 'rgba(37,99,235,0.3)',  color: '#2563EB', label: 'Programado',   symbol: 'P' },
+  Ejecutado:    { bg: 'rgba(22,101,52,0.1)',   border: 'rgba(22,101,52,0.35)',  color: '#166534', label: 'Ejecutado',    symbol: '✓' },
+  Vencido:      { bg: 'rgba(220,53,69,0.08)',  border: 'rgba(220,53,69,0.35)', color: '#DC3545', label: 'Vencido',      symbol: '!' },
+  Reprogramado: { bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.3)', color: '#7C3AED', label: 'Reprogramado', symbol: '↻' },
+  Cancelado:    { bg: 'rgba(220,53,69,0.08)',  border: 'rgba(220,53,69,0.25)',  color: '#DC3545', label: 'Cancelado',  symbol: '✕' },
   vacio:        { bg: 'transparent', border: 'transparent', color: '#D1D5DB', label: '', symbol: '' },
 }
 
@@ -111,10 +111,13 @@ export function CronogramaCelda({ prog, actividad, semana, mes, onAction, onSucc
     return (
       <button
         onClick={() => onAction(null, actividad, semana, mes)}
-        className="w-full h-9 rounded-[10px] border border-dashed border-gray-200 hover:border-blue-300 hover:bg-blue-50/30 transition-all duration-150 group flex items-center justify-center"
+        className="w-full h-9 rounded-[10px] border border-dashed transition-all duration-150 group flex items-center justify-center"
+        style={{ borderColor: 'var(--sst-dark-300)' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)'; e.currentTarget.style.background = 'rgba(59,130,246,0.04)' }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--sst-dark-300)'; e.currentTarget.style.background = '' }}
         title={`Programar — ${mes} S${semana}`}
       >
-        <span className="text-gray-300 group-hover:text-blue-400 text-xs transition-colors">+</span>
+        <span className="text-xs transition-colors" style={{ color: 'var(--sst-dark-300)' }}>+</span>
       </button>
     )
   }
@@ -138,21 +141,30 @@ export function CronogramaCelda({ prog, actividad, semana, mes, onAction, onSucc
             {actividad.fields.responsable && (
               <p style={{ color: '#94A3B8' }}>👤 {actividad.fields.responsable}</p>
             )}
+            {prog.fields.observaciones && (
+              <p className="text-[11px] italic leading-snug" style={{ color: '#CBD5E1', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 6 }}>
+                💬 {prog.fields.observaciones}
+              </p>
+            )}
             <div className="flex gap-1.5 pt-1">
               {estadoVisual !== 'Ejecutado' && estadoVisual !== 'Cancelado' && (
                 <button
                   onClick={quickExecute}
                   disabled={executing}
-                  className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-colors disabled:opacity-50"
-                  style={{ backgroundColor: '#16A34A', color: '#fff' }}
+                  className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all disabled:opacity-50 active:scale-95"
+                  style={{ backgroundColor: '#0B5B2D', color: '#fff' }}
+                  onMouseEnter={e => { e.currentTarget.style.backgroundColor = '#166534' }}
+                  onMouseLeave={e => { e.currentTarget.style.backgroundColor = '#0B5B2D' }}
                 >
                   {executing ? '…' : '✓ Ejecutado'}
                 </button>
               )}
               <button
                 onClick={viewDetail}
-                className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-colors"
-                style={{ backgroundColor: '#2563EB', color: '#fff' }}
+                className="flex-1 py-1.5 rounded-lg text-[10px] font-bold transition-all active:scale-95"
+                style={{ background: 'transparent', border: '1px solid #4ADE80', color: '#4ADE80' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(74,222,128,0.1)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
               >
                 Ver detalle
               </button>
@@ -181,14 +193,20 @@ export function CronogramaCelda({ prog, actividad, semana, mes, onAction, onSucc
         onClick={() => onAction(prog, actividad, semana, mes)}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        className={`w-full h-9 rounded-[10px] border-[1.5px] font-bold text-base transition-all duration-150 hover:scale-[1.15] active:scale-95 flex items-center justify-center ${
+        className={`w-full h-9 border-[1.5px] font-bold text-base transition-all duration-150 hover:scale-[1.15] active:scale-95 flex items-center justify-center ${
           estadoVisual === 'Vencido' ? 'animate-pulse' : ''
         }`}
         style={{
           backgroundColor: cfg.bg,
           borderColor: cfg.border,
           color: cfg.color,
-          boxShadow: hovered ? `0 4px 14px ${cfg.color}50` : undefined,
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+          boxShadow: hovered
+            ? `0 8px 24px ${cfg.color}33, inset 0 1px 0 rgba(255,255,255,0.4)`
+            : 'inset 0 1px 0 rgba(255,255,255,0.3)',
+          borderRadius: 'var(--radius-card)',
+          transition: 'var(--transition-normal)',
         }}
         title={`${cfg.label}${prog?.fields.fecha_programada ? ` — ${prog.fields.fecha_programada}` : ''}`}
       >

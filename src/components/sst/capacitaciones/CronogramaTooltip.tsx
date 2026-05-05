@@ -1,6 +1,6 @@
 'use client'
 
-import { User, Users, CalendarDays, Tag } from 'lucide-react'
+import { User, Users, CalendarDays, Tag, MessageSquare } from 'lucide-react'
 import { getCategoriaColor } from '@/lib/sst/cap-client'
 import type { CapActividadFields, CapProgramacionFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
@@ -82,7 +82,10 @@ export function CronogramaTooltip({ prog, actividad, onEdit, visible }: Props) {
         )}
 
         {prog.fields.observaciones && (
-          <p className="text-[11px] text-gray-400 italic line-clamp-2 pt-1">{prog.fields.observaciones}</p>
+          <div className="flex items-start gap-1 pt-1">
+            <MessageSquare className="w-3 h-3 flex-shrink-0 mt-0.5 text-gray-400" />
+            <p className="text-[11px] text-gray-400 italic line-clamp-2">{prog.fields.observaciones}</p>
+          </div>
         )}
       </div>
 

@@ -29,8 +29,14 @@ export function CronogramaSeparadorCategoria({ categoria, count, collapsed, onTo
     <tr className="select-none">
       <td
         colSpan={100}
-        className="px-3 py-2 cursor-pointer hover:brightness-95 transition-all"
-        style={{ backgroundColor: `${color}18`, borderLeft: `3px solid ${color}` }}
+        className="px-3 py-2 cursor-pointer transition-all"
+        style={{
+          backgroundColor: `${color}1A`,
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
+          borderLeft: `3px solid ${color}`,
+          fontFamily: 'var(--font-poppins)',
+        }}
         onClick={onToggle}
       >
         <div className="flex items-center gap-2">
@@ -39,8 +45,8 @@ export function CronogramaSeparadorCategoria({ categoria, count, collapsed, onTo
             {categoria}
           </span>
           <span
-            className="text-[10px] px-1.5 py-0.5 rounded-full font-medium ml-1"
-            style={{ backgroundColor: `${color}20`, color }}
+            className="text-[10px] px-1.5 py-0.5 font-medium ml-1"
+            style={{ backgroundColor: `${color}20`, color, borderRadius: 'var(--radius-pill)' }}
           >
             {count}
           </span>

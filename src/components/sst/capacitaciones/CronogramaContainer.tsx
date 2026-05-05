@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { CalendarDays, List, BarChart3, Search, SlidersHorizontal } from 'lucide-react'
+import { useState, useCallback, useMemo } from 'react'
+import { CalendarDays, List, BarChart3, Search, SlidersHorizontal, CircleDashed, CheckCircle2, AlertCircle, Hash } from 'lucide-react'
 import { CATEGORIAS_CAP } from '@/lib/sst/cap-client'
 import { CronogramaMensual } from './CronogramaMensual'
 import { CronogramaLista } from './CronogramaLista'
@@ -14,6 +14,8 @@ type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
 
 type Modo = 'mensual' | 'trimestral' | 'lista'
+
+const HOY_STR = new Date().toISOString().split('T')[0]
 
 function leerModo(): Modo {
   if (typeof window === 'undefined') return 'mensual'
@@ -62,22 +64,38 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
       )
     : actividades
 
+  // KPIs rápidos del cronograma
+  const kpis = useMemo(() => {
+    const total = programaciones.length
+    const ejecutadas = programaciones.filter(p => p.fields.estado === 'Ejecutado').length
+    const vencidas = programaciones.filter(p =>
+      p.fields.estado === 'Programado' && !!p.fields.fecha_programada && p.fields.fecha_programada < HOY_STR
+    ).length
+    const reprog = programaciones.filter(p => p.fields.estado === 'Reprogramado').length
+    return { total, ejecutadas, vencidas, reprog, actividades: actividades.length }
+  }, [programaciones, actividades])
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Tira de KPIs rápidos */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <KpiTile icon={Hash} label="Actividades" value={kpis.actividades} color="var(--sst-dark-700)" bg="var(--sst-dark-100)" />
+        <KpiTile icon={CircleDashed} label="Programaciones" value={kpis.total} color="#2563EB" bg="rgba(37,99,235,0.08)" />
+        <KpiTile icon={CheckCircle2} label="Ejecutadas" value={kpis.ejecutadas} color="#166534" bg="rgba(22,101,52,0.08)" />
+        <KpiTile icon={AlertCircle} label="Vencidas" value={kpis.vencidas} color="#DC3545" bg="rgba(220,53,69,0.08)" />
+      </div>
       {/* Tabs + controles */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {/* Tabs */}
-        <div className="flex items-center bg-gray-100 rounded-xl p-1 gap-0.5">
+        <div className="flex items-center rounded-xl p-1 gap-0.5" style={{ background: 'var(--sst-dark-100)' }}>
           {TABS.map(({ key, label, Icon }) => (
             <button
               key={key}
               onClick={() => cambiarModo(key)}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all duration-150 ${
-                modo === key
-                  ? 'bg-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
+                modo === key ? 'bg-white shadow-sm' : ''
               }`}
-              style={modo === key ? { color: 'var(--sst-green-700)' } : undefined}
+              style={{ color: modo === key ? 'var(--sst-green-700)' : 'var(--sst-dark-500)' }}
             >
               <Icon className="w-3.5 h-3.5" />
               {label}
@@ -86,14 +104,15 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
         </div>
 
         {/* Búsqueda */}
-        <div className="flex-1 relative max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <div className="flex-1 flex items-center max-w-xs rounded-xl border px-2.5 gap-2" style={{ borderColor: 'var(--border)', background: '#fff', height: 36 }}>
+          <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--sst-dark-500)' }} />
           <input
             type="text"
             placeholder="Buscar actividad..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
-            className="input-field pl-8 py-2 text-xs max-w-xs"
+            className="flex-1 bg-transparent text-xs outline-none border-none"
+            style={{ color: 'var(--sst-dark-900)' }}
           />
         </div>
 
@@ -119,17 +138,17 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
 
       {/* Panel de filtros */}
       {showFiltros && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 flex flex-col gap-3">
+        <div className="rounded-xl p-4 flex flex-col gap-3" style={{ border: '1px solid var(--border)', background: 'var(--sst-dark-100)' }}>
           {/* Categoría */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2">Categoría</p>
+            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--sst-dark-500)' }}>Categoría</p>
             <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => setCatFiltro('')}
-                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  catFiltro === '' ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                }`}
-                style={catFiltro === '' ? { background: 'var(--sst-green-700)' } : undefined}
+                className="text-xs px-3 py-1 rounded-full border transition-colors"
+                style={catFiltro === ''
+                  ? { background: 'var(--sst-green-700)', color: '#fff', borderColor: 'transparent' }
+                  : { background: 'var(--surface)', color: 'var(--sst-dark-700)', borderColor: 'var(--border)' }}
               >
                 Todas
               </button>
@@ -137,10 +156,10 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
                 <button
                   key={cat}
                   onClick={() => setCatFiltro(cat === catFiltro ? '' : cat)}
-                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                    catFiltro === cat ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-                  }`}
-                  style={catFiltro === cat ? { background: 'var(--sst-green-700)' } : undefined}
+                  className="text-xs px-3 py-1 rounded-full border transition-colors"
+                  style={catFiltro === cat
+                    ? { background: 'var(--sst-green-700)', color: '#fff', borderColor: 'transparent' }
+                    : { background: 'var(--surface)', color: 'var(--sst-dark-700)', borderColor: 'var(--border)' }}
                 >
                   {cat}
                 </button>
@@ -150,7 +169,7 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
 
           {/* Estados */}
           <div>
-            <p className="text-xs font-semibold text-gray-500 mb-2">Estado</p>
+            <p className="text-xs font-semibold mb-2" style={{ color: 'var(--sst-dark-500)' }}>Estado</p>
             <CronogramaLeyenda
               programaciones={programaciones}
               filtroEstados={filtroEstados}
@@ -186,6 +205,35 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
           onUpdate={onUpdate}
         />
       )}
+    </div>
+  )
+}
+
+// ─── Tile de KPI compacto ───
+interface KpiTileProps {
+  icon: React.FC<{ className?: string; style?: React.CSSProperties }>
+  label: string
+  value: number
+  color: string
+  bg: string
+}
+function KpiTile({ icon: Icon, label, value, color, bg }: KpiTileProps) {
+  return (
+    <div
+      className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200"
+      style={{ background: bg, border: `1px solid ${color}1A` }}
+    >
+      <div className="flex items-center justify-center w-9 h-9 rounded-lg" style={{ background: `${color}1F` }}>
+        <Icon className="w-4 h-4" style={{ color }} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] uppercase tracking-wider font-semibold leading-tight" style={{ color: 'var(--sst-dark-500)' }}>
+          {label}
+        </p>
+        <p className="text-xl font-bold leading-tight" style={{ color, fontFamily: 'var(--font-poppins)' }}>
+          {value}
+        </p>
+      </div>
     </div>
   )
 }
