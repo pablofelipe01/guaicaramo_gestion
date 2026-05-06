@@ -7,14 +7,10 @@ import { CronogramaContainer } from '@/components/sst/capacitaciones/CronogramaC
 import { ArrowLeft, Calendar } from 'lucide-react'
 import type { CapActividadFields, CapProgramacionFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
-
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 export default function CronogramaPage() {
   const router = useRouter()
@@ -25,8 +21,8 @@ export default function CronogramaPage() {
   const cargar = useCallback(async () => {
     setLoading(true)
     const [actRes, progRes] = await Promise.all([
-      fetch('/api/sst/capacitaciones', { headers: authHeaders() }),
-      fetch('/api/sst/capacitaciones/programacion', { headers: authHeaders() }),
+      fetch('/api/sst/capacitaciones', { headers: getAuthHeaders() }),
+      fetch('/api/sst/capacitaciones/programacion', { headers: getAuthHeaders() }),
     ])
     if (actRes.ok)  setActividades((await actRes.json()).records ?? [])
     if (progRes.ok) setProgramaciones((await progRes.json()).records ?? [])
@@ -63,18 +59,6 @@ export default function CronogramaPage() {
           <p className="text-sm" style={{ color: 'var(--sst-dark-500)' }}>Panel de control visual del programa anual SST</p>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <span
-            className="px-3 py-1 rounded-full text-xs font-semibold"
-            style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: 'var(--phase-planear)' }}
-          >
-            {totalProgramadas} en {mesActual}
-          </span>
-          <span
-            className="px-3 py-1 rounded-full text-xs font-semibold"
-            style={{ background: 'var(--sst-cumple-bg)', border: '1px solid rgba(22,101,52,0.18)', color: 'var(--sst-cumple)' }}
-          >
-            {totalEjecutadas} ejecutadas ({pct}%)
-          </span>
         </div>
       </div>
 

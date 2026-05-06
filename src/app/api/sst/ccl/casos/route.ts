@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarCasos, crearCaso } from '@/lib/sst/ccl'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
+
+// Casos de convivencia son confidenciales — solo integrantes del comité y coordinador
+const ROLES_CCL = ['coordinador_sst', 'administrador'] as const
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...ROLES_CCL)
+  if ('error' in auth) return auth.error
   const comiteId = request.nextUrl.searchParams.get('comiteId') ?? undefined
   return NextResponse.json(await listarCasos(comiteId))
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  const usuario = token ? await verifyToken(token) : null
-  if (!usuario) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...ROLES_CCL)
+  if ('error' in auth) return auth.error
+  const { user } = auth
   const body = await request.json()
   return NextResponse.json({
     record: await crearCaso({
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
       Estado: 'abierto',
       Confidencial: true,
       'Fecha Apertura': new Date().toISOString().split('T')[0],
-      'Registrado Por': usuario.name,
+      'Registrado Por': user.name,
     }),
   }, { status: 201 })
 }

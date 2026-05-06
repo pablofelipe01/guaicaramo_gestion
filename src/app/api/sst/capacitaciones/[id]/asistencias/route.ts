@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarRegistros, crearRegistro, obtenerActividad } from '@/lib/sst/cap'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
 type Ctx = { params: Promise<{ id: string }> }
 
 /** GET /api/sst/capacitaciones/[id]/asistencias — lista registros de ejecución de la actividad */
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(request: NextRequest, ctx: Ctx) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+    const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   const { id } = await ctx.params
   const records = await listarRegistros({ actividadId: id })
   return NextResponse.json({ records })
@@ -15,9 +16,9 @@ export async function GET(request: NextRequest, ctx: Ctx) {
 
 /** POST /api/sst/capacitaciones/[id]/asistencias — crea registro de ejecución */
 export async function POST(request: NextRequest, ctx: Ctx) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  const usuario = token ? await verifyToken(token) : null
-  if (!usuario) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
+  const usuario = auth.user
   const { id } = await ctx.params
   const body = await request.json()
   let actividad_tema: string | undefined

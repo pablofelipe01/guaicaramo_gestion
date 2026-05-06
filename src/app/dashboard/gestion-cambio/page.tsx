@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { RefreshCw, Plus, CheckCircle2, XCircle, RotateCcw, ShieldCheck, Pencil, Trash2 } from 'lucide-react'
 import type { CambioFields, CambioAprobacionFields, CambioControlFields } from '@/types/sst/cambio'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Cambio = AirtableRecord<CambioFields>
 type Aprobacion = AirtableRecord<CambioAprobacionFields>
@@ -20,11 +21,6 @@ const ESTADO_VARIANT: Record<string, 'neutral' | 'primary' | 'success' | 'error'
 }
 const TIPOS_CAMBIO = ['organizacional', 'tecnologico', 'proceso', 'infraestructura', 'otro']
 const TIPOS_CONTROL = ['eliminacion', 'sustitucion', 'control_ingenieria', 'administrativo', 'epp']
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 export default function GestionCambioPage() {
   const { user } = useAuth()
@@ -47,7 +43,7 @@ export default function GestionCambioPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/cambios', { headers: authHeaders() })
+    const res = await fetch('/api/sst/cambios', { headers: getAuthHeaders() })
     const data = await res.json()
     setCambios(data.records ?? [])
     setLoading(false)
@@ -60,8 +56,8 @@ export default function GestionCambioPage() {
     setLoadingDetalle(true)
     try {
       const [aprsRes, ctrlsRes] = await Promise.all([
-        fetch(`/api/sst/cambios/${c.id}/aprobaciones`, { headers: authHeaders() }),
-        fetch(`/api/sst/cambios/${c.id}/controles`, { headers: authHeaders() }),
+        fetch(`/api/sst/cambios/${c.id}/aprobaciones`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/cambios/${c.id}/controles`, { headers: getAuthHeaders() }),
       ])
       if (aprsRes.ok) {
         const aprs = await aprsRes.json()
@@ -81,9 +77,9 @@ export default function GestionCambioPage() {
     if (!formCambio.Titulo) return
     setGuardando(true)
     if (editId) {
-      await fetch(`/api/sst/cambios/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(formCambio) })
+      await fetch(`/api/sst/cambios/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(formCambio) })
     } else {
-      await fetch('/api/sst/cambios', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ ...formCambio, Solicitante: user?.name }) })
+      await fetch('/api/sst/cambios', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ ...formCambio, Solicitante: user?.name }) })
     }
     setModalCambio(false)
     setEditId(null)
@@ -106,7 +102,7 @@ export default function GestionCambioPage() {
   }
 
   const eliminarCambio = async (id: string) => {
-    await fetch(`/api/sst/cambios/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/cambios/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (seleccionado?.id === id) setSeleccionado(null)
     await cargar()
@@ -116,7 +112,7 @@ export default function GestionCambioPage() {
     if (!seleccionado) return
     setGuardando(true)
     await fetch(`/api/sst/cambios/${seleccionado.id}/aprobaciones`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify(formAprob),
     })
     setModalAprobacion(false)
@@ -130,7 +126,7 @@ export default function GestionCambioPage() {
     if (!seleccionado || !formControl.Descripcion) return
     setGuardando(true)
     await fetch(`/api/sst/cambios/${seleccionado.id}/controles`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ ...formControl, Responsable: formControl.Responsable || user?.name }),
     })
     setModalControl(false)
@@ -141,7 +137,7 @@ export default function GestionCambioPage() {
 
   const enviarRevision = async (cambio: Cambio) => {
     await fetch(`/api/sst/cambios/${cambio.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ Estado: 'en_revision' }),
     })
     await cargar()

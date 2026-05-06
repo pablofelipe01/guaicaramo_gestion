@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ShieldCheck, Plus, CheckCircle, XCircle, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import type { PermPermisoFields } from '@/types/sst/perm'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Permiso = AirtableRecord<PermPermisoFields>
 
@@ -34,11 +35,6 @@ const ESTADO_LABEL: Record<string, string> = {
   vencido: 'Vencido',
 }
 
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
-
 export default function PermisosTrabajoPage() {
   useAuth()
   const [permisos, setPermisos] = useState<Permiso[]>([])
@@ -53,7 +49,7 @@ export default function PermisosTrabajoPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/permisos', { headers: authHeaders() })
+    const res = await fetch('/api/sst/permisos', { headers: getAuthHeaders() })
     if (res.ok) setPermisos((await res.json()).records)
     setLoading(false)
   }, [])
@@ -62,7 +58,7 @@ export default function PermisosTrabajoPage() {
 
   const selectPermiso = async (p: Permiso) => {
     setSelected(p)
-    const res = await fetch(`/api/sst/permisos/${p.id}`, { headers: authHeaders() })
+    const res = await fetch(`/api/sst/permisos/${p.id}`, { headers: getAuthHeaders() })
     if (res.ok) setPrerrequisitos(await res.json())
   }
 
@@ -70,9 +66,9 @@ export default function PermisosTrabajoPage() {
     if (!form['Tipo ID'] || !form.Area || !form['Tarea Descripcion'] || !form['Fecha Inicio'] || !form['Fecha Fin']) return
     setSaving(true)
     if (editId) {
-      await fetch(`/api/sst/permisos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/permisos/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/permisos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/permisos', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setSaving(false)
     setShowModal(false)
@@ -88,7 +84,7 @@ export default function PermisosTrabajoPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/permisos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/permisos/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (selected?.id === id) setSelected(null)
     load()
@@ -96,7 +92,7 @@ export default function PermisosTrabajoPage() {
 
   const handleEnviarRevision = async (p: Permiso) => {
     await fetch(`/api/sst/permisos/${p.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ Estado: 'pendiente_aprobacion' }),
     })
     load()
@@ -104,7 +100,7 @@ export default function PermisosTrabajoPage() {
 
   const handleAprobar = async (p: Permiso, aprobado: boolean) => {
     await fetch(`/api/sst/permisos/${p.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ Estado: aprobado ? 'aprobado' : 'rechazado' }),
     })
     setSelected(null)
@@ -237,7 +233,7 @@ export default function PermisosTrabajoPage() {
                   <button
                     onClick={async () => {
                       await fetch(`/api/sst/permisos/${selected.id}`, {
-                        method: 'PUT', headers: authHeaders(),
+                        method: 'PUT', headers: getAuthHeaders(),
                         body: JSON.stringify({ Estado: 'en_ejecucion' }),
                       })
                       setSelected(null)
@@ -252,7 +248,7 @@ export default function PermisosTrabajoPage() {
                   <button
                     onClick={async () => {
                       await fetch(`/api/sst/permisos/${selected.id}`, {
-                        method: 'PUT', headers: authHeaders(),
+                        method: 'PUT', headers: getAuthHeaders(),
                         body: JSON.stringify({ Estado: 'cerrado' }),
                       })
                       setSelected(null)

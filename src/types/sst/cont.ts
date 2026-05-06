@@ -7,6 +7,7 @@ export interface ContContratistaFields {
   Actividad?: string
   Estado: 'activo' | 'inactivo' | 'suspendido'
   'Fecha Registro'?: string
+  Semaforo?: 'verde' | 'amarillo' | 'rojo'
 }
 
 export interface ContContratoFields {

@@ -13,7 +13,7 @@ export const CATEGORIAS_CAP = [
 ] as const
 
 export const PROVEEDORES_CAP = [
-  'Proveedor externo', 'ARL SURA', 'SENA', 'SST', 'Enfermería', 'Bienestar Social', 'SURA',
+  'Proveedor externo', 'ARL SURA', 'SENA', 'SST', 'Enfermería', 'Bienestar Social',
 ] as const
 
 export const MESES_CAP = [

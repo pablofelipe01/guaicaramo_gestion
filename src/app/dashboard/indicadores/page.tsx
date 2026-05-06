@@ -6,11 +6,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { TrendingUp, CheckCircle, XCircle, RefreshCw, AlertTriangle } from 'lucide-react'
 import type { IndKpiResult } from '@/types/sst/ind'
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 function SemaforoCircle({ cumple, valor, meta, unidad }: { cumple: boolean; valor: number | null; meta: number; unidad: string }) {
   const color = valor === null ? 'bg-gray-200' : cumple ? 'bg-green-500' : 'bg-red-500'
@@ -56,7 +52,7 @@ export default function IndicadoresPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`/api/sst/indicadores?vista=kpis&anio=${anio}`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/indicadores?vista=kpis&anio=${anio}`, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setKpis(data.kpis ?? [])

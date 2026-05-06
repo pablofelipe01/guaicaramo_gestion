@@ -13,7 +13,6 @@ export type CapProveedor =
   | 'SST'
   | 'Enfermería'
   | 'Bienestar Social'
-  | 'SURA'
 
 export type CapEstadoGeneral =
   | 'Sin programar'

@@ -1,16 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarExamenesDeCargo, crearExamen, obtenerPerfil } from '@/lib/sst/cargo'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(
   request: NextRequest,
   ctx: RouteContext<'/api/sst/cargo/perfiles/[id]/examenes'>
 ) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    }
     const { id } = await ctx.params
     const examenes = await listarExamenesDeCargo(id)
     return NextResponse.json({ records: examenes })
@@ -24,11 +23,9 @@ export async function POST(
   request: NextRequest,
   ctx: RouteContext<'/api/sst/cargo/perfiles/[id]/examenes'>
 ) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    }
     const { id } = await ctx.params
     const body = await request.json()
     const perfil = await obtenerPerfil(id)

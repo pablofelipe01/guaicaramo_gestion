@@ -28,7 +28,7 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
   const fin = `${anio}-12-31`
 
   const settled = await Promise.allSettled([
-    listRecords<IncIncidenteFields>('sst_incidentes', {
+    listRecords<IncIncidenteFields>('sst_inc_incidentes', {
       filterByFormula: `AND(IS_AFTER({Fecha Ocurrencia},'${inicio}'),IS_BEFORE({Fecha Ocurrencia},'${fin}'))`,
     }),
     listRecords<CapAsistenciaFields>('sst_cap_asistencias', {}),
@@ -91,7 +91,7 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
       unidad: 'AT por 240.000 HHT',
       cumpleMeta: hht > 0 ? Math.round((ats.length * 240000) / hht) <= KPI_METAS.IF : true,
       formula: '(N° AT × 240.000) / HHT',
-      fuente: 'sst_incidentes',
+      fuente: 'sst_inc_incidentes',
     },
     {
       codigo: 'IS',
@@ -102,7 +102,7 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
       unidad: 'Días perdidos por 240.000 HHT',
       cumpleMeta: hht > 0 ? Math.round((diasPerdidos * 240000) / hht) <= KPI_METAS.IS : true,
       formula: '(Días perdidos × 240.000) / HHT',
-      fuente: 'sst_incidentes',
+      fuente: 'sst_inc_incidentes',
     },
     {
       codigo: 'ILT',
@@ -112,7 +112,7 @@ export async function calcularKPIs(anio: number, hht = 240000): Promise<IndKpiRe
       unidad: '% sobre total trabajadores',
       cumpleMeta: els.length <= KPI_METAS.ILT,
       formula: '(N° EL × 100) / N° trabajadores',
-      fuente: 'sst_incidentes',
+      fuente: 'sst_inc_incidentes',
     },
     {
       codigo: 'COB_CAP',

@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ClipboardCheck, Plus, CheckCircle2, XCircle, MinusCircle, AlertCircle, Lock, Pencil, Trash2 } from 'lucide-react'
 import type { EvalEvaluacionFields, EvalEstandarFields, EvalRespuestaFields } from '@/types/sst/eval'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Evaluacion = AirtableRecord<EvalEvaluacionFields>
 type Estandar = AirtableRecord<EvalEstandarFields>
@@ -24,11 +25,6 @@ const RESULTADO_ICON: Record<string, React.ReactNode> = {
   parcial: <MinusCircle size={16} className="text-yellow-500" />,
   no_cumple: <XCircle size={16} className="text-red-500" />,
   no_aplica: <AlertCircle size={16} className="text-gray-400" />,
-}
-
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function EvaluacionInicialPage() {
@@ -49,7 +45,7 @@ export default function EvaluacionInicialPage() {
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/sst/evaluaciones', { headers: authHeaders() })
+      const res = await fetch('/api/sst/evaluaciones', { headers: getAuthHeaders() })
       if (!res.ok) {
         const text = await res.text()
         console.error('[cargar evaluaciones]', res.status, text)
@@ -71,8 +67,8 @@ export default function EvaluacionInicialPage() {
     setLoadingDetalle(true)
     try {
       const [estRes, respRes] = await Promise.all([
-        fetch('/api/sst/estandares', { headers: authHeaders() }),
-        fetch(`/api/sst/evaluaciones/${ev.id}/respuestas`, { headers: authHeaders() }),
+        fetch('/api/sst/estandares', { headers: getAuthHeaders() }),
+        fetch(`/api/sst/evaluaciones/${ev.id}/respuestas`, { headers: getAuthHeaders() }),
       ])
       if (estRes.ok) {
         const est = await estRes.json()
@@ -93,12 +89,12 @@ export default function EvaluacionInicialPage() {
     setGuardando(true)
     if (editId) {
       await fetch(`/api/sst/evaluaciones/${editId}`, {
-        method: 'PUT', headers: authHeaders(),
+        method: 'PUT', headers: getAuthHeaders(),
         body: JSON.stringify({ Titulo: form.Titulo, Descripcion: form.Descripcion }),
       })
     } else {
       await fetch('/api/sst/evaluaciones', {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({ ...form, Responsable: user?.name }),
       })
     }
@@ -110,7 +106,7 @@ export default function EvaluacionInicialPage() {
   }
 
   const eliminarEvaluacion = async (id: string) => {
-    await fetch(`/api/sst/evaluaciones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/evaluaciones/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (seleccionada?.id === id) { setSeleccionada(null); setEstandares([]); setRespuestas([]) }
     await cargar()
@@ -121,10 +117,10 @@ export default function EvaluacionInicialPage() {
     try {
       await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, {
         method: 'POST',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({ 'Estandar ID': estandarId, 'Estandar Nombre': estandarNombre, Resultado: resultado }),
       })
-      const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}/respuestas`, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setRespuestas(data.records ?? [])
@@ -140,7 +136,7 @@ export default function EvaluacionInicialPage() {
     try {
       const res = await fetch(`/api/sst/evaluaciones/${seleccionada.id}`, {
         method: 'PUT',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({ accion: 'cerrar' }),
       })
       if (res.ok) {

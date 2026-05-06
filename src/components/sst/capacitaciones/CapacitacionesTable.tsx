@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, Award, ChevronRight, X } from 'lucide-react'
+import { Search, ChevronRight, X } from 'lucide-react'
 import { EstadoBadge } from './EstadoBadge'
 import { CategoriaBadge } from './CategoriaBadge'
 import { getCategoriaColor, CATEGORIAS_CAP, PROVEEDORES_CAP } from '@/lib/sst/cap-client'
@@ -13,7 +13,7 @@ type Actividad = AirtableRecord<CapActividadFields>
 const ESTADOS: CapEstadoGeneral[] = ['Sin programar', 'Programado', 'En ejecución', 'Completado', 'Cancelado']
 
 const ESTADO_DOT: Record<string, string> = {
-  'Sin programar': '#9CA3AF',
+  'Sin programar': '#DC3545',
   'Programado':    '#3B82F6',
   'En ejecución':  '#F97316',
   'Completado':    '#22C55E',
@@ -128,7 +128,6 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Proveedor</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell">Responsable</th>
               <th className="px-3 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Estado</th>
-              <th className="px-3 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide hidden sm:table-cell">Cert.</th>
               <th className="px-2 py-3 w-6" />
             </tr>
           </thead>
@@ -175,12 +174,6 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
 
                   <td className="px-3 py-3">
                     <EstadoBadge estado={f.estado_general} />
-                  </td>
-
-                  <td className="px-3 py-3 text-center hidden sm:table-cell">
-                    {f.requiere_certificacion ? (
-                      <Award className="w-4 h-4 text-amber-500 mx-auto" aria-label="Requiere certificación" />
-                    ) : <span className="text-gray-200 text-xs">—</span>}
                   </td>
 
                   <td className="px-2 py-3" style={{ color: 'var(--sst-dark-300)' }}>

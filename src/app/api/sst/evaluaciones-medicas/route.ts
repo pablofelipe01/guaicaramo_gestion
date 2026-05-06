@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarEvaluaciones, crearEvaluacion, alertasEvaluaciones, procesarEvaluacionMedica } from '@/lib/sst/med'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
+
+// Datos médicos confidenciales — solo coordinador SST, médico y administrador
+const ROLES_MEDICO = ['coordinador_sst', 'medico', 'administrador'] as const
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...ROLES_MEDICO)
+  if ('error' in auth) return auth.error
   const { searchParams } = new URL(request.url)
   const trabajadorId = searchParams.get('trabajadorId') ?? undefined
   const alertas = searchParams.get('alertas')
@@ -13,8 +16,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...ROLES_MEDICO)
+  if ('error' in auth) return auth.error
   const body = await request.json()
   if (!body['Trabajador ID'] || !body.Tipo || !body.Fecha || !body.Aptitud)
     return NextResponse.json({ message: 'Trabajador ID, Tipo, Fecha y Aptitud son requeridos' }, { status: 400 })

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { obtenerComiteActivo, listarIntegrantes } from '@/lib/sst/ccl'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    
-    const verified = await verifyToken(token)
-    if (!verified) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+      const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
+
     
     const comite = await obtenerComiteActivo()
     if (!comite) return NextResponse.json({ comite: null, integrantes: [] })

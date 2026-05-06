@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarDocumentos, subirDocumento } from '@/lib/sst/doc'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 import type { ModuloOrigen } from '@/types/sst/doc'
 
-export async function GET(request: NextRequest) {
-  try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    }
+const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 
+export async function GET(request: NextRequest) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
+  try {
     const { searchParams } = request.nextUrl
     const documentos = await listarDocumentos({
       modulo: (searchParams.get('modulo') as ModuloOrigen) ?? undefined,
@@ -24,11 +23,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
+  const usuario = auth.user
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    const usuario = token ? await verifyToken(token) : null
-    if (!usuario) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-
     const body = await request.json()
 
     if (!body.Nombre || !body['Modulo Origen']) {

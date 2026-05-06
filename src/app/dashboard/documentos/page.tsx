@@ -9,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Archive, Plus, Search, Filter, Pencil, Trash2 } from 'lucide-react'
 import type { DocDocumentoFields, ModuloOrigen } from '@/types/sst/doc'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Documento = AirtableRecord<DocDocumentoFields> & { id: string }
 
@@ -20,11 +21,6 @@ const MODULOS: ModuloOrigen[] = [
 
 const ESTADO_VARIANT: Record<string, 'success' | 'warning' | 'neutral'> = {
   vigente: 'success', borrador: 'warning', obsoleto: 'neutral',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function DocumentosPage() {
@@ -48,7 +44,7 @@ export default function DocumentosPage() {
     if (filtroModulo) params.set('modulo', filtroModulo)
     if (filtroEstado) params.set('estado', filtroEstado)
     if (busqueda) params.set('busqueda', busqueda)
-    const res = await fetch(`/api/sst/documentos?${params}`, { headers: authHeaders() })
+    const res = await fetch(`/api/sst/documentos?${params}`, { headers: getAuthHeaders() })
     const data = await res.json()
     setDocumentos(data.records ?? [])
     setLoading(false)
@@ -60,9 +56,9 @@ export default function DocumentosPage() {
     if (!form.Nombre || !form['Modulo Origen']) return
     setGuardando(true)
     if (editId) {
-      await fetch(`/api/sst/documentos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/documentos/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/documentos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/documentos', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setModal(false)
     setEditId(null)
@@ -78,7 +74,7 @@ export default function DocumentosPage() {
   }
 
   const eliminarDoc = async (id: string) => {
-    await fetch(`/api/sst/documentos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/documentos/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     await cargarDocumentos()
   }

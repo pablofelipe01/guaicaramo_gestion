@@ -195,10 +195,10 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
       <div className="overflow-x-auto rounded-xl" style={{ border: '1px solid var(--border)' }}>
         <table className="w-full border-collapse text-xs">
           <thead>
-            <tr style={{ background: 'var(--sst-dark-100)', borderBottom: '1px solid var(--border)' }}>
+            <tr style={{ background: 'var(--sst-green-700)', borderBottom: '1px solid var(--border)' }}>
               <th
                 className="px-4 py-3 text-left font-semibold sticky left-0 z-10 min-w-[260px]"
-                style={{ color: 'var(--sst-dark-500)', background: 'var(--sst-dark-100)', borderRight: '1px solid var(--border)' }}
+                style={{ color: '#fff', background: 'var(--sst-green-700)', borderRight: '1px solid rgba(255,255,255,0.2)' }}
               >
                 <span className="text-[10px] uppercase tracking-wider">Actividad</span>
               </th>
@@ -209,19 +209,16 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                     key={s}
                     className="px-2 py-3 text-center font-semibold min-w-[140px]"
                     style={{
-                      color: esCurrent ? 'var(--sst-green-700)' : 'var(--sst-dark-500)',
-                      background: esCurrent ? 'var(--sst-cumple-bg)' : undefined,
-                      borderLeft: '1px solid var(--border)',
+                      color: '#fff',
+                      background: 'var(--sst-green-700)',
+                      borderLeft: '1px solid rgba(255,255,255,0.2)',
                       fontFamily: 'var(--font-poppins)',
                     }}
                   >
                     <div className="flex items-center justify-center gap-1.5">
                       <span className="text-xs">Semana {s}</span>
-                      {esCurrent && (
-                        <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full" style={{ background: 'var(--sst-green-700)', color: '#fff' }}>Hoy</span>
-                      )}
                     </div>
-                    <div className="text-[10px] font-medium mt-0.5" style={{ color: 'var(--sst-dark-500)' }}>{semanaHeaders[s - 1]}</div>
+                    <div className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.85)' }}>{semanaHeaders[s - 1]}</div>
                   </th>
                 )
               })}

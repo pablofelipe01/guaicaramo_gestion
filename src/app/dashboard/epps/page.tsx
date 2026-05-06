@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { HardHat, Plus, Bell, Package, Pencil, Trash2 } from 'lucide-react'
 import type { EppCatalogoFields, EppEntregaFields } from '@/types/sst/epp'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Catalogo = AirtableRecord<EppCatalogoFields>
 type Entrega = AirtableRecord<EppEntregaFields>
@@ -18,11 +19,6 @@ type Entrega = AirtableRecord<EppEntregaFields>
 const MOTIVO_LABEL: Record<string, string> = {
   ingreso: 'Ingreso', reposicion: 'Reposición', deterioro: 'Deterioro',
   perdida: 'Pérdida', dotacion_periodica: 'Dotación Periódica',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function EppsPage() {
@@ -44,9 +40,9 @@ export default function EppsPage() {
   const load = useCallback(async () => {
     setLoading(true)
     const [catRes, entRes, altRes] = await Promise.all([
-      fetch('/api/sst/epps', { headers: authHeaders() }),
-      fetch('/api/sst/epps/entregas', { headers: authHeaders() }),
-      fetch('/api/sst/epps?alertas=1', { headers: authHeaders() }),
+      fetch('/api/sst/epps', { headers: getAuthHeaders() }),
+      fetch('/api/sst/epps/entregas', { headers: getAuthHeaders() }),
+      fetch('/api/sst/epps?alertas=1', { headers: getAuthHeaders() }),
     ])
     if (catRes.ok) setCatalogo((await catRes.json()).records)
     if (entRes.ok) setEntregas((await entRes.json()).records)
@@ -60,9 +56,9 @@ export default function EppsPage() {
     if (!catForm.Nombre || !catForm.Tipo) return
     setSaving(true)
     if (editCatId) {
-      await fetch(`/api/sst/epps/${editCatId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(catForm) })
+      await fetch(`/api/sst/epps/${editCatId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(catForm) })
     } else {
-      await fetch('/api/sst/epps', { method: 'POST', headers: authHeaders(), body: JSON.stringify(catForm) })
+      await fetch('/api/sst/epps', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(catForm) })
     }
     setSaving(false)
     setShowCatalogoModal(false)
@@ -80,9 +76,9 @@ export default function EppsPage() {
   const eliminar = async () => {
     if (!confirmDelete || !deleteType) return
     if (deleteType === 'catalogo') {
-      await fetch(`/api/sst/epps/${confirmDelete}`, { method: 'DELETE', headers: authHeaders() })
+      await fetch(`/api/sst/epps/${confirmDelete}`, { method: 'DELETE', headers: getAuthHeaders() })
     } else {
-      await fetch(`/api/sst/epps/entregas/${confirmDelete}`, { method: 'DELETE', headers: authHeaders() })
+      await fetch(`/api/sst/epps/entregas/${confirmDelete}`, { method: 'DELETE', headers: getAuthHeaders() })
     }
     setConfirmDelete(null)
     setDeleteType(null)
@@ -92,7 +88,7 @@ export default function EppsPage() {
   const handleSaveEntrega = async () => {
     if (!entregaForm['Trabajador ID'] || !entregaForm['Catalogo ID'] || !entregaForm.Motivo || !entregaForm['Fecha Entrega']) return
     setSaving(true)
-    await fetch('/api/sst/epps/entregas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(entregaForm) })
+    await fetch('/api/sst/epps/entregas', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(entregaForm) })
     setSaving(false)
     setShowEntregaModal(false)
     setEntregaForm({})

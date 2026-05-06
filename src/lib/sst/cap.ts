@@ -1,5 +1,5 @@
 import 'server-only'
-import { listRecords, createRecords, updateRecord, getRecord, deleteRecord } from '@/lib/airtable-client'
+import { listRecords, createRecords, updateRecord, getRecord, deleteRecord, deleteRecords } from '@/lib/airtable-client'
 import type {
   CapActividadFields,
   CapProgramacionFields,
@@ -73,6 +73,13 @@ export async function actualizarActividad(id: string, fields: Partial<CapActivid
 }
 
 export async function eliminarActividad(id: string) {
+  // Cascade: eliminar todas las programaciones vinculadas antes de borrar la actividad
+  const { records: progs } = await listRecords<CapProgramacionFields>(T_PROGRAMACION, {
+    filterByFormula: `{actividad_id}='${id}'`,
+  })
+  if (progs.length > 0) {
+    await deleteRecords(T_PROGRAMACION, progs.map(p => p.id))
+  }
   return deleteRecord(T_ACTIVIDADES, id)
 }
 
@@ -395,7 +402,7 @@ export const CATEGORIAS_CAP = [
 ] as const
 
 export const PROVEEDORES_CAP = [
-  'Proveedor externo', 'ARL SURA', 'SENA', 'SST', 'Enfermería', 'Bienestar Social', 'SURA',
+  'Proveedor externo', 'ARL SURA', 'SENA', 'SST', 'Enfermería', 'Bienestar Social',
 ] as const
 
 export const MESES_CAP = [

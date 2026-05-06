@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ListChecks, Plus, BarChart2, ChevronRight, Trash2 } from 'lucide-react'
 import type { PlanPlanFields, PlanActividadFields } from '@/types/sst/plan'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Plan = AirtableRecord<PlanPlanFields>
 type Actividad = AirtableRecord<PlanActividadFields>
@@ -27,11 +28,6 @@ const PLAN_ESTADO_VARIANT: Record<string, 'neutral' | 'primary' | 'success'> = {
 }
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const CICLOS = ['Planear','Hacer','Verificar','Actuar']
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 export default function PlanTrabajoPage() {
   const { user } = useAuth()
@@ -56,7 +52,7 @@ export default function PlanTrabajoPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/planes', { headers: authHeaders() })
+    const res = await fetch('/api/sst/planes', { headers: getAuthHeaders() })
     const data = await res.json()
     setPlanes(data.records ?? [])
     setLoading(false)
@@ -69,8 +65,8 @@ export default function PlanTrabajoPage() {
     setLoadingDetalle(true)
     try {
       const [actsRes, dashRes] = await Promise.all([
-        fetch(`/api/sst/planes/${plan.id}/actividades`, { headers: authHeaders() }),
-        fetch(`/api/sst/planes/${plan.id}/actividades?dashboard=true`, { headers: authHeaders() }),
+        fetch(`/api/sst/planes/${plan.id}/actividades`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/planes/${plan.id}/actividades?dashboard=true`, { headers: getAuthHeaders() }),
       ])
       if (actsRes.ok) {
         const acts = await actsRes.json()
@@ -90,7 +86,7 @@ export default function PlanTrabajoPage() {
     if (!formPlan.Titulo) return
     setGuardando(true)
     await fetch('/api/sst/planes', {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ ...formPlan, Responsable: user?.name }),
     })
     setModalPlan(false)
@@ -103,7 +99,7 @@ export default function PlanTrabajoPage() {
     if (!seleccionado || !formEditarPlan.Titulo) return
     setGuardando(true)
     await fetch(`/api/sst/planes/${seleccionado.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify(formEditarPlan),
     })
     setModalEditarPlan(false)
@@ -117,7 +113,7 @@ export default function PlanTrabajoPage() {
     if (!confirm('¿Cerrar este plan? Se calculará el cumplimiento final.')) return
     setGuardando(true)
     await fetch(`/api/sst/planes/${seleccionado.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ Estado: 'cerrado' }),
     })
     await cargar()
@@ -126,14 +122,14 @@ export default function PlanTrabajoPage() {
   }
 
   const eliminarPlan = async (id: string) => {
-    await fetch(`/api/sst/planes/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/planes/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDeletePlan(null)
     if (seleccionado?.id === id) { setSeleccionado(null); setActividades([]) }
     await cargar()
   }
 
   const eliminarActividad = async (id: string) => {
-    await fetch(`/api/sst/actividades/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/actividades/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDeleteAct(null)
     if (seleccionado) await seleccionar(seleccionado)
   }
@@ -142,7 +138,7 @@ export default function PlanTrabajoPage() {
     if (!formAct.Descripcion || !seleccionado) return
     setGuardando(true)
     await fetch(`/api/sst/planes/${seleccionado.id}/actividades`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({
         ...formAct,
         Responsable: formAct.Responsable || user?.name,
@@ -158,7 +154,7 @@ export default function PlanTrabajoPage() {
 
   const actualizarAvance = async (id: string, avance: number) => {
     await fetch(`/api/sst/actividades/${id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ 'Porcentaje Avance': avance, Estado: avance === 100 ? 'completada' : avance > 0 ? 'en_progreso' : 'pendiente' }),
     })
     if (seleccionado) await seleccionar(seleccionado)

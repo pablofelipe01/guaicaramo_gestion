@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { AlertTriangle, Plus, Search, BarChart3, Pencil, Trash2 } from 'lucide-react'
 import type { IncIncidenteFields, IncInvestigacionFields } from '@/types/sst/inc'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Incidente = AirtableRecord<IncIncidenteFields>
 type Investigacion = AirtableRecord<IncInvestigacionFields>
@@ -31,11 +32,6 @@ const ESTADO_VARIANT: Record<string, 'warning' | 'info' | 'success'> = {
   reportado: 'warning',
   en_investigacion: 'info',
   cerrado: 'success',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function IncidentesPage() {
@@ -60,8 +56,8 @@ export default function IncidentesPage() {
   const load = useCallback(async () => {
     setLoading(true)
     const [incRes, statsRes] = await Promise.all([
-      fetch('/api/sst/incidentes', { headers: authHeaders() }),
-      fetch(`/api/sst/incidentes?anio=${anioActual}`, { headers: authHeaders() }),
+      fetch('/api/sst/incidentes', { headers: getAuthHeaders() }),
+      fetch(`/api/sst/incidentes?anio=${anioActual}`, { headers: getAuthHeaders() }),
     ])
     if (incRes.ok) setIncidentes((await incRes.json()).records)
     if (statsRes.ok) setStats(await statsRes.json())
@@ -71,7 +67,7 @@ export default function IncidentesPage() {
   useEffect(() => { load() }, [load])
 
   const loadInvestigaciones = useCallback(async (id: string) => {
-    const res = await fetch(`/api/sst/incidentes/${id}/investigaciones`, { headers: authHeaders() })
+    const res = await fetch(`/api/sst/incidentes/${id}/investigaciones`, { headers: getAuthHeaders() })
     if (res.ok) setInvestigaciones((await res.json()).records)
   }, [])
 
@@ -86,8 +82,8 @@ export default function IncidentesPage() {
     setError(null)
     try {
       const res = editId
-        ? await fetch(`/api/sst/incidentes/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
-        : await fetch('/api/sst/incidentes', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+        ? await fetch(`/api/sst/incidentes/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
+        : await fetch('/api/sst/incidentes', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
         setError(data.message ?? `Error ${res.status} al guardar el incidente`)
@@ -111,7 +107,7 @@ export default function IncidentesPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/incidentes/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/incidentes/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (selected?.id === id) setSelected(null)
     load()
@@ -123,7 +119,7 @@ export default function IncidentesPage() {
     setError(null)
     try {
       const res = await fetch(`/api/sst/incidentes/${selected.id}/investigaciones`, {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify(invForm),
+        method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(invForm),
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
@@ -134,7 +130,7 @@ export default function IncidentesPage() {
       setInvForm({})
       loadInvestigaciones(selected.id)
       await fetch(`/api/sst/incidentes/${selected.id}`, {
-        method: 'PUT', headers: authHeaders(), body: JSON.stringify({ Estado: 'en_investigacion' }),
+        method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify({ Estado: 'en_investigacion' }),
       })
       load()
     } catch (e) {

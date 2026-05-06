@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Scale, Plus, Bell, CheckCircle2, Clock, XCircle, MinusCircle, Pencil, Trash2 } from 'lucide-react'
 import type { LegalRequisitoFields, LegalCumplimientoFields } from '@/types/sst/legal'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Requisito = AirtableRecord<LegalRequisitoFields>
 type Cumplimiento = AirtableRecord<LegalCumplimientoFields>
@@ -29,11 +30,6 @@ const ESTADO_ICON: Record<string, React.ReactNode> = {
 const TIPOS = ['ley','decreto','resolucion','circular','norma_tecnica']
 const AMBITOS = ['nacional','sectorial','empresa']
 const ESTADOS_CUMPL = ['cumple','parcial','no_cumple','en_proceso','no_aplica']
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 export default function MatrizLegalPage() {
   const { user } = useAuth()
@@ -58,9 +54,9 @@ export default function MatrizLegalPage() {
     setLoading(true)
     try {
       const [reqsRes, altsRes, resRes] = await Promise.all([
-        fetch(`/api/sst/legal/requisitos${filtroTodos ? '?todos=true' : ''}`, { headers: authHeaders() }),
-        fetch('/api/sst/legal/requisitos?alertas=true', { headers: authHeaders() }),
-        fetch('/api/sst/legal/requisitos?resumen=true', { headers: authHeaders() }),
+        fetch(`/api/sst/legal/requisitos${filtroTodos ? '?todos=true' : ''}`, { headers: getAuthHeaders() }),
+        fetch('/api/sst/legal/requisitos?alertas=true', { headers: getAuthHeaders() }),
+        fetch('/api/sst/legal/requisitos?resumen=true', { headers: getAuthHeaders() }),
       ])
       if (reqsRes.ok) {
         const reqs = await reqsRes.json()
@@ -86,7 +82,7 @@ export default function MatrizLegalPage() {
     setSeleccionado(req)
     setLoadingDetalle(true)
     try {
-      const res = await fetch(`/api/sst/legal/requisitos/${req.id}/cumplimientos`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/legal/requisitos/${req.id}/cumplimientos`, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setCumplimientos(data.records ?? [])
@@ -101,9 +97,9 @@ export default function MatrizLegalPage() {
     if (!formReq.Norma) return
     setGuardando(true)
     if (editId) {
-      await fetch(`/api/sst/legal/requisitos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(formReq) })
+      await fetch(`/api/sst/legal/requisitos/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(formReq) })
     } else {
-      await fetch('/api/sst/legal/requisitos', { method: 'POST', headers: authHeaders(), body: JSON.stringify({ ...formReq, Activo: true }) })
+      await fetch('/api/sst/legal/requisitos', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ ...formReq, Activo: true }) })
     }
     setModalRequisito(false)
     setEditId(null)
@@ -126,7 +122,7 @@ export default function MatrizLegalPage() {
   }
 
   const eliminarRequisito = async (id: string) => {
-    await fetch(`/api/sst/legal/requisitos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/legal/requisitos/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (seleccionado?.id === id) setSeleccionado(null)
     await cargar()
@@ -136,7 +132,7 @@ export default function MatrizLegalPage() {
     if (!seleccionado) return
     setGuardando(true)
     await fetch(`/api/sst/legal/requisitos/${seleccionado.id}/cumplimientos`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ ...formCumpl, Responsable: formCumpl.Responsable || user?.name }),
     })
     setModalCumplimiento(false)

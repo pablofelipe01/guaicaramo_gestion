@@ -8,15 +8,11 @@ import { RegistroForm } from '@/components/sst/capacitaciones/RegistroForm'
 import { ArrowLeft, ClipboardCheck, Plus, Users, Calendar } from 'lucide-react'
 import type { CapActividadFields, CapProgramacionFields, CapRegistroFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
 type Registro = AirtableRecord<CapRegistroFields>
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 export default function RegistrosPage() {
   const router = useRouter()
@@ -29,9 +25,9 @@ export default function RegistrosPage() {
   const cargar = useCallback(async () => {
     setLoading(true)
     const [regRes, actRes, progRes] = await Promise.all([
-      fetch('/api/sst/capacitaciones/registros', { headers: authHeaders() }),
-      fetch('/api/sst/capacitaciones', { headers: authHeaders() }),
-      fetch('/api/sst/capacitaciones/programacion', { headers: authHeaders() }),
+      fetch('/api/sst/capacitaciones/registros', { headers: getAuthHeaders() }),
+      fetch('/api/sst/capacitaciones', { headers: getAuthHeaders() }),
+      fetch('/api/sst/capacitaciones/programacion', { headers: getAuthHeaders() }),
     ])
     if (regRes.ok)  setRegistros((await regRes.json()).records ?? [])
     if (actRes.ok)  setActividades((await actRes.json()).records ?? [])
@@ -44,7 +40,7 @@ export default function RegistrosPage() {
   const guardarRegistro = async (data: Record<string, unknown>) => {
     const res = await fetch('/api/sst/capacitaciones/registros', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     })
     if (!res.ok) {

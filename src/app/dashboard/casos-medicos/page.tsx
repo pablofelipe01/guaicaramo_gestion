@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { HeartPulse, Plus, MessageSquare, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { CasoCasoFields, CasoSeguimientoFields } from '@/types/sst/caso'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Caso = AirtableRecord<CasoCasoFields>
 type Seguimiento = AirtableRecord<CasoSeguimientoFields>
@@ -20,11 +21,6 @@ const TIPO_LABEL: Record<string, string> = {
   reubicacion: 'Reubicación',
   calificacion_el: 'Calificación EL',
   incapacidad_prolongada: 'Incapacidad Prolongada',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function CasosMedicosPage() {
@@ -43,7 +39,7 @@ export default function CasosMedicosPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/casos-medicos?estado=activo', { headers: authHeaders() })
+    const res = await fetch('/api/sst/casos-medicos?estado=activo', { headers: getAuthHeaders() })
     if (res.ok) setCasos((await res.json()).records)
     setLoading(false)
   }, [])
@@ -51,7 +47,7 @@ export default function CasosMedicosPage() {
   useEffect(() => { load() }, [load])
 
   const loadSeguimientos = useCallback(async (casoId: string) => {
-    const res = await fetch(`/api/sst/casos-medicos/${casoId}/seguimientos`, { headers: authHeaders() })
+    const res = await fetch(`/api/sst/casos-medicos/${casoId}/seguimientos`, { headers: getAuthHeaders() })
     if (res.ok) setSeguimientos((await res.json()).records)
   }, [])
 
@@ -64,9 +60,9 @@ export default function CasosMedicosPage() {
     if (!form['Trabajador ID'] || !form.Tipo) return
     setSaving(true)
     if (editId) {
-      await fetch(`/api/sst/casos-medicos/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/casos-medicos/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/casos-medicos', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/casos-medicos', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setSaving(false)
     setShowModal(false)
@@ -82,7 +78,7 @@ export default function CasosMedicosPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/casos-medicos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/casos-medicos/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (selected?.id === id) setSelected(null)
     load()
@@ -92,7 +88,7 @@ export default function CasosMedicosPage() {
     if (!nota || !selected) return
     setSaving(true)
     await fetch(`/api/sst/casos-medicos/${selected.id}/seguimientos`, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify({ Nota: nota }),
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ Nota: nota }),
     })
     setSaving(false)
     setShowSeguimientoModal(false)

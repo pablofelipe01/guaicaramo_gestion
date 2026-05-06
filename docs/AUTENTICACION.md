@@ -55,12 +55,12 @@ Sistema de login/registro profesional integrado con Airtable para gestionar usua
 
 2. Completa las variables:
    ```env
-   NEXT_PUBLIC_AIRTABLE_API_KEY=pat_xxxxxxxxxxxxx
-   NEXT_PUBLIC_AIRTABLE_BASE_ID=appXxxxxxxxxxxxxx
-   NEXT_PUBLIC_AIRTABLE_TABLE_NAME=Users
+   AIRTABLE_API_KEY=pat_xxxxxxxxxxxxx
+   AIRTABLE_BASE_ID=appXxxxxxxxxxxxxx
+   AIRTABLE_TABLE_USERS=Users
    ```
 
-⚠️ **Nota**: Las variables `NEXT_PUBLIC_*` son visibles en el cliente (usar solo para claves públicas)
+⚠️ **Nota**: Estas variables NO deben tener el prefijo `NEXT_PUBLIC_` — son secretos del servidor y nunca deben exponerse al navegador.
 
 ## 📁 Estructura de Archivos
 
@@ -182,7 +182,7 @@ export default function Component() {
 
 ## 🐛 Troubleshooting
 
-### Error: "NEXT_PUBLIC_AIRTABLE_API_KEY no está configurada"
+### Error: "AIRTABLE_API_KEY no está configurada"
 - Verifica que el archivo `.env.local` existe
 - Reinicia el servidor: `npm run dev`
 - Verifica las variables están sin espacios

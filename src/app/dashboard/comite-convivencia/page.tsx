@@ -11,6 +11,7 @@ import { ComiteCasosList } from '@/components/sst/ComiteCasosList'
 import { Users, Plus, CalendarDays, AlertTriangle, Lock, CheckCircle2, User, Trash2 } from 'lucide-react'
 import type { CclComiteFields, CclReunionFields, CclCompromisoFields, CclIntegranteFields } from '@/types/sst/ccl'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Comite = AirtableRecord<CclComiteFields>
 type Reunion = AirtableRecord<CclReunionFields>
@@ -22,11 +23,6 @@ const REUNION_VARIANT: Record<string, 'primary' | 'success' | 'neutral'> = {
 }
 const COMP_VARIANT: Record<string, 'neutral' | 'success' | 'error'> = {
   pendiente: 'neutral', cumplido: 'success', vencido: 'error',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 function diasRestantes(fechaFin: string) {
@@ -58,7 +54,7 @@ export default function ComiteConvivenciaPage() {
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/sst/ccl/comite/activo', { headers: authHeaders() })
+      const res = await fetch('/api/sst/ccl/comite/activo', { headers: getAuthHeaders() })
       if (!res.ok) {
         console.error('Error fetching comité:', res.status, res.statusText)
         setComite(null)
@@ -69,14 +65,14 @@ export default function ComiteConvivenciaPage() {
       setComite(data.comite)
       if (data.comite) {
         // Cargar reuniones
-        const r = await fetch(`/api/sst/ccl/reuniones?comiteId=${data.comite.id}`, { headers: authHeaders() })
+        const r = await fetch(`/api/sst/ccl/reuniones?comiteId=${data.comite.id}`, { headers: getAuthHeaders() })
         if (r.ok) {
           const rd = await r.json()
           setReuniones(rd.records ?? [])
         }
         
         // Cargar integrantes
-        const i = await fetch(`/api/sst/ccl/comites/${data.comite.id}`, { headers: authHeaders() })
+        const i = await fetch(`/api/sst/ccl/comites/${data.comite.id}`, { headers: getAuthHeaders() })
         if (i.ok) {
           const id = await i.json()
           setIntegrantes(id.integrantes ?? [])
@@ -94,7 +90,7 @@ export default function ComiteConvivenciaPage() {
     setReunionActiva(r)
     setTab('compromisos')
     try {
-      const res = await fetch(`/api/sst/ccl/reuniones/${r.id}/compromisos`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/ccl/reuniones/${r.id}/compromisos`, { headers: getAuthHeaders() })
       if (!res.ok) return
       const data = await res.json()
       setCompromisos(data.records ?? [])
@@ -107,7 +103,7 @@ export default function ComiteConvivenciaPage() {
     if (!formComite.Nombre) return
     setGuardando(true)
     try {
-      await fetch('/api/sst/ccl/comites', { method: 'POST', headers: authHeaders(), body: JSON.stringify(formComite) })
+      await fetch('/api/sst/ccl/comites', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(formComite) })
       setModalComite(false)
       await cargar()
     } catch (error) {
@@ -121,7 +117,7 @@ export default function ComiteConvivenciaPage() {
     setGuardando(true)
     try {
       await fetch('/api/sst/ccl/reuniones', {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({ ...formReunion, 'Comite ID': comite.id }),
       })
       setModalReunion(false)
@@ -138,7 +134,7 @@ export default function ComiteConvivenciaPage() {
     setGuardando(true)
     try {
       await fetch(`/api/sst/ccl/reuniones/${reunionActiva.id}/compromisos`, {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({ ...formComp, Responsable: formComp.Responsable || user?.name }),
       })
       setModalCompromiso(false)
@@ -155,7 +151,7 @@ export default function ComiteConvivenciaPage() {
     setGuardando(true)
     try {
       await fetch('/api/sst/ccl/integrantes', {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({
           ...formIntegrante,
           'Comite ID': comite.id,
@@ -173,20 +169,20 @@ export default function ComiteConvivenciaPage() {
   const dias = comite ? diasRestantes(comite.fields['Fecha Fin']) : null
 
   const eliminarReunion = async (id: string) => {
-    await fetch(`/api/sst/ccl/reuniones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/ccl/reuniones/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDeleteReunion(null)
     if (reunionActiva?.id === id) { setReunionActiva(null); setCompromisos([]) }
     await cargar()
   }
 
   const eliminarCompromiso = async (id: string) => {
-    await fetch(`/api/sst/ccl/compromisos/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/ccl/compromisos/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDeleteComp(null)
     if (reunionActiva) await seleccionarReunion(reunionActiva)
   }
 
   const eliminarIntegrante = async (id: string) => {
-    await fetch(`/api/sst/ccl/integrantes/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/ccl/integrantes/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDeleteIntegrante(null)
     await cargar()
   }

@@ -16,15 +16,11 @@ import {
 } from 'lucide-react'
 import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapCategoria, CapProveedor } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
 type Registro = AirtableRecord<CapRegistroFields>
-
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
@@ -52,9 +48,9 @@ export default function CapacitacionDetallePage() {
     setLoading(true)
     try {
       const [actRes, progRes, regRes] = await Promise.all([
-        fetch(`/api/sst/capacitaciones/${id}`, { headers: authHeaders() }),
-        fetch(`/api/sst/capacitaciones/programacion?actividad_id=${id}`, { headers: authHeaders() }),
-        fetch(`/api/sst/capacitaciones/registros?actividad_id=${id}`, { headers: authHeaders() }),
+        fetch(`/api/sst/capacitaciones/${id}`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/capacitaciones/programacion?actividad_id=${id}`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/capacitaciones/registros?actividad_id=${id}`, { headers: getAuthHeaders() }),
       ])
       if (actRes.ok) {
         const d = await actRes.json()
@@ -77,7 +73,7 @@ export default function CapacitacionDetallePage() {
     try {
       await fetch('/api/sst/capacitaciones/programacion', {
         method: 'POST',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           actividad_id: id,
           mes: formProg.mes,
@@ -96,7 +92,7 @@ export default function CapacitacionDetallePage() {
   const guardarRegistro = async (data: Record<string, unknown>) => {
     const res = await fetch('/api/sst/capacitaciones/registros', {
       method: 'POST',
-      headers: authHeaders(),
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     })
     if (!res.ok) {
@@ -110,7 +106,7 @@ export default function CapacitacionDetallePage() {
   const eliminarRegistro = async (registroId: string) => {
     const res = await fetch(`/api/sst/capacitaciones/registros/${registroId}`, {
       method: 'DELETE',
-      headers: authHeaders(),
+      headers: getAuthHeaders(),
     })
     if (!res.ok && res.status !== 204) {
       const err = await res.json().catch(() => ({}))
@@ -130,7 +126,7 @@ export default function CapacitacionDetallePage() {
     try {
       const res = await fetch(`/api/sst/capacitaciones/${id}`, {
         method: 'PUT',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify(formEdit),
       })
       if (!res.ok) throw new Error('Error al guardar')
@@ -147,7 +143,7 @@ export default function CapacitacionDetallePage() {
     try {
       const res = await fetch(`/api/sst/capacitaciones/${id}`, {
         method: 'DELETE',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       router.push('/dashboard/capacitaciones')
@@ -489,7 +485,7 @@ export default function CapacitacionDetallePage() {
                 onChange={e => setFormEdit(p => ({ ...p, proveedor: e.target.value as CapProveedor }))}
                 className="input-field"
               >
-                {(['Proveedor externo','ARL SURA','SENA','SST','Enfermería','Bienestar Social','SURA'] as CapProveedor[]).map(v => (
+                {(['Proveedor externo','ARL SURA','SENA','SST','Enfermería','Bienestar Social'] as CapProveedor[]).map(v => (
                   <option key={v} value={v}>{v}</option>
                 ))}
               </select>

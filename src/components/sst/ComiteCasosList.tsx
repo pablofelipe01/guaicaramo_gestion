@@ -7,6 +7,7 @@ import { Plus, Lock, AlertCircle, Loader } from 'lucide-react'
 import { StatusBadge } from '@/components/ui/StatusBadge'
 import type { CclCasoFields } from '@/types/sst/ccl'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Caso = AirtableRecord<CclCasoFields>
 
@@ -42,16 +43,11 @@ export function ComiteCasosList({ comiteId, onSuccess }: ComiteCasosListProps) {
   })
   const [error, setError] = useState('')
 
-  function authHeaders() {
-    const token = localStorage.getItem('authToken')
-    return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-  }
-
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
       const query = comiteId ? `?comiteId=${comiteId}` : ''
-      const res = await fetch(`/api/sst/ccl/casos${query}`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/ccl/casos${query}`, { headers: getAuthHeaders() })
       const data = await res.json()
       setCasos(data.records ?? [])
     } catch (err) {
@@ -73,7 +69,7 @@ export function ComiteCasosList({ comiteId, onSuccess }: ComiteCasosListProps) {
     try {
       const response = await fetch('/api/sst/ccl/casos', {
         method: 'POST',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           ...formData,
           'Comite ID': comiteId,

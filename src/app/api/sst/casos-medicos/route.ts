@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarCasos, crearCaso } from '@/lib/sst/caso'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
+
+// Datos médicos confidenciales — solo coordinador SST, médico y administrador
+const ROLES_MEDICO = ['coordinador_sst', 'medico', 'administrador'] as const
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...ROLES_MEDICO)
+  if ('error' in auth) return auth.error
   const { searchParams } = new URL(request.url)
   const estado = searchParams.get('estado') ?? undefined
   return NextResponse.json(await listarCasos(estado))
 }
 
 export async function POST(request: NextRequest) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...ROLES_MEDICO)
+  if ('error' in auth) return auth.error
   const body = await request.json()
   if (!body['Trabajador ID'] || !body.Tipo)
     return NextResponse.json({ message: 'Trabajador ID y Tipo son requeridos' }, { status: 400 })

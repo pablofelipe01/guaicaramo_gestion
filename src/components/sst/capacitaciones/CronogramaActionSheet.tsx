@@ -5,6 +5,7 @@ import { X, CheckCircle2, RotateCcw, XCircle, Clock, CalendarDays, MessageSquare
 import { getCategoriaColor } from '@/lib/sst/cap-client'
 import type { CapActividadFields, CapProgramacionFields, CapEstadoProgramacion } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
@@ -17,11 +18,6 @@ interface Props {
   mes?: string
   onClose: () => void
   onSuccess: () => void
-}
-
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 const OPCIONES: { estado: CapEstadoProgramacion; label: string; color: string; Icon: React.FC<{ className?: string }> }[] = [
@@ -54,7 +50,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
     try {
       const res = await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
         method: 'PUT',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           estado: estadoNuevo,
           ...(observaciones ? { observaciones } : {}),
@@ -90,7 +86,7 @@ export function CronogramaActionSheet({ open, prog, actividad, onClose, onSucces
 
       const res = await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
         method: 'PUT',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify(body),
       })
       if (!res.ok) {

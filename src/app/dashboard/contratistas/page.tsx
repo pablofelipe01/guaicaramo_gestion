@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { HardHat, Plus, AlertTriangle, CheckCircle2, UserCheck, Pencil, Trash2 } from 'lucide-react'
 import type { ContContratistaFields, ContDocumentoFields, ContTrabajadorFields } from '@/types/sst/cont'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Contratista = AirtableRecord<ContContratistaFields>
 type Documento = AirtableRecord<ContDocumentoFields>
@@ -23,11 +24,6 @@ const DOC_ESTADO_VARIANT: Record<string, 'success' | 'warning' | 'error'> = {
   vigente: 'success', proximo_vencer: 'warning', vencido: 'error',
 }
 const TIPOS_DOC = ['arl', 'eps', 'pension', 'sgsst', 'rut', 'camara_comercio', 'otro']
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 export default function ContratistasPage() {
   const { user } = useAuth()
@@ -51,7 +47,7 @@ export default function ContratistasPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/contratistas', { headers: authHeaders() })
+    const res = await fetch('/api/sst/contratistas', { headers: getAuthHeaders() })
     const data = await res.json()
     setContratistas(data.records ?? [])
     setLoading(false)
@@ -64,9 +60,9 @@ export default function ContratistasPage() {
     setLoadingDetalle(true)
     try {
       const [semRes, docsRes, trabsRes] = await Promise.all([
-        fetch(`/api/sst/contratistas/${c.id}/semaforo`, { headers: authHeaders() }),
-        fetch(`/api/sst/contratistas/${c.id}/documentos`, { headers: authHeaders() }),
-        fetch(`/api/sst/contratistas/${c.id}/trabajadores`, { headers: authHeaders() }),
+        fetch(`/api/sst/contratistas/${c.id}/semaforo`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/contratistas/${c.id}/documentos`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/contratistas/${c.id}/trabajadores`, { headers: getAuthHeaders() }),
       ])
       if (semRes.ok) {
         const sem = await semRes.json()
@@ -90,9 +86,9 @@ export default function ContratistasPage() {
     if (!formCont['Nombre Empresa'] || !formCont.NIT) return
     setGuardando(true)
     if (editId) {
-      await fetch(`/api/sst/contratistas/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(formCont) })
+      await fetch(`/api/sst/contratistas/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(formCont) })
     } else {
-      await fetch('/api/sst/contratistas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(formCont) })
+      await fetch('/api/sst/contratistas', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(formCont) })
     }
     setModalContratista(false)
     setEditId(null)
@@ -115,7 +111,7 @@ export default function ContratistasPage() {
   }
 
   const eliminarContratista = async (id: string) => {
-    await fetch(`/api/sst/contratistas/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/contratistas/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (seleccionado?.id === id) setSeleccionado(null)
     await cargar()
@@ -125,7 +121,7 @@ export default function ContratistasPage() {
     if (!seleccionado || !formDoc['Fecha Vencimiento']) return
     setGuardando(true)
     await fetch(`/api/sst/contratistas/${seleccionado.id}/documentos`, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(formDoc),
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(formDoc),
     })
     setModalDoc(false)
     setFormDoc({ Tipo: 'arl', 'Fecha Vencimiento': '', 'URL Documento': '' })
@@ -137,7 +133,7 @@ export default function ContratistasPage() {
     if (!seleccionado || !formTrab['Nombre Completo']) return
     setGuardando(true)
     await fetch(`/api/sst/contratistas/${seleccionado.id}/trabajadores`, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(formTrab),
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(formTrab),
     })
     setModalTrabajador(false)
     setFormTrab({ 'Nombre Completo': '', Identificacion: '', Cargo: '' })

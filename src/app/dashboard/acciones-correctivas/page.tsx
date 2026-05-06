@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { AcAccionFields, AcSeguimientoFields } from '@/types/sst/ac'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Accion = AirtableRecord<AcAccionFields>
 type Seguimiento = AirtableRecord<AcSeguimientoFields>
@@ -54,11 +55,6 @@ const TIPO_LABEL: Record<string, string> = {
   correctiva: 'Correctiva', preventiva: 'Preventiva', mejora: 'Mejora',
 }
 
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
-
 export default function AccionesCorrectivasPage() {
   useAuth()
   const [acciones, setAcciones] = useState<Accion[]>([])
@@ -82,9 +78,9 @@ export default function AccionesCorrectivasPage() {
     setLoading(true)
     const params = filtroEstado ? `?estado=${filtroEstado}` : ''
     const [accionesRes, statsRes, alertasRes] = await Promise.all([
-      fetch(`/api/sst/acciones${params}`, { headers: authHeaders() }),
-      fetch('/api/sst/acciones?vista=estadisticas', { headers: authHeaders() }),
-      fetch('/api/sst/acciones?vista=alertas', { headers: authHeaders() }),
+      fetch(`/api/sst/acciones${params}`, { headers: getAuthHeaders() }),
+      fetch('/api/sst/acciones?vista=estadisticas', { headers: getAuthHeaders() }),
+      fetch('/api/sst/acciones?vista=alertas', { headers: getAuthHeaders() }),
     ])
     if (accionesRes.ok) setAcciones((await accionesRes.json()).records)
     if (statsRes.ok) setStats(await statsRes.json())
@@ -95,7 +91,7 @@ export default function AccionesCorrectivasPage() {
   useEffect(() => { load() }, [load])
 
   const loadSeguimientos = useCallback(async (id: string) => {
-    const res = await fetch(`/api/sst/acciones/${id}/seguimientos`, { headers: authHeaders() })
+    const res = await fetch(`/api/sst/acciones/${id}/seguimientos`, { headers: getAuthHeaders() })
     if (res.ok) setSeguimientos((await res.json()).records)
   }, [])
 
@@ -108,9 +104,9 @@ export default function AccionesCorrectivasPage() {
     if (!form.Titulo || !form.Tipo || !form.Origen || !form.Prioridad || !form['Fecha Limite']) return
     setSaving(true)
     if (editId) {
-      await fetch(`/api/sst/acciones/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/acciones/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/acciones', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/acciones', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setSaving(false)
     setShowModal(false)
@@ -126,7 +122,7 @@ export default function AccionesCorrectivasPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/acciones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/acciones/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (selected?.id === id) setSelected(null)
     load()
@@ -134,7 +130,7 @@ export default function AccionesCorrectivasPage() {
 
   const handleEjecutar = async () => {
     if (!selected) return
-    await fetch(`/api/sst/acciones/${selected.id}/ejecutar`, { method: 'PUT', headers: authHeaders() })
+    await fetch(`/api/sst/acciones/${selected.id}/ejecutar`, { method: 'PUT', headers: getAuthHeaders() })
     load()
     loadSeguimientos(selected.id)
     setSelected(prev => prev ? { ...prev, fields: { ...prev.fields, Estado: 'ejecutada' } } : null)
@@ -144,7 +140,7 @@ export default function AccionesCorrectivasPage() {
     if (!selected || eficaciaConfirmada === null) return
     setSaving(true)
     await fetch(`/api/sst/acciones/${selected.id}/verificar`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ confirmada: eficaciaConfirmada }),
     })
     setSaving(false)
@@ -157,7 +153,7 @@ export default function AccionesCorrectivasPage() {
 
   const handleCerrar = async () => {
     if (!selected) return
-    const res = await fetch(`/api/sst/acciones/${selected.id}/cerrar`, { method: 'PUT', headers: authHeaders() })
+    const res = await fetch(`/api/sst/acciones/${selected.id}/cerrar`, { method: 'PUT', headers: getAuthHeaders() })
     if (!res.ok) {
       const err = await res.json()
       alert(err.message)
@@ -171,7 +167,7 @@ export default function AccionesCorrectivasPage() {
     if (!selected || !seguimientoNota.trim()) return
     setSaving(true)
     await fetch(`/api/sst/acciones/${selected.id}/seguimientos`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ Nota: seguimientoNota }),
     })
     setSaving(false)

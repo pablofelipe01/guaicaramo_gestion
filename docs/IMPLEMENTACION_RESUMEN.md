@@ -150,8 +150,8 @@ Usuario → Formulario → Validación Cliente
 cp .env.example .env.local
 
 # Agrrega tus credenciales:
-NEXT_PUBLIC_AIRTABLE_API_KEY=tu_api_key
-NEXT_PUBLIC_AIRTABLE_BASE_ID=tu_base_id
+AIRTABLE_API_KEY=tu_api_key
+AIRTABLE_BASE_ID=tu_base_id
 ```
 
 ### 3. Instalar Dependencias

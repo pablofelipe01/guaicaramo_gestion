@@ -30,9 +30,9 @@ cp .env.example .env.local
 
 Edita `.env.local`:
 ```env
-NEXT_PUBLIC_AIRTABLE_API_KEY=pat_xxxxxxxxxxxxx
-NEXT_PUBLIC_AIRTABLE_BASE_ID=appXxxxxxxxxxxxxx
-NEXT_PUBLIC_AIRTABLE_TABLE_NAME=Users
+AIRTABLE_API_KEY=pat_xxxxxxxxxxxxx
+AIRTABLE_BASE_ID=appXxxxxxxxxxxxxx
+AIRTABLE_TABLE_USERS=Users
 ```
 
 **Cómo obtener el Base ID**:
@@ -133,11 +133,11 @@ Password: TestPassword123!
 ### Cambiar Tabla de Airtable
 
 1. **Archivo**: `.env.local`
-2. **Edita**: `NEXT_PUBLIC_AIRTABLE_TABLE_NAME=MiTabla`
+2. **Edita**: `AIRTABLE_TABLE_USERS=MiTabla`
 
 ## 🆘 Si Algo Falla
 
-### Error: "NEXT_PUBLIC_AIRTABLE_API_KEY no está configurada"
+### Error: "AIRTABLE_API_KEY no está configurada"
 ```bash
 # Reinicia el servidor
 npm run dev

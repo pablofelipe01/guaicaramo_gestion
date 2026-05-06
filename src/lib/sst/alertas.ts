@@ -63,7 +63,7 @@ export async function obtenerAlertasDashboard(): Promise<AlertaDashboard[]> {
   }
 
   const contratistasRojo = contratistas.filter(
-    c => (c.fields as unknown as { Semaforo?: string }).Semaforo === 'rojo'
+    c => c.fields.Semaforo === 'rojo'
   )
   for (const c of contratistasRojo) {
     alertas.push({

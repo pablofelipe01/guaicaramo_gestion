@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Wallet, Plus, AlertTriangle, TrendingUp, TrendingDown, Trash2 } from 'lucide-react'
 import type { PptoPresupuestoFields, PptoRubroFields, PptoEjecucionFields } from '@/types/sst/ppto'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Presupuesto = AirtableRecord<PptoPresupuestoFields>
 type Rubro = AirtableRecord<PptoRubroFields>
@@ -25,11 +26,6 @@ const CAT_LABEL: Record<string, string> = {
   consultoria: 'Consultoría', infraestructura: 'Infraestructura', otro: 'Otro',
 }
 const CATEGORIAS = ['epps','capacitacion','medico','consultoria','infraestructura','otro']
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 function pct(ejecutado: number, presupuestado: number) {
   if (!presupuestado) return 0
@@ -66,7 +62,7 @@ export default function PresupuestoPage() {
 
   const cargar = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/presupuestos', { headers: authHeaders() })
+    const res = await fetch('/api/sst/presupuestos', { headers: getAuthHeaders() })
     const data = await res.json()
     setPresupuestos(data.records ?? [])
     setLoading(false)
@@ -81,8 +77,8 @@ export default function PresupuestoPage() {
     setLoadingDetalle(true)
     try {
       const [rubsRes, altsRes] = await Promise.all([
-        fetch(`/api/sst/presupuestos/${p.id}/rubros`, { headers: authHeaders() }),
-        fetch(`/api/sst/presupuestos/${p.id}/rubros?alertas=true`, { headers: authHeaders() }),
+        fetch(`/api/sst/presupuestos/${p.id}/rubros`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/presupuestos/${p.id}/rubros?alertas=true`, { headers: getAuthHeaders() }),
       ])
       if (rubsRes.ok) {
         const rubs = await rubsRes.json()
@@ -102,7 +98,7 @@ export default function PresupuestoPage() {
     setRubroActivo(rubro)
     setLoadingEj(true)
     try {
-      const res = await fetch(`/api/sst/rubros/${rubro.id}/ejecuciones`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/rubros/${rubro.id}/ejecuciones`, { headers: getAuthHeaders() })
       if (res.ok) {
         const data = await res.json()
         setEjecuciones(data.records ?? [])
@@ -117,7 +113,7 @@ export default function PresupuestoPage() {
     if (!formPpto.Titulo || !formPpto['Total Presupuestado']) return
     setGuardando(true)
     await fetch('/api/sst/presupuestos', {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ ...formPpto, 'Total Presupuestado': Number(formPpto['Total Presupuestado']), Responsable: user?.name }),
     })
     setModalPpto(false)
@@ -130,7 +126,7 @@ export default function PresupuestoPage() {
     if (!formRubro['Nombre Rubro'] || !seleccionado) return
     setGuardando(true)
     await fetch(`/api/sst/presupuestos/${seleccionado.id}/rubros`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ ...formRubro, 'Valor Presupuestado': Number(formRubro['Valor Presupuestado']) }),
     })
     setModalRubro(false)
@@ -143,7 +139,7 @@ export default function PresupuestoPage() {
     if (!formEj.Descripcion || !formEj.Valor || !rubroActivo) return
     setGuardando(true)
     await fetch(`/api/sst/rubros/${rubroActivo.id}/ejecuciones`, {
-      method: 'POST', headers: authHeaders(),
+      method: 'POST', headers: getAuthHeaders(),
       body: JSON.stringify({ ...formEj, Valor: Number(formEj.Valor) }),
     })
     setModalEjecucion(false)
@@ -155,7 +151,7 @@ export default function PresupuestoPage() {
 
   const eliminarPpto = async (id: string) => {
     try {
-      await fetch(`/api/sst/presupuestos/${id}`, { method: 'DELETE', headers: authHeaders() })
+      await fetch(`/api/sst/presupuestos/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
       setConfirmDeletePpto(null)
       if (seleccionado?.id === id) setSeleccionado(null)
       await cargar()
@@ -174,7 +170,7 @@ export default function PresupuestoPage() {
     if (!seleccionado || !formEditPpto.Titulo) return
     setGuardando(true)
     await fetch(`/api/sst/presupuestos/${seleccionado.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ Titulo: formEditPpto.Titulo, 'Total Presupuestado': Number(formEditPpto['Total Presupuestado']) }),
     })
     setModalEditPpto(false)
@@ -187,12 +183,12 @@ export default function PresupuestoPage() {
     if (!seleccionado) return
     setGuardando(true)
     await fetch(`/api/sst/presupuestos/${seleccionado.id}/estado`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ estadoActual: seleccionado.fields.Estado, estadoNuevo: nuevoEstado }),
     })
     await cargar()
     if (seleccionado.id) {
-      const res = await fetch(`/api/sst/presupuestos/${seleccionado.id}`, { headers: authHeaders() })
+      const res = await fetch(`/api/sst/presupuestos/${seleccionado.id}`, { headers: getAuthHeaders() })
       const data = await res.json()
       setSeleccionado(data.record)
     }
@@ -204,7 +200,7 @@ export default function PresupuestoPage() {
     setGuardando(true)
     try {
       const res = await fetch(`/api/sst/rubros/${rubro.id}`, {
-        method: 'DELETE', headers: authHeaders(),
+        method: 'DELETE', headers: getAuthHeaders(),
       })
       if (res.ok) {
         if (seleccionado) await seleccionar(seleccionado)
@@ -228,7 +224,7 @@ export default function PresupuestoPage() {
     if (!rubroActivo || !formEditRubro['Nombre Rubro']) return
     setGuardando(true)
     await fetch(`/api/sst/rubros/${rubroActivo.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ 'Nombre Rubro': formEditRubro['Nombre Rubro'], 'Valor Presupuestado': Number(formEditRubro['Valor Presupuestado']) }),
     })
     setModalEditRubro(false)

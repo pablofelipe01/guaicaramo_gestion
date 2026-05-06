@@ -11,10 +11,18 @@ interface UserFields {
   'Fecha Creacion'?: string
 }
 
-// Solo disponible en desarrollo. En producción eliminar o proteger con una variable de entorno.
+// Solo disponible en entornos no-producción y con SETUP_SECRET correcto.
 export async function POST(request: NextRequest) {
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json({ message: 'No disponible en producción' }, { status: 403 })
+  }
+  const setupSecret = process.env.SETUP_SECRET
+  if (setupSecret) {
+    const authHeader = request.headers.get('authorization') ?? ''
+    const providedSecret = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader
+    if (providedSecret !== setupSecret) {
+      return NextResponse.json({ message: 'SETUP_SECRET inválido' }, { status: 403 })
+    }
   }
 
   try {

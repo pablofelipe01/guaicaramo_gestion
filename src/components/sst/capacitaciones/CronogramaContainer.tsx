@@ -56,6 +56,15 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
     )
   }, [])
 
+  // Set de IDs de actividades válidas — para filtrar programaciones huérfanas
+  const actIdsValidos = useMemo(() => new Set(actividades.map(a => a.id)), [actividades])
+
+  // Programaciones sin actividades fantasmas (cascade delete puede no haberse ejecutado antes)
+  const programacionesValidas = useMemo(
+    () => programaciones.filter(p => actIdsValidos.has(p.fields.actividad_id)),
+    [programaciones, actIdsValidos],
+  )
+
   // Filtrar actividades por búsqueda
   const actsFiltradas = busqueda.trim()
     ? actividades.filter(a =>
@@ -66,14 +75,14 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
 
   // KPIs rápidos del cronograma
   const kpis = useMemo(() => {
-    const total = programaciones.length
-    const ejecutadas = programaciones.filter(p => p.fields.estado === 'Ejecutado').length
-    const vencidas = programaciones.filter(p =>
+    const total = programacionesValidas.length
+    const ejecutadas = programacionesValidas.filter(p => p.fields.estado === 'Ejecutado').length
+    const vencidas = programacionesValidas.filter(p =>
       p.fields.estado === 'Programado' && !!p.fields.fecha_programada && p.fields.fecha_programada < HOY_STR
     ).length
-    const reprog = programaciones.filter(p => p.fields.estado === 'Reprogramado').length
+    const reprog = programacionesValidas.filter(p => p.fields.estado === 'Reprogramado').length
     return { total, ejecutadas, vencidas, reprog, actividades: actividades.length }
-  }, [programaciones, actividades])
+  }, [programacionesValidas, actividades])
 
   return (
     <div className="flex flex-col gap-5">
@@ -171,7 +180,7 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
           <div>
             <p className="text-xs font-semibold mb-2" style={{ color: 'var(--sst-dark-500)' }}>Estado</p>
             <CronogramaLeyenda
-              programaciones={programaciones}
+              programaciones={programacionesValidas}
               filtroEstados={filtroEstados}
               onToggle={toggleEstado}
             />
@@ -183,7 +192,7 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
       {modo === 'mensual' && (
         <CronogramaMensual
           actividades={actsFiltradas}
-          programaciones={programaciones}
+          programaciones={programacionesValidas}
           filtroEstados={filtroEstados}
           catFiltro={catFiltro}
           onUpdate={onUpdate}
@@ -192,14 +201,14 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
       {modo === 'trimestral' && (
         <CronogramaTrimestral
           actividades={actsFiltradas}
-          programaciones={programaciones}
+          programaciones={programacionesValidas}
           catFiltro={catFiltro}
         />
       )}
       {modo === 'lista' && (
         <CronogramaLista
           actividades={actsFiltradas}
-          programaciones={programaciones}
+          programaciones={programacionesValidas}
           filtroEstados={filtroEstados}
           catFiltro={catFiltro}
           onUpdate={onUpdate}

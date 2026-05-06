@@ -4,7 +4,7 @@ import type { IncIncidenteFields, IncInvestigacionFields } from '@/types/sst/inc
 import { crearAccion } from '@/lib/sst/ac'
 import { crearCaso } from '@/lib/sst/caso'
 
-const T_INCIDENTES = 'sst_incidentes'
+const T_INCIDENTES = 'sst_inc_incidentes'
 const T_INVESTIGACIONES = 'sst_inc_investigaciones'
 
 export async function listarIncidentes(tipo?: string) {

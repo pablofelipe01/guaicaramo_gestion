@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { CapActividadFields, CapProgramacionFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
@@ -19,11 +20,6 @@ interface Props {
 }
 
 const HOY = new Date().toISOString().split('T')[0]
-
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
 
 function esVencido(prog: Prog): boolean {
   return prog.fields.estado === 'Programado' &&
@@ -88,7 +84,7 @@ export function CronogramaCelda({ prog, actividad, semana, mes, onAction, onSucc
       const today = new Date().toISOString().split('T')[0]
       const res = await fetch(`/api/sst/capacitaciones/programacion/${prog.id}`, {
         method: 'PUT',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({ estado: 'Ejecutado', fecha_ejecucion: today }),
       })
       if (!res.ok) throw new Error(await res.text())

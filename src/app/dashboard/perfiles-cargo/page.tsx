@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { CargoPerfilFields, CargoPeligroFields, CargoEppFields, CargoExamenFields } from '@/types/sst/cargo'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Perfil = AirtableRecord<CargoPerfilFields>
 type Peligro = AirtableRecord<CargoPeligroFields>
@@ -22,11 +23,6 @@ type Examen = AirtableRecord<CargoExamenFields>
 
 const NIVEL_VARIANT: Record<string, 'success' | 'info' | 'warning' | 'error'> = {
   '1': 'success', '2': 'success', '3': 'warning', '4': 'error', '5': 'error',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function PerfilesCargoPage() {
@@ -47,7 +43,7 @@ export default function PerfilesCargoPage() {
 
   const cargarPerfiles = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/cargo/perfiles', { headers: authHeaders() })
+    const res = await fetch('/api/sst/cargo/perfiles', { headers: getAuthHeaders() })
     const data = await res.json()
     setPerfiles(data.records ?? [])
     setLoading(false)
@@ -60,9 +56,9 @@ export default function PerfilesCargoPage() {
     setLoadingDetalle(true)
     try {
       const [pRes, eRes, exRes] = await Promise.all([
-        fetch(`/api/sst/cargo/perfiles/${perfil.id}/peligros`, { headers: authHeaders() }),
-        fetch(`/api/sst/cargo/perfiles/${perfil.id}/epps`, { headers: authHeaders() }),
-        fetch(`/api/sst/cargo/perfiles/${perfil.id}/examenes`, { headers: authHeaders() }),
+        fetch(`/api/sst/cargo/perfiles/${perfil.id}/peligros`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/cargo/perfiles/${perfil.id}/epps`, { headers: getAuthHeaders() }),
+        fetch(`/api/sst/cargo/perfiles/${perfil.id}/examenes`, { headers: getAuthHeaders() }),
       ])
       const pData = pRes.ok ? await pRes.json() : { records: [] }
       const eData = eRes.ok ? await eRes.json() : { records: [] }
@@ -77,9 +73,9 @@ export default function PerfilesCargoPage() {
   const guardarPerfil = async () => {
     setGuardando(true)
     if (editId) {
-      await fetch(`/api/sst/cargo/perfiles/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/cargo/perfiles/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/cargo/perfiles', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/cargo/perfiles', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setModalPerfil(false)
     setEditId(null)
@@ -101,7 +97,7 @@ export default function PerfilesCargoPage() {
   }
 
   const eliminarPerfil = async (id: string) => {
-    await fetch(`/api/sst/cargo/perfiles/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/cargo/perfiles/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (seleccionado?.id === id) setSeleccionado(null)
     await cargarPerfiles()
@@ -111,7 +107,7 @@ export default function PerfilesCargoPage() {
     if (!seleccionado) return
     setGuardando(true)
     const endpoint = `/api/sst/cargo/perfiles/${seleccionado.id}/${tab}`
-    await fetch(endpoint, { method: 'POST', headers: authHeaders(), body: JSON.stringify(formSub) })
+    await fetch(endpoint, { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(formSub) })
     setModalSubrecurso(false)
     setFormSub({})
     await seleccionarPerfil(seleccionado)

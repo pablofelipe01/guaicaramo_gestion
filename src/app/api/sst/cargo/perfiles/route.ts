@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarPerfiles, crearPerfil } from '@/lib/sst/cargo'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(request: NextRequest) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    }
 
     const soloActivos = request.nextUrl.searchParams.get('todos') !== 'true'
     const perfiles = await listarPerfiles(soloActivos)
@@ -20,9 +19,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    const usuario = token ? await verifyToken(token) : null
-    if (!usuario) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
+  const usuario = auth.user
 
     const body = await request.json()
     const { 'Nombre Cargo': nombre, Codigo, Area, 'Nivel Riesgo ARL': nivel, Descripcion } = body

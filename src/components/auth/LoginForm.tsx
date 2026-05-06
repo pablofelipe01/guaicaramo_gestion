@@ -221,7 +221,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
         </div>
 
         <button type="submit" disabled={isLoading}
-          className="w-full btn-primary flex items-center justify-center gap-2">
+          className="w-full btn btn-primary flex items-center justify-center gap-2">
           {isLoading ? <><Loader className="w-5 h-5 animate-spin" />Autenticando...</> : 'Iniciar Sesión'}
         </button>
       </form>

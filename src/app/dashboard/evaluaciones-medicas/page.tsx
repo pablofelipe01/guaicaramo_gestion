@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { Stethoscope, Plus, Bell, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import type { MedEvaluacionFields } from '@/types/sst/med'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Evaluacion = AirtableRecord<MedEvaluacionFields>
 
@@ -28,11 +29,6 @@ const TIPO_LABEL: Record<string, string> = {
   cambio_cargo: 'Cambio de Cargo',
 }
 
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
-
 export default function EvaluacionesMedicasPage() {
   useAuth()
   const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([])
@@ -47,8 +43,8 @@ export default function EvaluacionesMedicasPage() {
   const load = useCallback(async () => {
     setLoading(true)
     const [evRes, altRes] = await Promise.all([
-      fetch('/api/sst/evaluaciones-medicas', { headers: authHeaders() }),
-      fetch('/api/sst/evaluaciones-medicas?alertas=1', { headers: authHeaders() }),
+      fetch('/api/sst/evaluaciones-medicas', { headers: getAuthHeaders() }),
+      fetch('/api/sst/evaluaciones-medicas?alertas=1', { headers: getAuthHeaders() }),
     ])
     if (evRes.ok) setEvaluaciones((await evRes.json()).records)
     if (altRes.ok) setAlertas((await altRes.json()).records)
@@ -61,9 +57,9 @@ export default function EvaluacionesMedicasPage() {
     if (!form['Trabajador ID'] || !form.Tipo || !form.Fecha || !form.Aptitud) return
     setSaving(true)
     if (editId) {
-      await fetch(`/api/sst/evaluaciones-medicas/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/evaluaciones-medicas/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/evaluaciones-medicas', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/evaluaciones-medicas', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setSaving(false)
     setShowModal(false)
@@ -79,7 +75,7 @@ export default function EvaluacionesMedicasPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/evaluaciones-medicas/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/evaluaciones-medicas/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     load()
   }

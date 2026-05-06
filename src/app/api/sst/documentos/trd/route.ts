@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { listarTrd, crearEntradaTrd } from '@/lib/sst/doc'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(request: NextRequest) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    }
     const trd = await listarTrd()
     return NextResponse.json({ records: trd })
   } catch (error) {
@@ -17,11 +16,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) {
-      return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
-    }
     const body = await request.json()
     const entrada = await crearEntradaTrd(body)
     return NextResponse.json({ record: entrada }, { status: 201 })

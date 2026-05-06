@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ClipboardList, Plus, Flag, ChevronRight, Pencil, Trash2 } from 'lucide-react'
 import type { InspInspeccionFields, InspHallazgoFields } from '@/types/sst/insp'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Inspeccion = AirtableRecord<InspInspeccionFields>
 type Hallazgo = AirtableRecord<InspHallazgoFields>
@@ -21,11 +22,6 @@ const ESTADO_VARIANT: Record<string, 'warning' | 'success' | 'error'> = {
 
 const CRITICIDAD_VARIANT: Record<string, 'info' | 'warning' | 'error' | 'error'> = {
   baja: 'info', media: 'warning', alta: 'error', critica: 'error',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function InspeccionesPage() {
@@ -44,7 +40,7 @@ export default function InspeccionesPage() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await fetch('/api/sst/inspecciones', { headers: authHeaders() })
+    const res = await fetch('/api/sst/inspecciones', { headers: getAuthHeaders() })
     if (res.ok) setInspecciones((await res.json()).records)
     setLoading(false)
   }, [])
@@ -52,7 +48,7 @@ export default function InspeccionesPage() {
   useEffect(() => { load() }, [load])
 
   const loadHallazgos = useCallback(async (id: string) => {
-    const res = await fetch(`/api/sst/inspecciones/${id}/hallazgos`, { headers: authHeaders() })
+    const res = await fetch(`/api/sst/inspecciones/${id}/hallazgos`, { headers: getAuthHeaders() })
     if (res.ok) setHallazgos((await res.json()).records)
   }, [])
 
@@ -65,9 +61,9 @@ export default function InspeccionesPage() {
     if (!form['Tipo ID'] || !form.Area || !form['Fecha Programada']) return
     setSaving(true)
     if (editId) {
-      await fetch(`/api/sst/inspecciones/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch(`/api/sst/inspecciones/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(form) })
     } else {
-      await fetch('/api/sst/inspecciones', { method: 'POST', headers: authHeaders(), body: JSON.stringify(form) })
+      await fetch('/api/sst/inspecciones', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(form) })
     }
     setSaving(false)
     setShowModal(false)
@@ -83,7 +79,7 @@ export default function InspeccionesPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/inspecciones/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/inspecciones/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     if (selected?.id === id) setSelected(null)
     load()
@@ -93,7 +89,7 @@ export default function InspeccionesPage() {
     if (!selected || !hallazgoForm.Descripcion || !hallazgoForm.Criticidad) return
     setSaving(true)
     await fetch(`/api/sst/inspecciones/${selected.id}/hallazgos`, {
-      method: 'POST', headers: authHeaders(), body: JSON.stringify(hallazgoForm),
+      method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(hallazgoForm),
     })
     setSaving(false)
     setShowHallazgoModal(false)
@@ -103,7 +99,7 @@ export default function InspeccionesPage() {
 
   const handleMarcarRealizada = async (insp: Inspeccion) => {
     await fetch(`/api/sst/inspecciones/${insp.id}`, {
-      method: 'PUT', headers: authHeaders(),
+      method: 'PUT', headers: getAuthHeaders(),
       body: JSON.stringify({ Estado: 'realizada', 'Fecha Realizada': new Date().toISOString().split('T')[0] }),
     })
     load()

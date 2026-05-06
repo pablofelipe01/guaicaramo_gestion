@@ -133,3 +133,23 @@ export async function deleteRecord(table: string, id: string): Promise<void> {
   )
   await handleResponse<unknown>(res)
 }
+
+/**
+ * Elimina hasta 10 registros por lote (límite de la API de Airtable).
+ * Lanza error sólo si falla un lote completo; los lotes anteriores ya eliminados no se revierten.
+ */
+export async function deleteRecords(table: string, ids: string[]): Promise<void> {
+  if (ids.length === 0) return
+  const { baseUrl, headers } = getConfig()
+  // Airtable permite hasta 10 registros por petición DELETE
+  const BATCH = 10
+  for (let i = 0; i < ids.length; i += BATCH) {
+    const lote = ids.slice(i, i + BATCH)
+    const query = lote.map(id => `records[]=${encodeURIComponent(id)}`).join('&')
+    const res = await fetch(
+      `${baseUrl}/${encodeURIComponent(table)}?${query}`,
+      { method: 'DELETE', headers }
+    )
+    await handleResponse<unknown>(res)
+  }
+}

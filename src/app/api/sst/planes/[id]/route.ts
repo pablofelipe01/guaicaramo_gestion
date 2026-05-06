@@ -1,19 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { obtenerPlan, actualizarPlan, listarActividades, dashboardPlan, cerrarPlan } from '@/lib/sst/plan'
 import { deleteRecord } from '@/lib/airtable-client'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
 const T_PLANES = 'sst_plan_planes'
 
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireRole(req, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    const user = token ? await verifyToken(token) : null
-    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
     const { id } = await params
     const plan = await obtenerPlan(id)
     if (!plan) {
@@ -31,11 +30,9 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireRole(req, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    const user = token ? await verifyToken(token) : null
-    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
     const { id } = await params
     const body = await req.json()
     
@@ -57,11 +54,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const auth = await requireRole(req, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   try {
-    const token = req.headers.get('authorization')?.replace('Bearer ', '')
-    const user = token ? await verifyToken(token) : null
-    if (!user) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-
     const { id } = await params
     await deleteRecord(T_PLANES, id)
     return NextResponse.json({ message: 'Plan eliminado' })

@@ -11,6 +11,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ShieldAlert, Plus, AlertTriangle, Pencil, Trash2 } from 'lucide-react'
 import type { IpvrRegistroFields } from '@/types/sst/ipvr'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Registro = AirtableRecord<IpvrRegistroFields>
 
@@ -23,11 +24,6 @@ const NIVEL_DESC: Record<string, string> = {
   II: 'No aceptable o aceptable con control específico (150–599)',
   III: 'Aceptable con control (40–149)',
   IV: 'Aceptable (< 40)',
-}
-
-function authHeaders() {
-  const token = localStorage.getItem('authToken')
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
 export default function IpvrPage() {
@@ -52,8 +48,8 @@ export default function IpvrPage() {
   const load = useCallback(async () => {
     setLoading(true)
     const [allRes, nivelIRes] = await Promise.all([
-      fetch('/api/sst/ipvr', { headers: authHeaders() }),
-      fetch('/api/sst/ipvr?nivelI=1', { headers: authHeaders() }),
+      fetch('/api/sst/ipvr', { headers: getAuthHeaders() }),
+      fetch('/api/sst/ipvr?nivelI=1', { headers: getAuthHeaders() }),
     ])
     if (allRes.ok) setRegistros((await allRes.json()).records)
     if (nivelIRes.ok) setNivelI((await nivelIRes.json()).records)
@@ -67,9 +63,9 @@ export default function IpvrPage() {
     setSaving(true)
     const payload = { ...form, 'Fecha Revision': form['Fecha Revision'] ?? new Date().toISOString().split('T')[0] }
     if (editId) {
-      await fetch(`/api/sst/ipvr/${editId}`, { method: 'PUT', headers: authHeaders(), body: JSON.stringify(payload) })
+      await fetch(`/api/sst/ipvr/${editId}`, { method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload) })
     } else {
-      await fetch('/api/sst/ipvr', { method: 'POST', headers: authHeaders(), body: JSON.stringify(payload) })
+      await fetch('/api/sst/ipvr', { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload) })
     }
     setSaving(false)
     setShowModal(false)
@@ -85,7 +81,7 @@ export default function IpvrPage() {
   }
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/sst/ipvr/${id}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`/api/sst/ipvr/${id}`, { method: 'DELETE', headers: getAuthHeaders() })
     setConfirmDelete(null)
     load()
   }

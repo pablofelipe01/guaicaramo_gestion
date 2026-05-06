@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { obtenerActividad, actualizarActividad, eliminarActividad } from '@/lib/sst/cap'
-import { verifyToken } from '@/lib/auth'
+import { requireRole } from '@/lib/auth/middleware'
 
 type Ctx = { params: Promise<{ id: string }> }
 
+  const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 export async function GET(request: NextRequest, ctx: Ctx) {
-  const token = request.headers.get('authorization')?.replace('Bearer ', '')
-  if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+    const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
   const { id } = await ctx.params
   try {
     const record = await obtenerActividad(id)
@@ -18,8 +19,8 @@ export async function GET(request: NextRequest, ctx: Ctx) {
 
 export async function PUT(request: NextRequest, ctx: Ctx) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+      const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
     const { id } = await ctx.params
     const body = await request.json()
     return NextResponse.json({ record: await actualizarActividad(id, body) })
@@ -31,8 +32,8 @@ export async function PUT(request: NextRequest, ctx: Ctx) {
 
 export async function DELETE(request: NextRequest, ctx: Ctx) {
   try {
-    const token = request.headers.get('authorization')?.replace('Bearer ', '')
-    if (!token || !(await verifyToken(token))) return NextResponse.json({ message: 'No autorizado' }, { status: 401 })
+      const auth = await requireRole(request, ...SST_ROLES)
+  if ('error' in auth) return auth.error
     const { id } = await ctx.params
     await eliminarActividad(id)
     return new NextResponse(null, { status: 204 })

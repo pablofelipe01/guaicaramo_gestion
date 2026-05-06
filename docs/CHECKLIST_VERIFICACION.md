@@ -10,9 +10,9 @@
 ## Configuración Inicial
 
 - [ ] Archivo `.env.local` creado
-- [ ] `NEXT_PUBLIC_AIRTABLE_API_KEY` configurado
-- [ ] `NEXT_PUBLIC_AIRTABLE_BASE_ID` configurado
-- [ ] `NEXT_PUBLIC_AIRTABLE_TABLE_NAME` configurado
+- [ ] `AIRTABLE_API_KEY` configurado
+- [ ] `AIRTABLE_BASE_ID` configurado
+- [ ] `AIRTABLE_TABLE_USERS` configurado
 - [ ] Dependencias instaladas con `npm install`
 
 ## Estructura de Airtable

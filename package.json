@@ -13,6 +13,7 @@
     "@types/nodemailer": "^8.0.0",
     "bcrypt": "^6.0.0",
     "chart.js": "^4.5.1",
+    "framer-motion": "^11.18.2",
     "jose": "^6.2.2",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.7",

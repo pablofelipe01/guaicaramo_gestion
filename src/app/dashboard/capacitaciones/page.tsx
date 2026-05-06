@@ -16,16 +16,11 @@ import {
 import { CATEGORIAS_CAP, PROVEEDORES_CAP, calcularPct, getCategoriaColor } from '@/lib/sst/cap-client'
 import type { CapActividadFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
+import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 
-function authHeaders() {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null
-  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
-}
-
 const FORM_INICIAL = {
-  item_numero: '',
   tema: '',
   objetivo: '',
   categoria: '',
@@ -34,6 +29,10 @@ const FORM_INICIAL = {
   dirigido_a: '',
   normativa_aplicable: '',
   requiere_certificacion: false,
+}
+
+function capitalize(v: string): string {
+  return v ? v.charAt(0).toUpperCase() + v.slice(1) : v
 }
 
 function SkeletonKpi() {
@@ -71,7 +70,7 @@ export default function CapacitacionesPage() {
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/sst/capacitaciones', { headers: authHeaders() })
+      const res = await fetch('/api/sst/capacitaciones', { headers: getAuthHeaders() })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       setActividades(data.records ?? [])
@@ -110,10 +109,10 @@ export default function CapacitacionesPage() {
     try {
       const res = await fetch('/api/sst/capacitaciones', {
         method: 'POST',
-        headers: authHeaders(),
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           ...form,
-          item_numero: form.item_numero ? Number(form.item_numero) : 0,
+          item_numero: Math.max(0, ...actividades.map(a => a.fields.item_numero ?? 0)) + 1,
           anio: 2026,
           requiere_certificacion: form.requiere_certificacion,
         }),
@@ -137,7 +136,7 @@ export default function CapacitacionesPage() {
   }
 
   const set = (field: string, value: string | boolean) =>
-    setForm(prev => ({ ...prev, [field]: value }))
+    setForm(prev => ({ ...prev, [field]: typeof value === 'string' ? capitalize(value) : value }))
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
@@ -257,7 +256,7 @@ export default function CapacitacionesPage() {
           <button
             onClick={cargar}
             disabled={loading}
-            className="btn btn-ghost text-xs gap-1 disabled:opacity-50"
+            className="btn btn-secondary text-xs gap-1 disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
             Actualizar
@@ -292,28 +291,16 @@ export default function CapacitacionesPage() {
         title="Nueva actividad de capacitacion"
       >
         <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">N degree item</label>
-              <input
-                type="number" min="1"
-                value={form.item_numero}
-                onChange={e => set('item_numero', e.target.value)}
-                placeholder="Ej: 1"
-                className="input-field"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Categoria <span className="text-red-500">*</span></label>
-              <select
-                value={form.categoria}
-                onChange={e => set('categoria', e.target.value)}
-                className="input-field"
-              >
-                <option value="">Seleccionar...</option>
-                {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Categoría <span className="text-red-500">*</span></label>
+            <select
+              value={form.categoria}
+              onChange={e => set('categoria', e.target.value)}
+              className="input-field"
+            >
+              <option value="">Seleccionar...</option>
+              {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
           </div>
 
           <div className="flex flex-col gap-1">
@@ -381,19 +368,6 @@ export default function CapacitacionesPage() {
               />
             </div>
           </div>
-
-          <label className="flex items-center gap-2 cursor-pointer select-none pt-1">
-            <input
-              type="checkbox"
-              checked={form.requiere_certificacion}
-              onChange={e => set('requiere_certificacion', e.target.checked)}
-              className="w-4 h-4 rounded" style={{ accentColor: 'var(--sst-green-700)' }}
-            />
-            <span className="flex items-center gap-1.5 text-sm text-gray-700">
-              <Award className="w-4 h-4 text-amber-500" />
-              Requiere certificacion
-            </span>
-          </label>
 
           {formError && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-700">
