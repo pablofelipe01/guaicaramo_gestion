@@ -53,12 +53,24 @@ function FirmarCapacitacionContent() {
   }, [token])
 
   // ── Lógica del canvas de firma ────────────────────────────────────────────
+  // Escala las coordenadas del evento al espacio interno del canvas,
+  // compensando diferencias entre tamaño CSS y tamaño de píxeles internos
+  // (incluye pantallas de alta densidad / retina / móvil).
   const getPos = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    const rect = canvasRef.current!.getBoundingClientRect()
+    const canvas = canvasRef.current!
+    const rect   = canvas.getBoundingClientRect()
+    const scaleX = canvas.width  / rect.width
+    const scaleY = canvas.height / rect.height
     if ('touches' in e) {
-      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top }
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top)  * scaleY,
+      }
     }
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top)  * scaleY,
+    }
   }
 
   const iniciarTrazo = useCallback((e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {

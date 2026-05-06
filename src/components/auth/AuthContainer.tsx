@@ -1,20 +1,16 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import LoginForm from './LoginForm';
 import { Lock, Shield } from 'lucide-react';
-import { isTokenValid } from '@/lib/token';
 
 export default function AuthContainer() {
-  const router = useRouter();
-
+  // Limpiar cualquier sesión anterior al llegar a la pantalla de login.
+  // El usuario siempre debe autenticarse con correo y contraseña.
   useEffect(() => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('authToken') : null;
-    if (token && isTokenValid(token)) {
-      router.replace('/dashboard');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
