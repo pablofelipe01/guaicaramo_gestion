@@ -842,6 +842,14 @@ export async function listarAsistenciasRegistro(registroId: string) {
 }
 
 /**
+ * Obtiene un único registro de capacitación por su ID.
+ * @param id - ID del registro en `sst_cap_registros`.
+ */
+export async function obtenerRegistro(id: string) {
+  return getRecord<CapRegistroFields>(T_REGISTROS, id)
+}
+
+/**
  * Registra la asistencia individual de un trabajador a una sesión.
  * El campo `asistio` se establece en `true` por defecto.
  *

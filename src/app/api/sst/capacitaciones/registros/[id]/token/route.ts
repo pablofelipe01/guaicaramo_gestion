@@ -26,6 +26,7 @@ type Ctx = { params: Promise<{ id: string }> }
  * @returns `{ token, url }` donde `url` es el enlace listo para compartir por QR/WhatsApp.
  */
 export async function POST(request: NextRequest, ctx: Ctx) {
+  try {
   const auth = await requireRole(request, 'coordinador_sst', 'administrador')
   if ('error' in auth) return auth.error
 
@@ -48,4 +49,11 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   const url = `${baseUrl}/firmar/capacitacion?token=${token}`
 
   return NextResponse.json({ token, url })
+  } catch (error) {
+    console.error('[token route] Error inesperado:', error)
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : 'Error interno al generar el token' },
+      { status: 500 }
+    )
+  }
 }
