@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle, AlertTriangle, Pen, RotateCcw } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, PenLine, RotateCcw, Shield, CalendarDays } from 'lucide-react'
 
 interface RegistroInfo {
   registroId: string
@@ -15,8 +15,8 @@ type Estado = 'cargando' | 'formulario' | 'enviando' | 'exito' | 'error_token' |
 export default function FirmarCapacitacionPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-t-transparent rounded-full border-blue-600" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--sst-green-500)', borderTopColor: 'transparent' }} />
       </div>
     }>
       <FirmarCapacitacionContent />
@@ -136,176 +136,240 @@ function FirmarCapacitacionContent() {
   // ── Renders por estado ────────────────────────────────────────────────────
   if (estado === 'cargando') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin w-10 h-10 border-4 border-t-transparent rounded-full border-blue-600" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <div className="w-10 h-10 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--sst-green-500)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
 
   if (estado === 'error_token') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-2xl shadow-md p-8 max-w-sm w-full text-center">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-gray-900 mb-2">Enlace inválido</h1>
-          <p className="text-sm text-gray-500">{errorMsg}</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100">
+            <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-red-500" />
+            </div>
+            <h1 className="text-base font-bold text-gray-900 mb-2">Enlace inválido</h1>
+            <p className="text-sm text-gray-500 leading-relaxed">{errorMsg}</p>
+            <p className="mt-4 text-xs text-gray-400">
+              Solicita un nuevo enlace al coordinador SST.
+            </p>
+          </div>
       </div>
     )
   }
 
   if (estado === 'exito') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-2xl shadow-md p-8 max-w-sm w-full text-center">
-          <CheckCircle className="w-14 h-14 text-green-500 mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-gray-900 mb-2">¡Asistencia registrada!</h1>
-          <p className="text-sm text-gray-500">
-            Tu participación en la capacitación ha quedado registrada. Puedes cerrar esta página.
-          </p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100">
+            <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+              style={{ background: 'linear-gradient(135deg, #166534 0%, #22C55E 100%)' }}>
+              <CheckCircle2 className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-lg font-bold text-gray-900 mb-2">¡Asistencia registrada!</h1>
+            <p className="text-sm text-gray-500 leading-relaxed">
+              Tu participación en la capacitación ha quedado registrada en el SG-SST de Guaicaramo.
+            </p>
+            <p className="mt-4 text-xs text-gray-400">Puedes cerrar esta página.</p>
+          </div>
       </div>
     )
   }
 
   if (estado === 'error_envio') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="bg-white rounded-2xl shadow-md p-8 max-w-sm w-full text-center">
-          <AlertTriangle className="w-12 h-12 text-orange-500 mx-auto mb-3" />
-          <h1 className="text-lg font-bold text-gray-900 mb-2">Error al registrar</h1>
-          <p className="text-sm text-gray-500 mb-4">{errorMsg}</p>
-          <button
-            onClick={() => setEstado('formulario')}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Intentar de nuevo
-          </button>
-        </div>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'var(--background)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center border border-gray-100">
+            <div className="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-7 h-7 text-orange-500" />
+            </div>
+            <h1 className="text-base font-bold text-gray-900 mb-2">Error al registrar</h1>
+            <p className="text-sm text-gray-500 mb-5 leading-relaxed">{errorMsg}</p>
+            <button
+              onClick={() => setEstado('formulario')}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+              style={{ background: 'linear-gradient(135deg, #166534 0%, #0B5B2D 100%)' }}
+            >
+              Intentar de nuevo
+            </button>
+          </div>
       </div>
     )
   }
 
-  // Estado: formulario
+  // ── Estado: formulario ────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-md w-full max-w-md overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-5 border-b border-gray-100" style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)' }}>
-          <div className="flex items-center gap-2 mb-1">
-            <Pen className="w-5 h-5 text-white/80" />
-            <span className="text-xs font-semibold text-white/70 uppercase tracking-widest">Registro de asistencia</span>
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 py-8" style={{ background: 'var(--background)' }}>
+
+        {/* Marca */}
+        <div className="flex items-center gap-2 mb-5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg, #166534 0%, #22C55E 100%)' }}>
+            <Shield className="w-4 h-4 text-white" />
           </div>
-          <h1 className="text-white font-bold text-base leading-snug">
-            {info?.actividadTema ?? 'Capacitación SG-SST'}
-          </h1>
-          {info?.fechaEjecucion && (
-            <p className="text-white/70 text-xs mt-0.5">{info.fechaEjecucion}</p>
-          )}
+          <span className="font-bold text-sm tracking-wide" style={{ color: 'var(--sst-dark-700)' }}>Guaicaramo · SG-SST</span>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={enviar} className="px-6 py-5 flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Nombre completo *</label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={e => setNombre(e.target.value)}
-              placeholder="Ej. Juan Carlos Gómez"
-              required
-              autoComplete="name"
-              className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        {/* Card principal */}
+        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100">
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Cédula</label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={cedula}
-                onChange={e => setCedula(e.target.value)}
-                placeholder="12345678"
-                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+          {/* Header de la card */}
+          <div className="px-6 pt-6 pb-5 border-b border-gray-100"
+            style={{ background: 'linear-gradient(135deg, #052E16 0%, #166534 100%)' }}>
+            <div className="flex items-center gap-2 mb-2">
+              <PenLine className="w-4 h-4 text-green-300" />
+              <span className="text-[11px] font-semibold text-green-300 uppercase tracking-widest">
+                Registro de asistencia
+              </span>
             </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Cargo</label>
-              <input
-                type="text"
-                value={cargo}
-                onChange={e => setCargo(e.target.value)}
-                placeholder="Operario"
-                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <h1 className="text-white font-bold text-[15px] leading-snug">
+              {info?.actividadTema ?? 'Capacitación SG-SST'}
+            </h1>
+            {info?.fechaEjecucion && (
+              <div className="flex items-center gap-1.5 mt-2">
+                <CalendarDays className="w-3.5 h-3.5 text-green-300" />
+                <p className="text-green-200 text-xs">{info.fechaEjecucion}</p>
+              </div>
+            )}
           </div>
 
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Área</label>
-            <input
-              type="text"
-              value={area}
-              onChange={e => setArea(e.target.value)}
-              placeholder="Ej. Producción"
-              className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+          {/* Formulario */}
+          <form onSubmit={enviar} className="px-6 py-5 flex flex-col gap-4">
 
-          {/* Canvas de firma */}
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-gray-600 flex items-center gap-1">
-                <Pen className="w-3.5 h-3.5" /> Firma digital (opcional)
+            {/* Nombre */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                Nombre completo <span className="text-red-400">*</span>
               </label>
-              {firmado && (
-                <button
-                  type="button"
-                  onClick={limpiarFirma}
-                  className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <RotateCcw className="w-3 h-3" /> Borrar
-                </button>
-              )}
-            </div>
-            <div className="relative border-2 border-dashed border-gray-200 rounded-xl overflow-hidden bg-gray-50 touch-none">
-              <canvas
-                ref={canvasRef}
-                width={380}
-                height={120}
-                className="w-full cursor-crosshair"
-                onMouseDown={iniciarTrazo}
-                onMouseMove={dibujar}
-                onMouseUp={terminarTrazo}
-                onMouseLeave={terminarTrazo}
-                onTouchStart={iniciarTrazo}
-                onTouchMove={dibujar}
-                onTouchEnd={terminarTrazo}
+              <input
+                type="text"
+                value={nombre}
+                onChange={e => setNombre(e.target.value)}
+                placeholder="Ej. Juan Carlos Gómez"
+                required
+                autoComplete="name"
+                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                  focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
+                  transition-colors bg-gray-50 focus:bg-white"
               />
-              {!firmado && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <p className="text-xs text-gray-300 font-medium">Dibuja tu firma aquí</p>
-                </div>
-              )}
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={estado === 'enviando' || !nombre.trim()}
-            className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-60"
-            style={{ background: 'linear-gradient(90deg, #1e3a5f 0%, #2563eb 100%)' }}
-          >
-            {estado === 'enviando' ? 'Registrando…' : 'Confirmar asistencia'}
-          </button>
+            {/* Cédula + Cargo */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Cédula</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={cedula}
+                  onChange={e => setCedula(e.target.value)}
+                  placeholder="12345678"
+                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                    focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
+                    transition-colors bg-gray-50 focus:bg-white"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Cargo</label>
+                <input
+                  type="text"
+                  value={cargo}
+                  onChange={e => setCargo(e.target.value)}
+                  placeholder="Operario"
+                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                    focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
+                    transition-colors bg-gray-50 focus:bg-white"
+                />
+              </div>
+            </div>
 
-          <p className="text-center text-[10px] text-gray-400">
-            Al confirmar, tu asistencia quedará registrada en el Sistema de Gestión SST de Guaicaramo.
-          </p>
-        </form>
-      </div>
+            {/* Área */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Área</label>
+              <input
+                type="text"
+                value={area}
+                onChange={e => setArea(e.target.value)}
+                placeholder="Ej. Producción"
+                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                  focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
+                  transition-colors bg-gray-50 focus:bg-white"
+              />
+            </div>
+
+            {/* Canvas de firma */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
+                  <PenLine className="w-3.5 h-3.5 text-gray-400" />
+                  Firma digital <span className="text-gray-300 normal-case">(opcional)</span>
+                </label>
+                {firmado && (
+                  <button
+                    type="button"
+                    onClick={limpiarFirma}
+                    className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" /> Borrar
+                  </button>
+                )}
+              </div>
+
+              <div className={`relative rounded-xl overflow-hidden touch-none transition-all
+                ${firmado
+                  ? 'border-2 border-green-500/40 bg-green-50/30'
+                  : 'border-2 border-dashed border-gray-200 bg-gray-50'}`}>
+                <canvas
+                  ref={canvasRef}
+                  width={380}
+                  height={120}
+                  className="w-full cursor-crosshair"
+                  onMouseDown={iniciarTrazo}
+                  onMouseMove={dibujar}
+                  onMouseUp={terminarTrazo}
+                  onMouseLeave={terminarTrazo}
+                  onTouchStart={iniciarTrazo}
+                  onTouchMove={dibujar}
+                  onTouchEnd={terminarTrazo}
+                />
+                {!firmado && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none gap-1">
+                    <PenLine className="w-5 h-5 text-gray-300" />
+                    <p className="text-[11px] text-gray-300 font-medium">Dibuja tu firma aquí</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Botón enviar */}
+            <button
+              type="submit"
+              disabled={estado === 'enviando' || !nombre.trim()}
+              className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all
+                disabled:opacity-50 disabled:cursor-not-allowed
+                active:scale-[0.98]"
+              style={{ background: 'linear-gradient(135deg, #052E16 0%, #166534 100%)' }}
+            >
+              {estado === 'enviando'
+                ? <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin inline-block" />
+                    Registrando…
+                  </span>
+                : 'Confirmar asistencia'}
+            </button>
+
+            {/* Pie de la card */}
+            <div className="flex items-center gap-1.5 justify-center pt-1">
+              <Shield className="w-3 h-3 text-gray-300" />
+              <p className="text-[10px] text-gray-400 text-center">
+                Información protegida · Sistema SG-SST Guaicaramo
+              </p>
+            </div>
+          </form>
+        </div>
+
+        <p className="text-[10px] mt-5" style={{ color: 'var(--sst-dark-500)' }}>© 2026 Guaicaramo. Todos los derechos reservados.</p>
     </div>
   )
 }

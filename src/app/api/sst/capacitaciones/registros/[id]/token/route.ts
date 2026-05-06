@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth/middleware'
 import { generarTokenFirmaCapacitacion } from '@/lib/sst/cap-firma-token'
-import { listarRegistros } from '@/lib/sst/cap'
+import { getRecord } from '@/lib/airtable-client'
 import type { CapRegistroFields } from '@/types/sst/cap'
+
+const T_REGISTROS = 'sst_cap_registros'
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -22,13 +24,10 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   let actividadTema: string | undefined
   let fechaEjecucion: string | undefined
   try {
-    const registros = await listarRegistros({ actividadId: undefined, programacionId: undefined })
-    const reg = registros.find((r: { id: string; fields: CapRegistroFields }) => r.id === id)
-    if (reg) {
-      actividadTema  = reg.fields.actividad_tema ?? undefined
-      fechaEjecucion = reg.fields.fecha_ejecucion ?? undefined
-    }
-  } catch { /* si falla, el token igual se genera sin contexto */ }
+    const reg = await getRecord<CapRegistroFields>(T_REGISTROS, id)
+    actividadTema  = reg.fields.actividad_tema ?? undefined
+    fechaEjecucion = reg.fields.fecha_ejecucion ?? undefined
+  } catch { /* si el registro no existe o la tabla aún no está creada, el token se genera sin contexto */ }
 
   const token = await generarTokenFirmaCapacitacion(id, actividadTema, fechaEjecucion)
 

@@ -187,21 +187,40 @@ export default function CapacitacionDetallePage() {
         method: 'POST',
         headers: getAuthHeaders(),
       })
-      if (!res.ok) throw new Error('Error al generar enlace')
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}))
+        const msg = (errBody as { message?: string }).message ?? `HTTP ${res.status}`
+        throw new Error(`Error al generar enlace: ${msg}`)
+      }
       const data = await res.json() as { url: string }
       setEnlaceFirma(data.url)
       setModalEnlace(true)
     } catch (e) {
       console.error('[generarEnlaceFirma]', e)
+      alert((e as Error).message)
     }
   }
 
   const copiarEnlace = async () => {
     try {
-      await navigator.clipboard.writeText(enlaceFirma)
+      // navigator.clipboard solo funciona en HTTPS o localhost.
+      // En HTTP por red local usamos el fallback con execCommand.
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(enlaceFirma)
+      } else {
+        const ta = document.createElement('textarea')
+        ta.value = enlaceFirma
+        ta.style.position = 'fixed'
+        ta.style.opacity  = '0'
+        document.body.appendChild(ta)
+        ta.focus()
+        ta.select()
+        document.execCommand('copy')
+        document.body.removeChild(ta)
+      }
       setCopiado(true)
       setTimeout(() => setCopiado(false), 2500)
-    } catch { /* fallback */ }
+    } catch { /* silencioso */ }
   }
 
   const guardarAsistencia = async () => {
