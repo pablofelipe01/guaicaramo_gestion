@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { X, ClipboardCheck } from 'lucide-react'
 import type { CapActividadFields, CapProgramacionFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
@@ -80,17 +79,9 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between border-b border-gray-200 pb-3">
-        <div className="flex items-center gap-2">
-          <ClipboardCheck className="w-5 h-5 text-blue-600" />
-          <h2 className="text-base font-semibold text-gray-900">Registrar ejecución</h2>
-        </div>
-        <button type="button" onClick={onCancelar} className="text-gray-400 hover:text-gray-600 transition-colors">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
+      {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-sm text-red-700">{error}</div>
       )}
@@ -101,8 +92,8 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
         <select
           value={form.actividad_id}
           onChange={e => { set('actividad_id', e.target.value); set('programacion_id', '') }}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           required
+          className="input-field"
         >
           <option value="">Seleccionar actividad…</option>
           {actividades.map(a => (
@@ -118,13 +109,14 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
           <select
             value={form.programacion_id}
             onChange={e => set('programacion_id', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="input-field"
           >
             <option value="">Sin programación específica</option>
             {progFiltradas.map(p => {
               const cancelado = p.fields.estado === 'Cancelado'
               return (
-                <option key={p.id} value={p.id} disabled={cancelado} style={cancelado ? { color: '#9ca3af' } : undefined}>
+                <option key={p.id} value={p.id} disabled={cancelado}
+                  style={cancelado ? { color: '#9ca3af' } : undefined}>
                   {p.fields.mes} — Semana {p.fields.semana} ({p.fields.estado})
                 </option>
               )
@@ -136,128 +128,103 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
         </div>
       )}
 
+      {/* Fecha + Duración */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Fecha ejecución *</label>
-          <input
-            type="date"
-            value={form.fecha_ejecucion}
-            max={hoy}
+          <input type="date" required value={form.fecha_ejecucion} max={hoy}
             onChange={e => set('fecha_ejecucion', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required
-          />
+            className="input-field" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Duración (horas)</label>
-          <input
-            type="number"
-            min="0"
-            step="0.5"
-            value={form.duracion_horas}
+          <input type="number" min="0" step="0.5" value={form.duracion_horas}
             onChange={e => set('duracion_horas', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            className="input-field" />
         </div>
+      </div>
+
+      {/* Lugar + Facilitador */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Lugar</label>
-          <input
-            type="text"
-            value={form.lugar}
+          <input type="text" value={form.lugar}
             onChange={e => set('lugar', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            className="input-field" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Facilitador</label>
-          <input
-            type="text"
-            value={form.facilitador}
+          <input type="text" value={form.facilitador}
             onChange={e => set('facilitador', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            className="input-field" />
         </div>
+      </div>
+
+      {/* Convocados + Presentes */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Convocados</label>
-          <input
-            type="number" min="0"
-            value={form.convocados}
+          <input type="number" min="0" value={form.convocados}
             onChange={e => set('convocados', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            className="input-field" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">
             Presentes
             {form.convocados && (
-              <span className="ml-1 font-normal" style={{ color: 'var(--sst-dark-400)' }}>/ {form.convocados} máx.</span>
+              <span className="ml-1 font-normal text-gray-400">/ {form.convocados} máx.</span>
             )}
           </label>
-          <input
-            type="number" min="0"
+          <input type="number" min="0"
             max={form.convocados ? Number(form.convocados) : undefined}
             value={form.presentes}
             onChange={e => set('presentes', e.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-              form.presentes && form.convocados && Number(form.presentes) > Number(form.convocados)
-                ? 'border-red-400 bg-red-50 focus:ring-red-400'
-                : 'border-gray-200 focus:ring-blue-500'
-            }`}
+            className={`input-field ${form.presentes && form.convocados && Number(form.presentes) > Number(form.convocados) ? 'border-red-400' : ''}`}
           />
           {form.presentes && form.convocados && Number(form.presentes) > Number(form.convocados) && (
-            <p className="text-xs text-red-600">Los presentes no pueden superar los {form.convocados} convocados.</p>
+            <p className="text-xs text-red-500 mt-0.5">No puede superar los {form.convocados} convocados.</p>
           )}
         </div>
+      </div>
+
+      {/* Evaluaciones realizadas + aprobadas */}
+      <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Evaluaciones realizadas</label>
-          <input
-            type="number" min="0"
-            max={form.presentes ? Number(form.presentes) : undefined}
-            value={form.evaluaciones_realizadas}
+          <input type="number" min="0" value={form.evaluaciones_realizadas}
             onChange={e => set('evaluaciones_realizadas', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+            className="input-field" />
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">
             Evaluaciones aprobadas
             {form.evaluaciones_realizadas && (
-              <span className="ml-1 font-normal" style={{ color: 'var(--sst-dark-400)' }}>/ {form.evaluaciones_realizadas} máx.</span>
+              <span className="ml-1 font-normal text-gray-400">/ {form.evaluaciones_realizadas} máx.</span>
             )}
           </label>
-          <input
-            type="number" min="0"
+          <input type="number" min="0"
             max={form.evaluaciones_realizadas ? Number(form.evaluaciones_realizadas) : undefined}
             value={form.evaluaciones_aprobadas}
             onChange={e => set('evaluaciones_aprobadas', e.target.value)}
-            className={`border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
-              form.evaluaciones_aprobadas && form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas)
-                ? 'border-red-400 bg-red-50 focus:ring-red-400'
-                : 'border-gray-200 focus:ring-blue-500'
-            }`}
+            className={`input-field ${form.evaluaciones_aprobadas && form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas) ? 'border-red-400' : ''}`}
           />
           {form.evaluaciones_aprobadas && form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas) && (
-            <p className="text-xs text-red-600">Las aprobadas no pueden superar las {form.evaluaciones_realizadas} realizadas.</p>
+            <p className="text-xs text-red-500 mt-0.5">No puede superar las {form.evaluaciones_realizadas} realizadas.</p>
           )}
         </div>
       </div>
 
+      {/* Observaciones */}
       <div className="flex flex-col gap-1">
         <label className="text-xs font-semibold text-gray-600">Observaciones</label>
-        <textarea
-          rows={3}
-          value={form.observaciones}
+        <textarea rows={3} value={form.observaciones}
           onChange={e => set('observaciones', e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-        />
+          className="input-field resize-none" />
       </div>
 
-      <div className="flex gap-2 pt-2">
-        <button
-          type="button"
-          onClick={onCancelar}
-          className="flex-1 px-4 py-2 text-sm border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
-        >
+      {/* Acciones */}
+      <div className="flex gap-2 pt-1">
+        <button type="button" onClick={onCancelar} className="btn btn-secondary flex-1">
           Cancelar
         </button>
         <button
@@ -267,7 +234,7 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
             (!!form.presentes && !!form.convocados && Number(form.presentes) > Number(form.convocados)) ||
             (!!form.evaluaciones_aprobadas && !!form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas))
           }
-          className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
+          className="btn btn-primary flex-1 disabled:opacity-60"
         >
           {guardando ? 'Guardando…' : 'Guardar registro'}
         </button>

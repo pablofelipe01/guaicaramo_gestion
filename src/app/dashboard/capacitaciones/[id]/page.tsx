@@ -13,11 +13,12 @@ import { getCategoriaColor, calcularPct } from '@/lib/sst/cap-client'
 import {
   ArrowLeft, Award, Users, Calendar, ClipboardCheck, BookOpen,
   AlertTriangle, Plus, Target, Pencil, Trash2, PenLine, Link2,
-  Copy, CheckCircle2, UserPlus,
+  Copy, CheckCircle2, UserPlus, ExternalLink,
 } from 'lucide-react'
 import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapAsistenciaRegistroFields, CapCategoria, CapProveedor } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 import { getAuthHeaders } from '@/lib/client/authFetch'
+import QRCode from 'react-qr-code'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
@@ -816,16 +817,35 @@ export default function CapacitacionDetallePage() {
           <div className="flex items-start gap-2 rounded-xl p-3" style={{ background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.2)' }}>
             <Link2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--phase-planear)' }} />
             <p className="text-xs" style={{ color: 'var(--sst-dark-700)' }}>
-              Comparte este enlace con los asistentes. Es válido por <strong>72 horas</strong>. Los participantes podrán registrar su asistencia y firmar digitalmente sin necesidad de una cuenta.
+              Comparte el <strong>código QR</strong> o el enlace con los asistentes. Válido por <strong>72 horas</strong>. No necesitan cuenta para firmar.
             </p>
           </div>
+
+          {/* QR Code */}
+          <div className="flex flex-col items-center gap-2 py-2">
+            <div className="p-4 rounded-2xl" style={{ background: '#fff', border: '1px solid var(--border)' }}>
+              <QRCode value={enlaceFirma} size={200} fgColor="#052E16" />
+            </div>
+            <p className="text-[11px]" style={{ color: 'var(--sst-dark-400)' }}>Escanear con la cámara del celular</p>
+          </div>
+
+          {/* URL + botón copiar */}
           <div className="flex gap-2">
-            <input
-              readOnly
-              value={enlaceFirma}
-              className="input-field flex-1 text-xs font-mono truncate"
-              onClick={e => (e.target as HTMLInputElement).select()}
-            />
+            <a
+              href={enlaceFirma}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono overflow-hidden transition-colors"
+              style={{
+                border: '1px solid rgba(37,99,235,0.35)',
+                background: 'rgba(37,99,235,0.06)',
+                color: 'var(--phase-planear)',
+                wordBreak: 'break-all',
+              }}
+            >
+              <ExternalLink className="w-3 h-3 shrink-0" />
+              <span style={{ wordBreak: 'break-all' }}>{enlaceFirma}</span>
+            </a>
             <button
               onClick={copiarEnlace}
               className="btn btn-primary text-xs shrink-0"
@@ -834,10 +854,6 @@ export default function CapacitacionDetallePage() {
               {copiado ? <><CheckCircle2 className="w-3.5 h-3.5" /> Copiado</> : <><Copy className="w-3.5 h-3.5" /> Copiar</>}
             </button>
           </div>
-          <p className="text-center text-xs" style={{ color: 'var(--sst-dark-400)' }}>
-            También puedes abrir el enlace directamente para probarlo.{' '}
-            <a href={enlaceFirma} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--phase-planear)' }}>Abrir</a>
-          </p>
         </div>
       </Modal>
     </div>
