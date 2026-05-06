@@ -1,3 +1,11 @@
+/**
+ * @file CategoriaBadge.tsx
+ * Chip de categoría con color semántico derivado de `getCategoriaColor`.
+ * Usado en tablas, tarjetas y listas para identificar la categoría SST.
+ *
+ * @example
+ * <CategoriaBadge categoria="Alturas y espacios confinados" size="sm" />
+ */
 'use client'
 
 import { getCategoriaColor, getCategoriaBg } from '@/lib/sst/cap-client'

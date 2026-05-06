@@ -1,3 +1,11 @@
+/**
+ * @file BarraMensual.tsx
+ * Barra de progreso horizontal para representar el avance mensual de un indicador.
+ * Aplica semáforo verde/naranja/rojo según la cercanía al valor `meta`.
+ *
+ * @example
+ * <BarraMensual value={65} meta={80} showLabel showMeta />
+ */
 'use client'
 
 interface Props {

@@ -1,3 +1,9 @@
+/**
+ * @file CronogramaLista.tsx
+ * Vista de lista del cronograma, ordenada por fecha programada.
+ * Muestra tarjetas de sesión con estado, actividad relacionada y acciones rápidas.
+ * Al hacer clic en una sesión, abre el `CronogramaActionSheet` para gestionarla.
+ */
 'use client'
 
 import { useState, useMemo } from 'react'

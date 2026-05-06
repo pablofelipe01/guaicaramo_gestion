@@ -1,3 +1,9 @@
+/**
+ * @file CronogramaTooltip.tsx
+ * Tooltip flotante con el detalle de una sesión programada.
+ * Muestra tema, categoría, facilitador, población y observaciones.
+ * Se posiciona dinámicamente para no salirse del viewport.
+ */
 'use client'
 
 import { User, Users, CalendarDays, Tag, MessageSquare } from 'lucide-react'

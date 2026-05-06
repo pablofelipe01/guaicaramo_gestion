@@ -1,3 +1,13 @@
+/**
+ * @file route.ts
+ * Ruta: POST /api/sst/capacitaciones/registros/[id]/token
+ *
+ * Genera un JWT de firma pública (72 horas) para compartir con asistentes.
+ * El token embebe el ID del registro, el tema y la fecha de ejecución
+ * para que la página pública lo muestre sin requerir autenticación.
+ *
+ * Restringido a: coordinador_sst, administrador.
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth/middleware'
 import { generarTokenFirmaCapacitacion } from '@/lib/sst/cap-firma-token'
@@ -9,10 +19,11 @@ const T_REGISTROS = 'sst_cap_registros'
 type Ctx = { params: Promise<{ id: string }> }
 
 /**
- * POST /api/sst/capacitaciones/registros/[id]/token
+ * Genera un enlace público de firma para un registro de ejecución.
  *
- * Genera un token de firma pública (72 h) para el registro de ejecución indicado.
- * Devuelve el token y la URL lista para compartir con los asistentes.
+ * @param request - Solicitud autenticada (coordinador_sst o administrador).
+ * @param ctx - `id` = ID del registro en `sst_cap_registros`.
+ * @returns `{ token, url }` donde `url` es el enlace listo para compartir por QR/WhatsApp.
  */
 export async function POST(request: NextRequest, ctx: Ctx) {
   const auth = await requireRole(request, 'coordinador_sst', 'administrador')
@@ -20,14 +31,14 @@ export async function POST(request: NextRequest, ctx: Ctx) {
 
   const { id } = await ctx.params
 
-  // Obtener info del registro para embebir en el token (contexto para la página pública)
+  // Enriquecer el token con contexto del registro para mostrarlo en la página pública
   let actividadTema: string | undefined
   let fechaEjecucion: string | undefined
   try {
     const reg = await getRecord<CapRegistroFields>(T_REGISTROS, id)
     actividadTema  = reg.fields.actividad_tema ?? undefined
     fechaEjecucion = reg.fields.fecha_ejecucion ?? undefined
-  } catch { /* si el registro no existe o la tabla aún no está creada, el token se genera sin contexto */ }
+  } catch { /* si el registro no existe aún, el token se genera sin contexto */ }
 
   const token = await generarTokenFirmaCapacitacion(id, actividadTema, fechaEjecucion)
 

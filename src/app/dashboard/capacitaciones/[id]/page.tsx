@@ -51,7 +51,7 @@ export default function CapacitacionDetallePage() {
   const [registroSeleccionado, setRegistroSeleccionado] = useState<string | null>(null)
   const [cargandoAsistencias, setCargandoAsistencias] = useState(false)
   const [modalNuevaAsistencia, setModalNuevaAsistencia] = useState(false)
-  const [formAsistencia, setFormAsistencia] = useState({ nombre: '', cedula: '', cargo: '', area: '' })
+  const [formAsistencia, setFormAsistencia] = useState({ nombre: '', numero_documento: '', telefono: '', cargo_empresa: '' })
   const [guardandoAsistencia, setGuardandoAsistencia] = useState(false)
   const [modalEnlace, setModalEnlace] = useState(false)
   const [enlaceFirma, setEnlaceFirma] = useState('')
@@ -233,14 +233,14 @@ export default function CapacitacionDetallePage() {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           nombre_trabajador: formAsistencia.nombre.trim(),
-          cedula: formAsistencia.cedula.trim() || undefined,
-          cargo:  formAsistencia.cargo.trim()  || undefined,
-          area:   formAsistencia.area.trim()   || undefined,
+          numero_documento: formAsistencia.numero_documento.trim() || undefined,
+          telefono:         formAsistencia.telefono.trim()         || undefined,
+          cargo_empresa:    formAsistencia.cargo_empresa.trim()    || undefined,
         }),
       })
       if (!res.ok) throw new Error('Error al guardar')
       setModalNuevaAsistencia(false)
-      setFormAsistencia({ nombre: '', cedula: '', cargo: '', area: '' })
+      setFormAsistencia({ nombre: '', numero_documento: '', telefono: '', cargo_empresa: '' })
       await cargarAsistencias(registroSeleccionado)
     } catch (e) {
       console.error('[guardarAsistencia]', e)
@@ -489,10 +489,10 @@ export default function CapacitacionDetallePage() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Nombre</th>
-                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Cédula</th>
-                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Cargo</th>
-                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Área</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Nombre de asistente</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>No. documento</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Teléfono</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Cargo / Empresa</th>
                       <th className="text-center py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Firma</th>
                     </tr>
                   </thead>
@@ -503,9 +503,9 @@ export default function CapacitacionDetallePage() {
                         className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
                       >
                         <td className="py-1.5 px-2 font-medium" style={{ color: 'var(--sst-dark-800)' }}>{a.fields.nombre_trabajador}</td>
-                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.cedula ?? '—'}</td>
-                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.cargo ?? '—'}</td>
-                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.area ?? '—'}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.numero_documento ?? '—'}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.telefono ?? '—'}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.cargo_empresa ?? '—'}</td>
                         <td className="py-1.5 px-2 text-center">
                           {a.fields.firma_url
                             ? <CheckCircle2 className="w-4 h-4 mx-auto" style={{ color: 'var(--sst-cumple)' }} />
@@ -760,7 +760,18 @@ export default function CapacitacionDetallePage() {
       <Modal open={modalNuevaAsistencia} onClose={() => setModalNuevaAsistencia(false)} title="Agregar asistente">
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Nombre completo *</label>
+            <label className="text-xs font-semibold text-gray-600">Número de documento</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={formAsistencia.numero_documento}
+              onChange={e => setFormAsistencia(p => ({ ...p, numero_documento: e.target.value }))}
+              placeholder="Ej. 1234567890"
+              className="input-field"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Nombre de asistente *</label>
             <input
               type="text"
               value={formAsistencia.nombre}
@@ -771,32 +782,25 @@ export default function CapacitacionDetallePage() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Cédula</label>
+              <label className="text-xs font-semibold text-gray-600">Número de teléfono</label>
               <input
-                type="text"
-                value={formAsistencia.cedula}
-                onChange={e => setFormAsistencia(p => ({ ...p, cedula: e.target.value }))}
+                type="tel"
+                value={formAsistencia.telefono}
+                onChange={e => setFormAsistencia(p => ({ ...p, telefono: e.target.value }))}
+                placeholder="Ej. 3001234567"
                 className="input-field"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Cargo</label>
+              <label className="text-xs font-semibold text-gray-600">Cargo o empresa</label>
               <input
                 type="text"
-                value={formAsistencia.cargo}
-                onChange={e => setFormAsistencia(p => ({ ...p, cargo: e.target.value }))}
+                value={formAsistencia.cargo_empresa}
+                onChange={e => setFormAsistencia(p => ({ ...p, cargo_empresa: e.target.value }))}
+                placeholder="Operario / Empresa"
                 className="input-field"
               />
             </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Área</label>
-            <input
-              type="text"
-              value={formAsistencia.area}
-              onChange={e => setFormAsistencia(p => ({ ...p, area: e.target.value }))}
-              className="input-field"
-            />
           </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => setModalNuevaAsistencia(false)} className="btn btn-secondary flex-1">Cancelar</button>

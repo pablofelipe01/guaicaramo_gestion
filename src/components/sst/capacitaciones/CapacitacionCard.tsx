@@ -1,3 +1,13 @@
+/**
+ * @file CapacitacionCard.tsx
+ * Tarjeta visual para una actividad del plan anual de capacitaciones.
+ *
+ * Muestra: número de ítem, tema, estado, categoría con color semántico,
+ * proveedor, población objetivo y alertas de certificación/fechas.
+ *
+ * @example
+ * <CapacitacionCard actividad={record} onClick={() => router.push(`/capacitaciones/${record.id}`)} />
+ */
 'use client'
 
 import { Award, Users, AlertTriangle } from 'lucide-react'
@@ -7,7 +17,9 @@ import type { CapActividadFields } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 
 interface Props {
+  /** Registro Airtable completo de la actividad. */
   actividad: AirtableRecord<CapActividadFields>
+  /** Callback al hacer clic sobre la tarjeta (navegación al detalle). */
   onClick?: () => void
 }
 

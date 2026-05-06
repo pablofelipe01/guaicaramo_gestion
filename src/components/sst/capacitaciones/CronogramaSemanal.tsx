@@ -1,3 +1,8 @@
+/**
+ * @file CronogramaSemanal.tsx
+ * Subvista semanal del cronograma mensual.
+ * Muestra las actividades programadas para una semana específica agrupadas por día.
+ */
 'use client'
 
 import { useMemo } from 'react'

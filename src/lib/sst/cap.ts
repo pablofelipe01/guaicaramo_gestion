@@ -1,3 +1,20 @@
+/**
+ * @file cap.ts
+ * @module lib/sst/cap
+ *
+ * Capa de acceso a datos del módulo Capacitaciones.
+ * Todas las funciones son server-only — no pueden importarse desde Client Components.
+ *
+ * Tablas Airtable manejadas:
+ *   sst_cap_actividades   → catálogo anual de temas
+ *   sst_cap_programacion  → calendarización semanal
+ *   sst_cap_registros     → ejecución real de cada sesión
+ *   sst_cap_asistencias   → firma individual por asistente
+ *   sst_cap_indicadores   → KPIs trimestrales calculados
+ *
+ * Regla de integridad: ninguna función de este módulo escribe directamente
+ * en tablas de otros módulos (sst_inc_, sst_ac_, etc.).
+ */
 import 'server-only'
 import { listRecords, createRecords, updateRecord, getRecord, deleteRecord, deleteRecords } from '@/lib/airtable-client'
 import type {
@@ -12,22 +29,40 @@ import type {
   CapAsistenciaFields,
 } from '@/types/sst/cap'
 
-// ─── Tablas nuevas ────────────────────────────────────────────────────────────
+// ─── Nombres de tablas Airtable ───────────────────────────────────────────────
 const T_ACTIVIDADES    = 'sst_cap_actividades'
 const T_PROGRAMACION   = 'sst_cap_programacion'
 const T_REGISTROS      = 'sst_cap_registros'
 const T_INDICADORES    = 'sst_cap_indicadores'
 
 // ─── Tablas legacy (mantener para compatibilidad con rutas antiguas) ──────────
+/** @deprecated Usar T_ACTIVIDADES. Se eliminará cuando se migren las rutas legacy. */
 const T_PROGRAMAS      = 'sst_cap_programas'
+/** @deprecated Usar T_REGISTROS. */
 const T_CAPACITACIONES = 'sst_cap_capacitaciones'
+/** @deprecated Sin reemplazo directo. */
 const T_POBLACION      = 'sst_cap_poblacion'
 const T_ASISTENCIAS    = 'sst_cap_asistencias'
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ACTIVIDADES — Catálogo del plan anual
-// ═══════════════════════════════════════════════════════════════════════════════
+// ─── Umbral para el cálculo de estado de meta (Resolución 0312 de 2019) ───────
+const META_CUMPLIMIENTO_MINIMA = 80   // %
+const UMBRAL_EN_RIESGO_FACTOR  = 0.75 // 75% de la meta = zona de riesgo
 
+// =============================================================================
+// ACTIVIDADES — Catálogo del plan anual
+// =============================================================================
+
+/**
+ * Lista las actividades del plan anual con filtros opcionales.
+ * Los resultados se ordenan por `item_numero` ascendente.
+ *
+ * @async
+ * @param filtros - Filtros opcionales para acotar los resultados.
+ * @param filtros.categoria - Filtrar por categoría SST exacta.
+ * @param filtros.estado - Filtrar por estado general (ej. 'Sin programar').
+ * @param filtros.responsable - Filtrar por nombre exacto del responsable.
+ * @returns Array de registros Airtable con campos `CapActividadFields`.
+ */
 export async function listarActividades(filtros?: {
   categoria?: string
   estado?: string
@@ -49,10 +84,26 @@ export async function listarActividades(filtros?: {
   return records
 }
 
+/**
+ * Obtiene una actividad por su ID de Airtable.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_actividades`.
+ * @returns Registro completo de la actividad.
+ * @throws {Error} Si el registro no existe en Airtable.
+ */
 export async function obtenerActividad(id: string) {
   return getRecord<CapActividadFields>(T_ACTIVIDADES, id)
 }
 
+/**
+ * Crea una nueva actividad en el plan anual.
+ * Aplica valores por defecto para campos obligatorios no provistos.
+ *
+ * @async
+ * @param fields - Campos de la actividad. `tema` y `categoria` son requeridos en la API.
+ * @returns Registro Airtable recién creado.
+ */
 export async function crearActividad(fields: Partial<CapActividadFields>) {
   const payload: CapActividadFields = {
     item_numero: fields.item_numero ?? 0,
@@ -69,12 +120,28 @@ export async function crearActividad(fields: Partial<CapActividadFields>) {
   return record
 }
 
+/**
+ * Actualiza parcialmente los campos de una actividad.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_actividades`.
+ * @param fields - Campos a actualizar (patch, no reemplaza campos no incluidos).
+ * @returns Registro Airtable actualizado.
+ */
 export async function actualizarActividad(id: string, fields: Partial<CapActividadFields>) {
   return updateRecord<CapActividadFields>(T_ACTIVIDADES, id, fields)
 }
 
+/**
+ * Elimina una actividad y todas sus programaciones asociadas (cascada).
+ * No elimina los registros de ejecución existentes para preservar el historial.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_actividades`.
+ * @returns Resultado de la eliminación de Airtable.
+ */
 export async function eliminarActividad(id: string) {
-  // Cascade: eliminar todas las programaciones vinculadas antes de borrar la actividad
+  // Eliminar programaciones primero para mantener la integridad referencial
   const { records: progs } = await listRecords<CapProgramacionFields>(T_PROGRAMACION, {
     filterByFormula: `{actividad_id}='${id}'`,
   })
@@ -84,10 +151,20 @@ export async function eliminarActividad(id: string) {
   return deleteRecord(T_ACTIVIDADES, id)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // PROGRAMACIÓN — Calendarización semanal
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
+/**
+ * Lista las sesiones programadas del cronograma anual.
+ * Ordenadas por `fecha_programada` ascendente.
+ *
+ * @async
+ * @param filtros - Filtros opcionales.
+ * @param filtros.actividadId - Filtrar por ID de actividad.
+ * @param filtros.mes - Filtrar por mes calendario (ej. 'Junio').
+ * @returns Array de registros de programación.
+ */
 export async function listarProgramacion(filtros?: {
   actividadId?: string
   mes?: string
@@ -107,6 +184,14 @@ export async function listarProgramacion(filtros?: {
   return records
 }
 
+/**
+ * Crea una nueva sesión en el cronograma y recalcula el estado de la actividad.
+ * Al crear la primera programación, la actividad pasa de 'Sin programar' a 'Programado'.
+ *
+ * @async
+ * @param fields - Campos de la programación. `actividad_id`, `mes` y `semana` son requeridos.
+ * @returns Registro Airtable recién creado.
+ */
 export async function crearProgramacion(fields: Partial<CapProgramacionFields>) {
   const payload: CapProgramacionFields = {
     actividad_id: fields.actividad_id ?? '',
@@ -124,8 +209,17 @@ export async function crearProgramacion(fields: Partial<CapProgramacionFields>) 
   return record
 }
 
+/**
+ * Actualiza una sesión del cronograma y recalcula el estado de su actividad.
+ * Omite `actividad_tema` porque es un campo lookup de solo lectura en Airtable.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_programacion`.
+ * @param fields - Campos a actualizar.
+ * @returns Registro Airtable actualizado.
+ */
 export async function actualizarProgramacion(id: string, fields: Partial<CapProgramacionFields>) {
-  // actividad_tema es un campo lookup de Airtable — no escribible
+  // actividad_tema es lookup de Airtable — no puede escribirse
   const { actividad_tema: _at, ...writableFields } = fields
 
   const record = await updateRecord<CapProgramacionFields>(T_PROGRAMACION, id, writableFields)
@@ -173,8 +267,15 @@ async function recalcularEstadoActividad(actividadId: string): Promise<void> {
   } catch { /* actividad no encontrada, continuar */ }
 }
 
+/**
+ * Elimina una sesión del cronograma y recalcula el estado de su actividad.
+ * Si era la única sesión programada, la actividad vuelve a 'Sin programar'.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_programacion`.
+ */
 export async function eliminarProgramacion(id: string): Promise<void> {
-  // Obtener el actividad_id antes de eliminar para recalcular el estado
+  // Capturar el actividad_id antes de eliminar para poder recalcular el estado
   let actividadId: string | undefined
   try {
     const prog = await getRecord<CapProgramacionFields>(T_PROGRAMACION, id)
@@ -186,10 +287,20 @@ export async function eliminarProgramacion(id: string): Promise<void> {
   if (actividadId) await recalcularEstadoActividad(actividadId)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// REGISTROS — Ejecución y asistencia
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// REGISTROS — Ejecución real de sesiones
+// =============================================================================
 
+/**
+ * Lista los registros de ejecución de sesiones.
+ * Ordenados por `fecha_ejecucion` descendente (más recientes primero).
+ *
+ * @async
+ * @param filtros - Filtros opcionales.
+ * @param filtros.actividadId - Filtrar por ID de actividad.
+ * @param filtros.programacionId - Filtrar por ID de programación.
+ * @returns Array de registros de ejecución.
+ */
 export async function listarRegistros(filtros?: {
   actividadId?: string
   programacionId?: string
@@ -209,9 +320,20 @@ export async function listarRegistros(filtros?: {
   return records
 }
 
+/**
+ * Registra la ejecución de una sesión de capacitación.
+ *
+ * Efectos secundarios automáticos:
+ *  1. Marca la programación asociada como 'Ejecutado' (si `programacion_id` fue provisto).
+ *  2. Recalcula el `estado_general` de la actividad padre.
+ *
+ * @async
+ * @param fields - Datos de la ejecución. `actividad_id` y `fecha_ejecucion` son requeridos.
+ * @returns Registro Airtable recién creado.
+ * @throws {Error} Si la llamada a Airtable falla.
+ */
 export async function crearRegistro(fields: Partial<CapRegistroFields>) {
-  // Solo enviar campos escribibles — fecha_ejecucion y actividad_tema son
-  // campos computed/lookup en Airtable y no pueden escribirse directamente.
+  // Solo enviar campos escribibles — actividad_tema es lookup de solo lectura en Airtable.
   const writableFields: Record<string, unknown> = {}
   const writable = [
     'actividad_id', 'programacion_id', 'duracion_horas', 'lugar',
@@ -256,18 +378,40 @@ export async function crearRegistro(fields: Partial<CapRegistroFields>) {
   return record
 }
 
+/**
+ * Actualiza parcialmente un registro de ejecución.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_registros`.
+ * @param fields - Campos a actualizar.
+ * @returns Registro Airtable actualizado.
+ */
 export async function actualizarRegistro(id: string, fields: Partial<CapRegistroFields>) {
   return updateRecord<CapRegistroFields>(T_REGISTROS, id, fields)
 }
 
+/**
+ * Elimina un registro de ejecución.
+ * No recalcula el estado de la actividad — usar con precaución.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_registros`.
+ */
 export async function eliminarRegistro(id: string) {
   return deleteRecord(T_REGISTROS, id)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 // INDICADORES — KPIs trimestrales
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
 
+/**
+ * Lista todos los registros de indicadores trimestrales.
+ * Ordenados por trimestre ascendente (Q1 → Q4).
+ *
+ * @async
+ * @returns Array de todos los indicadores calculados.
+ */
 export async function listarIndicadores() {
   const { records } = await listRecords<CapIndicadorFields>(T_INDICADORES, {
     sort: [{ field: 'trimestre', direction: 'asc' }],
@@ -275,6 +419,13 @@ export async function listarIndicadores() {
   return records
 }
 
+/**
+ * Obtiene el registro de indicadores de un trimestre específico.
+ *
+ * @async
+ * @param trimestre - Identificador del trimestre (ej. 'Q2 2026').
+ * @returns Registro de indicadores, o null si aún no existe para ese trimestre.
+ */
 export async function obtenerIndicadorPorTrimestre(trimestre: string) {
   const { records } = await listRecords<CapIndicadorFields>(T_INDICADORES, {
     filterByFormula: `{trimestre}='${trimestre}'`,
@@ -283,6 +434,25 @@ export async function obtenerIndicadorPorTrimestre(trimestre: string) {
   return records[0] ?? null
 }
 
+/**
+ * Calcula y persiste los KPIs de un trimestre a partir de los datos reales.
+ *
+ * Proceso:
+ *  1. Filtra las programaciones del trimestre por sus meses correspondientes.
+ *  2. Agrega los totales de convocados, presentes y evaluaciones desde los registros
+ *     de ejecución dentro del rango de fechas del trimestre.
+ *  3. Calcula los tres indicadores principales (cumplimiento, cobertura, eficacia).
+ *  4. Crea o actualiza el registro en `sst_cap_indicadores`.
+ *
+ * Indicadores calculados (Res. 0312 de 2019):
+ *  - pct_cumplimiento = (ejecutadas / programadas) × 100
+ *  - pct_cobertura    = (presentes / convocados) × 100
+ *  - pct_eficacia     = (evaluaciones_aprobadas / evaluaciones_realizadas) × 100
+ *
+ * @async
+ * @param trimestre - Identificador del trimestre a calcular (ej. 'Q1 2026').
+ * @returns Registro Airtable creado o actualizado con los KPIs del trimestre.
+ */
 export async function calcularIndicadoresTrimestre(trimestre: string) {
   const mesesPorTrimestre: Record<string, CapProgramacionFields['mes'][]> = {
     'Q1 2026': ['Enero', 'Febrero', 'Marzo'],
@@ -331,8 +501,13 @@ export async function calcularIndicadoresTrimestre(trimestre: string) {
   const pct_cobertura    = calcularPct(totalPresentes, totalConvocados)
   const pct_eficacia     = calcularPct(evalAprobadas, evalRealizadas)
 
+  // Semáforo según umbrales de la Resolución 0312 de 2019 (meta mínima 80%)
   const estado_meta_cumplimiento: CapIndicadorFields['estado_meta_cumplimiento'] =
-    pct_cumplimiento >= 80 ? 'Cumple' : pct_cumplimiento >= 60 ? 'En riesgo' : 'No cumple'
+    pct_cumplimiento >= META_CUMPLIMIENTO_MINIMA
+      ? 'Cumple'
+      : pct_cumplimiento >= META_CUMPLIMIENTO_MINIMA * UMBRAL_EN_RIESGO_FACTOR
+        ? 'En riesgo'
+        : 'No cumple'
 
   const indicadorData: Partial<CapIndicadorFields> = {
     trimestre: trimestre as CapIndicadorFields['trimestre'],
@@ -359,19 +534,45 @@ export async function calcularIndicadoresTrimestre(trimestre: string) {
   return record
 }
 
+/**
+ * Actualiza parcialmente un registro de indicadores.
+ * Usar para análisis narrativos o correcciones manuales de un coordinador SST.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_indicadores`.
+ * @param fields - Campos a actualizar.
+ * @returns Registro Airtable actualizado.
+ */
 export async function actualizarIndicador(id: string, fields: Partial<CapIndicadorFields>) {
   return updateRecord<CapIndicadorFields>(T_INDICADORES, id, fields)
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// HELPERS
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// HELPERS — Cálculo y presentación (server-side)
+// Nota: estos helpers están duplicados en cap-client.ts para uso en Client
+// Components. Mantener sincronizados si se modifican las fórmulas.
+// =============================================================================
 
+/**
+ * Calcula un porcentaje redondeado al entero más cercano.
+ * Retorna 0 si el denominador es 0, evitando NaN o Infinity.
+ *
+ * @param numerador - Valor parcial.
+ * @param denominador - Valor total.
+ * @returns Porcentaje entero 0–100.
+ */
 export function calcularPct(numerador: number, denominador: number): number {
   if (denominador === 0) return 0
   return Math.round((numerador / denominador) * 100)
 }
 
+/**
+ * Devuelve un token semántico de color para un indicador según su cercanía a la meta.
+ *
+ * @param porcentaje - Valor actual del indicador (0–100).
+ * @param meta - Meta esperada. Por defecto 80 (mínimo Res. 0312).
+ * @returns Token de estado: 'success' | 'warning' | 'danger'.
+ */
 export function getColorEstadoMeta(
   porcentaje: number,
   meta = 80
@@ -381,6 +582,13 @@ export function getColorEstadoMeta(
   return 'danger'
 }
 
+/**
+ * Devuelve el color hexadecimal asociado a una categoría de capacitación.
+ * Usado en cronogramas, tarjetas y badges del módulo.
+ *
+ * @param categoria - Nombre exacto de la categoría SST.
+ * @returns Color hex. Por defecto '#6C757D' (gris) si la categoría no existe.
+ */
 export function getCategoriaColor(categoria: string): string {
   const colores: Record<string, string> = {
     'Alturas y espacios confinados': '#2C5F8D',
@@ -402,23 +610,42 @@ export const CATEGORIAS_CAP = [
   'Ergonomía, mecánica y EPI',
 ] as const
 
+/**
+ * Proveedores habilitados para impartir capacitaciones SST.
+ * Incluye la ARL (SURA), el SENA y equipos internos de la empresa.
+ * @see CATEGORIAS_CAP en cap-client.ts para usar en componentes.
+ */
 export const PROVEEDORES_CAP = [
   'Proveedor externo', 'ARL SURA', 'SENA', 'SST', 'Enfermería', 'Bienestar Social',
 ] as const
 
+/** Nombres canónicos de los 12 meses en español, usados como `mes` en programaciones. */
 export const MESES_CAP = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ] as const
 
+/**
+ * Trimestres del año vigente 2026.
+ * Actualizar manualmente para cada año fiscal.
+ */
 export const TRIMESTRES_CAP: CapIndicadorFields['trimestre'][] = [
   'Q1 2026', 'Q2 2026', 'Q3 2026', 'Q4 2026',
 ]
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// LEGACY — funciones para rutas antiguas (sst_cap_programas / sst_cap_capacitaciones)
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// LEGACY — Funciones para rutas antiguas
+// @deprecated Usar las funciones de Actividades/Registros en código nuevo.
+// Tablas: sst_cap_programas, sst_cap_capacitaciones, sst_cap_poblacion
+// =============================================================================
 
+/**
+ * Lista los programas anuales de capacitación (tabla legacy).
+ *
+ * @async
+ * @returns Array de programas ordenados por año descendente.
+ * @deprecated Usar `listarActividades`. Se mantiene para compatibilidad con rutas antiguas.
+ */
 export async function listarProgramas() {
   const { records } = await listRecords<CapProgramaFields>(T_PROGRAMAS, {
     sort: [{ field: 'Año', direction: 'desc' }],
@@ -426,11 +653,27 @@ export async function listarProgramas() {
   return records
 }
 
+/**
+ * Crea un programa anual de capacitación (tabla legacy).
+ *
+ * @async
+ * @param fields - Campos del programa.
+ * @returns Registro Airtable recién creado.
+ * @deprecated Usar `crearActividad`. Se mantiene para compatibilidad con rutas antiguas.
+ */
 export async function crearPrograma(fields: Partial<CapProgramaFields>) {
   const [record] = await createRecords<CapProgramaFields>(T_PROGRAMAS, [{ fields }])
   return record
 }
 
+/**
+ * Lista las capacitaciones de un programa (tabla legacy).
+ *
+ * @async
+ * @param programaId - ID del programa para filtrar. Sin filtro devuelve todas.
+ * @returns Array de capacitaciones ordenadas por fecha programada ascendente.
+ * @deprecated Usar `listarProgramacion`. Se mantiene para compatibilidad con rutas antiguas.
+ */
 export async function listarCapacitaciones(programaId?: string) {
   const { records } = await listRecords<CapCapacitacionFields>(T_CAPACITACIONES, {
     filterByFormula: programaId ? `{Programa ID}="${programaId}"` : undefined,
@@ -439,6 +682,15 @@ export async function listarCapacitaciones(programaId?: string) {
   return records
 }
 
+/**
+ * Obtiene una capacitación por su ID de registro Airtable (tabla legacy).
+ * Usa un filtro `RECORD_ID()` porque la tabla no tiene campo `id` indexado.
+ *
+ * @async
+ * @param id - ID del registro Airtable.
+ * @returns Primer registro encontrado, o `undefined` si no existe.
+ * @deprecated Usar `obtenerActividad` o `listarProgramacion`. Se mantiene para compatibilidad.
+ */
 export async function obtenerCapacitacion(id: string) {
   const { records } = await listRecords<CapCapacitacionFields>(T_CAPACITACIONES, {
     filterByFormula: `RECORD_ID()="${id}"`,
@@ -447,15 +699,40 @@ export async function obtenerCapacitacion(id: string) {
   return records[0]
 }
 
+/**
+ * Crea una capacitación en el programa (tabla legacy).
+ *
+ * @async
+ * @param fields - Campos de la capacitación.
+ * @returns Registro Airtable recién creado.
+ * @deprecated Usar `crearProgramacion`. Se mantiene para compatibilidad con rutas antiguas.
+ */
 export async function crearCapacitacion(fields: Partial<CapCapacitacionFields>) {
   const [record] = await createRecords<CapCapacitacionFields>(T_CAPACITACIONES, [{ fields }])
   return record
 }
 
+/**
+ * Actualiza una capacitación (tabla legacy).
+ *
+ * @async
+ * @param id - ID del registro.
+ * @param fields - Campos a actualizar.
+ * @returns Registro Airtable actualizado.
+ * @deprecated Usar `actualizarProgramacion`. Se mantiene para compatibilidad con rutas antiguas.
+ */
 export async function actualizarCapacitacion(id: string, fields: Partial<CapCapacitacionFields>) {
   return updateRecord<CapCapacitacionFields>(T_CAPACITACIONES, id, fields)
 }
 
+/**
+ * Lista la población objetivo de una capacitación (tabla legacy).
+ *
+ * @async
+ * @param capacitacionId - ID de la capacitación padre.
+ * @returns Array de segmentaciones de población.
+ * @deprecated Tabla `sst_cap_poblacion` sin reemplazo directo en el nuevo modelo.
+ */
 export async function listarPoblacion(capacitacionId: string) {
   const { records } = await listRecords<CapPoblacionFields>(T_POBLACION, {
     filterByFormula: `{Capacitacion ID}="${capacitacionId}"`,
@@ -463,11 +740,27 @@ export async function listarPoblacion(capacitacionId: string) {
   return records
 }
 
+/**
+ * Crea una entrada de población objetivo (tabla legacy).
+ *
+ * @async
+ * @param fields - Campos de la población.
+ * @returns Registro Airtable recién creado.
+ * @deprecated Tabla `sst_cap_poblacion` sin reemplazo directo en el nuevo modelo.
+ */
 export async function crearPoblacion(fields: Partial<CapPoblacionFields>) {
   const [record] = await createRecords<CapPoblacionFields>(T_POBLACION, [{ fields }])
   return record
 }
 
+/**
+ * Lista los registros de asistencia de una capacitación (tabla legacy).
+ *
+ * @async
+ * @param capacitacionId - ID de la capacitación padre.
+ * @returns Array de asistencias de la tabla `sst_cap_asistencias` legacy.
+ * @deprecated Usar `listarAsistenciasRegistro` que trabaja con la tabla actual.
+ */
 export async function listarAsistencias(capacitacionId: string) {
   const { records } = await listRecords<CapAsistenciaFields>(T_ASISTENCIAS, {
     filterByFormula: `{Capacitacion ID}="${capacitacionId}"`,
@@ -475,11 +768,30 @@ export async function listarAsistencias(capacitacionId: string) {
   return records
 }
 
+/**
+ * Registra una asistencia individual (tabla legacy).
+ *
+ * @async
+ * @param fields - Campos de la asistencia.
+ * @returns Registro Airtable recién creado.
+ * @deprecated Usar `crearAsistenciaRegistro` que incluye soporte de firma digital.
+ */
 export async function registrarAsistencia(fields: Partial<CapAsistenciaFields>) {
   const [record] = await createRecords<CapAsistenciaFields>(T_ASISTENCIAS, [{ fields }])
   return record
 }
 
+/**
+ * Calcula la cobertura global de capacitaciones a partir de la tabla de asistencias legacy.
+ *
+ * Retorna:
+ *  - `cobertura` — % de asistentes que efectivamente asistieron.
+ *  - `porCargo` — desglose por cargo del trabajador.
+ *
+ * @async
+ * @returns Objeto con totales agrupados y porcentaje de cobertura global.
+ * @deprecated Usar `calcularIndicadoresTrimestre` que calcula indicadores según Res. 0312.
+ */
 export async function coberturaCapacitaciones() {
   const { records: asistencias } = await listRecords<CapAsistenciaFields>(T_ASISTENCIAS)
   const { records: caps } = await listRecords<CapCapacitacionFields>(T_CAPACITACIONES)
@@ -506,10 +818,21 @@ export async function coberturaCapacitaciones() {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ASISTENCIAS POR REGISTRO — Firma individual de asistentes (nuevo flujo)
-// ═══════════════════════════════════════════════════════════════════════════════
+// =============================================================================
+// ASISTENCIAS — Firma individual de asistentes
+// =============================================================================
 
+/**
+ * Lista los registros de asistencia de una sesión específica.
+ * Ordenados por nombre del trabajador ascendente.
+ *
+ * IMPORTANTE: Los campos `firma_encriptada` se devuelven tal como están en Airtable.
+ * La capa de API (route.ts) es responsable de omitirlos antes de enviarlos al cliente.
+ *
+ * @async
+ * @param registroId - ID del registro en `sst_cap_registros`.
+ * @returns Array de asistencias con todos sus campos, incluyendo `firma_encriptada`.
+ */
 export async function listarAsistenciasRegistro(registroId: string) {
   const { records } = await listRecords<CapAsistenciaRegistroFields>(T_ASISTENCIAS, {
     filterByFormula: `{registro_id}='${registroId}'`,
@@ -518,6 +841,21 @@ export async function listarAsistenciasRegistro(registroId: string) {
   return records
 }
 
+/**
+ * Registra la asistencia individual de un trabajador a una sesión.
+ * El campo `asistio` se establece en `true` por defecto.
+ *
+ * Se invoca desde dos flujos:
+ *  1. Coordinador SST agrega asistente manualmente (requiere auth).
+ *  2. Trabajador firma desde página pública con token de 72 horas.
+ *
+ * Si se provee `firma_encriptada`, debe estar cifrada con AES-256-GCM
+ * antes de llamar a esta función (responsabilidad del caller).
+ *
+ * @async
+ * @param fields - Datos del asistente. `registro_id` y `nombre_trabajador` son requeridos.
+ * @returns Registro Airtable recién creado.
+ */
 export async function crearAsistenciaRegistro(
   fields: Omit<CapAsistenciaRegistroFields, 'asistio'> & { asistio?: boolean }
 ) {
@@ -529,6 +867,15 @@ export async function crearAsistenciaRegistro(
   return record
 }
 
+/**
+ * Actualiza parcialmente un registro de asistencia individual.
+ * Principalmente usado para agregar nota de evaluación o corregir datos.
+ *
+ * @async
+ * @param id - ID del registro en `sst_cap_asistencias`.
+ * @param fields - Campos a actualizar.
+ * @returns Registro Airtable actualizado.
+ */
 export async function actualizarAsistenciaRegistro(
   id: string,
   fields: Partial<CapAsistenciaRegistroFields>

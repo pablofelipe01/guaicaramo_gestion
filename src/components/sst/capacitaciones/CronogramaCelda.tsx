@@ -1,3 +1,9 @@
+/**
+ * @file CronogramaCelda.tsx
+ * Celda interactiva del cronograma mensual para una actividad en una semana dada.
+ * Al hacer clic, muestra un tooltip con acciones (crear/editar/ejecutar programación).
+ * Usa `createPortal` para renderizar el tooltip por encima de otros elementos.
+ */
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'

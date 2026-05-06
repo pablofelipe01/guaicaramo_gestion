@@ -1,3 +1,17 @@
+/**
+ * @file KpiDashboard.tsx
+ * Panel de indicadores trimestrales del módulo de capacitaciones.
+ *
+ * Muestra los tres indicadores principales de Resolución 0312 (cumplimiento,
+ * cobertura, eficacia) usando `KpiRing`, más un gráfico de barras con el
+ * detalle de programadas vs ejecutadas por categoría.
+ *
+ * Si no se ha calculado aún el indicador del trimestre seleccionado,
+ * muestra el estado vacío con los valores en cero.
+ *
+ * @example
+ * <KpiDashboard indicador={record} trimestre="Q2 2026" />
+ */
 'use client'
 
 import { Bar } from 'react-chartjs-2'
@@ -13,10 +27,13 @@ import type { AirtableRecord } from '@/lib/airtable-client'
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 interface Props {
+  /** Registro de indicadores trimestrales. `null` si el trimestre aún no tiene datos calculados. */
   indicador: AirtableRecord<CapIndicadorFields> | null
+  /** Identificador del trimestre activo (ej. 'Q2 2026'). */
   trimestre: string
 }
 
+/** KPIs principales con sus metas según Resolución 0312 (cumplimiento mínimo 80%). */
 const KPI_LIST = [
   { key: 'pct_cumplimiento',        label: 'Cumplimiento',   icon: BarChart3,     meta: 80  },
   { key: 'pct_cobertura',           label: 'Cobertura',      icon: Users,         meta: 80  },
@@ -24,12 +41,19 @@ const KPI_LIST = [
   { key: 'pct_cobertura_induccion', label: 'Inducción',      icon: GraduationCap, meta: 100 },
 ] as const
 
+/** Columnas del gráfico de barras: programado vs ejecutado por entidad. */
 const DETALLE_LIST = [
   { prog: 'programadas',             ejec: 'ejecutadas',               label: 'Actividades'   },
   { prog: 'trabajadores_objetivo',   ejec: 'trabajadores_capacitados', label: 'Trabajadores'  },
   { prog: 'evaluaciones_realizadas', ejec: 'evaluaciones_aprobadas',   label: 'Evaluaciones'  },
 ] as const
 
+/**
+ * Renderiza un badge de estado de meta con punto de color.
+ *
+ * @param estado - 'Cumple' | 'En riesgo' | 'Crítico' | undefined.
+ * @returns Elemento JSX del badge.
+ */
 function estadoBadge(estado?: string) {
   const map: Record<string, { bg: string; text: string; dot: string }> = {
     'Cumple':    { bg: 'rgba(22,101,52,0.08)',  text: '#166534', dot: '#166534' },

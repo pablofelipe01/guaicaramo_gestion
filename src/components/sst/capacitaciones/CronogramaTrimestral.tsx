@@ -1,3 +1,8 @@
+/**
+ * @file CronogramaTrimestral.tsx
+ * Vista trimestral del cronograma: agrega las sesiones por mes dentro del trimestre.
+ * Muestra progreso por categoría usando `BarraMensual` y las estadísticas del trimestre.
+ */
 'use client'
 
 import { useMemo, useRef, useEffect } from 'react'

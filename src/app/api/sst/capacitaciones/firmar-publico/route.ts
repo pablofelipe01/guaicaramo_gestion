@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
  * Recibe el token + datos del asistente + firma (data URL base64) y registra
  * la asistencia individual.
  *
- * Body: { token, nombre_trabajador, cedula?, cargo?, area?, firma_data_url? }
+ * Body: { token, nombre_trabajador, numero_documento?, telefono?, cargo_empresa?, firma_data_url? }
  */
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>
@@ -41,13 +41,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Cuerpo de solicitud inválido' }, { status: 400 })
   }
 
-  const { token, nombre_trabajador, cedula, cargo, area, firma_data_url } = body
+  const { token, nombre_trabajador, numero_documento, telefono, cargo_empresa, firma_data_url } = body
 
   if (!token || typeof token !== 'string')
     return NextResponse.json({ message: 'Token requerido' }, { status: 400 })
 
   if (!nombre_trabajador || typeof nombre_trabajador !== 'string' || !nombre_trabajador.trim())
     return NextResponse.json({ message: 'nombre_trabajador es requerido' }, { status: 400 })
+
+  if (!firma_data_url || typeof firma_data_url !== 'string' || !firma_data_url.startsWith('data:image/'))
+    return NextResponse.json({ message: 'La firma es obligatoria' }, { status: 400 })
 
   const payload = await verificarTokenFirmaCapacitacion(token)
   if (!payload) return NextResponse.json({ message: 'Token inválido o expirado' }, { status: 401 })
@@ -61,9 +64,9 @@ export async function POST(request: NextRequest) {
   const record = await crearAsistenciaRegistro({
     registro_id:       payload.registroId,
     nombre_trabajador: String(nombre_trabajador).trim(),
-    cedula:            typeof cedula    === 'string' ? cedula.trim()    : undefined,
-    cargo:             typeof cargo     === 'string' ? cargo.trim()     : undefined,
-    area:              typeof area      === 'string' ? area.trim()      : undefined,
+    numero_documento:  typeof numero_documento === 'string' ? numero_documento.trim() : undefined,
+    telefono:          typeof telefono          === 'string' ? telefono.trim()         : undefined,
+    cargo_empresa:     typeof cargo_empresa     === 'string' ? cargo_empresa.trim()    : undefined,
     asistio:           true,
     firma_encriptada,
     fecha_firma:       new Date().toISOString().split('T')[0],

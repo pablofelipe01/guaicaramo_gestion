@@ -1,22 +1,56 @@
+/**
+ * @file KpiRing.tsx
+ * Anillo SVG animado para representar un indicador porcentual con semáforo.
+ *
+ * La animación de llenado se activa al entrar en el viewport (IntersectionObserver)
+ * con una curva ease-out cúbica de 1.1 segundos.
+ *
+ * Colores del semáforo (tokens CSS de globals.css):
+ *   - value ≥ meta          → --sst-cumple  (verde)
+ *   - value ≥ meta × 0.75   → --sst-riesgo  (naranja)
+ *   - value < meta × 0.75   → --sst-critico (rojo)
+ *
+ * @example
+ * <KpiRing value={72} meta={80} size={90} strokeWidth={7} label="72%" sublabel="Cobertura" />
+ */
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
 
 interface KpiRingProps {
+  /** Valor actual del indicador (0–100). */
   value: number
+  /** Meta esperada. Por defecto 80 (mínimo Res. 0312). */
   meta?: number
+  /** Diámetro total del SVG en px. Por defecto 90. */
   size?: number
+  /** Grosor del trazo del anillo en px. Por defecto 7. */
   strokeWidth?: number
+  /** Texto principal dentro del anillo (ej. "72%"). */
   label?: string
+  /** Texto secundario bajo el label (ej. "Cobertura"). */
   sublabel?: string
 }
 
+/**
+ * Devuelve el token CSS de color para el semáforo del anillo.
+ *
+ * @param value - Valor actual del indicador.
+ * @param meta - Meta esperada.
+ * @returns Token CSS var(--sst-cumple|riesgo|critico).
+ */
 function getColor(value: number, meta: number) {
-  if (value >= meta) return 'var(--sst-cumple)'      // #166534
-  if (value >= meta * 0.75) return 'var(--sst-riesgo)' // #D97706
-  return 'var(--sst-critico)'                          // #DC3545
+  if (value >= meta) return 'var(--sst-cumple)'
+  if (value >= meta * 0.75) return 'var(--sst-riesgo)'
+  return 'var(--sst-critico)'
 }
 
+/**
+ * Función de easing ease-out cúbica para la animación del anillo.
+ *
+ * @param t - Progreso de la animación (0–1).
+ * @returns Valor de opacidad/progreso suavizado.
+ */
 function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3)
 }

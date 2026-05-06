@@ -1,3 +1,8 @@
+/**
+ * @file CronogramaLeyenda.tsx
+ * Panel de leyenda y estadísticas rápidas del cronograma.
+ * Muestra el conteo de sesiones por estado y el avance del mes actual.
+ */
 'use client'
 
 import { CheckCircle2, Clock, AlertCircle, RotateCcw, XCircle } from 'lucide-react'

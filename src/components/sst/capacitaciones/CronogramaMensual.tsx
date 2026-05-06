@@ -1,3 +1,9 @@
+/**
+ * @file CronogramaMensual.tsx
+ * Vista mensual del cronograma: grilla de actividades (filas) x semanas del mes (columnas).
+ * Cada celda es un `CronogramaCelda` que puede crear, editar o ejecutar una programación.
+ * Permite navegar entre meses con los controles de paginación.
+ */
 'use client'
 
 import { useState, useMemo, useCallback } from 'react'

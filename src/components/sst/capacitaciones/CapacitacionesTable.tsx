@@ -1,3 +1,9 @@
+/**
+ * @file CapacitacionesTable.tsx
+ * Tabla con búsqueda y filtros para el listado de actividades del plan anual.
+ * Soporta filtro por estado, categoría y búsqueda por texto libre sobre el tema.
+ * Cada fila es clickeable para navegar al detalle de la actividad.
+ */
 'use client'
 
 import { useState, useMemo } from 'react'

@@ -1,3 +1,19 @@
+/**
+ * @file KpiCard.tsx
+ * Tarjeta individual de KPI para el dashboard de capacitaciones.
+ *
+ * Aplica semáforo automático (verde/naranja/rojo) comparando `value` vs `meta`.
+ * Si `showRing` es `true`, renderiza un anillo SVG animado (`KpiRing`) en lugar
+ * del número simple. Soporta un indicador de tendencia opcional (↑/↓/─).
+ *
+ * Umbrales del semáforo (Resolución 0312 de 2019, meta mínima 80%):
+ *   - value ≥ meta          → verde  ("Cumple meta")
+ *   - value ≥ meta × 0.75   → naranja ("En riesgo")
+ *   - value < meta × 0.75   → rojo   ("No cumple")
+ *
+ * @example
+ * <KpiCard label="Cumplimiento" value={72} meta={80} showRing />
+ */
 'use client'
 
 import { AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
@@ -5,20 +21,36 @@ import type { LucideIcon } from 'lucide-react'
 import { KpiRing } from './KpiRing'
 
 interface Props {
+  /** Etiqueta descriptiva mostrada sobre el valor (ej. "Cobertura de capacitación"). */
   label: string
+  /** Valor actual del indicador (entero 0–100 para porcentajes, o cantidad absoluta). */
   value: number
+  /** Unidad de medida mostrada junto al valor. Por defecto '%'. */
   unit?: string
+  /** Meta esperada para el semáforo. Por defecto 80 (mínimo Res. 0312). */
   meta?: number
+  /** Ícono Lucide opcional mostrado en la esquina superior derecha. */
   icon?: LucideIcon
+  /** Texto de descripción secundario bajo el semáforo. */
   description?: string
+  /** Si `true`, muestra el `KpiRing` SVG en lugar del número plano. Solo aplica si `unit === '%'`. */
   showRing?: boolean
-  trend?: number   // positive = good, negative = bad, undefined = no trend
+  /** Variación porcentual respecto al período anterior. Positivo = bueno, negativo = malo. */
+  trend?: number
+  /** Callback al hacer clic sobre la tarjeta. */
   onClick?: () => void
 }
 
-const semaforo = (v: number, meta: number) => {
-  if (v >= meta) return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-100 text-green-700', dot: 'bg-green-500', label: 'Cumple meta' }
-  if (v >= meta * 0.75) return { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500', label: 'En riesgo' }
+/**
+ * Calcula la clase de semáforo de un indicador.
+ *
+ * @param valor - Valor actual del indicador.
+ * @param meta - Meta esperada.
+ * @returns Objeto con clases TailwindCSS para el estado del semáforo.
+ */
+const semaforo = (valor: number, meta: number) => {
+  if (valor >= meta) return { bg: 'bg-green-50', border: 'border-green-200', text: 'text-green-700', badge: 'bg-green-100 text-green-700', dot: 'bg-green-500', label: 'Cumple meta' }
+  if (valor >= meta * 0.75) return { bg: 'bg-orange-50', border: 'border-orange-200', text: 'text-orange-700', badge: 'bg-orange-100 text-orange-700', dot: 'bg-orange-500', label: 'En riesgo' }
   return { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-700', badge: 'bg-red-100 text-red-700', dot: 'bg-red-500', label: 'No cumple' }
 }
 

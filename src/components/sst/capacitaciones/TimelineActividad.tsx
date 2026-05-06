@@ -1,3 +1,9 @@
+/**
+ * @file TimelineActividad.tsx
+ * Timeline vertical de los registros de ejecución de una actividad.
+ * Muestra cada sesión ejecutada con fecha, duración, facilitador y métricas.
+ * Permite eliminar un registro (solo coordinador SST / admin) con confirmación.
+ */
 'use client'
 
 import { useState } from 'react'

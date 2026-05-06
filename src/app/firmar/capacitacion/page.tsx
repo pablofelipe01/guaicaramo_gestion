@@ -32,10 +32,10 @@ function FirmarCapacitacionContent() {
   const [info, setInfo]             = useState<RegistroInfo | null>(null)
   const [errorMsg, setErrorMsg]     = useState<string>('')
 
-  const [nombre, setNombre]         = useState('')
-  const [cedula, setCedula]         = useState('')
-  const [cargo, setCargo]           = useState('')
-  const [area, setArea]             = useState('')
+  const [nombre, setNombre]           = useState('')
+  const [numDocumento, setNumDocumento] = useState('')
+  const [telefono, setTelefono]       = useState('')
+  const [cargoEmpresa, setCargoEmpresa] = useState('')
 
   // Canvas de firma
   const canvasRef   = useRef<HTMLCanvasElement>(null)
@@ -126,9 +126,9 @@ function FirmarCapacitacionContent() {
         body: JSON.stringify({
           token,
           nombre_trabajador: nombre.trim(),
-          cedula:  cedula.trim()  || undefined,
-          cargo:   cargo.trim()   || undefined,
-          area:    area.trim()    || undefined,
+          numero_documento: numDocumento.trim() || undefined,
+          telefono:         telefono.trim()     || undefined,
+          cargo_empresa:    cargoEmpresa.trim() || undefined,
           firma_data_url,
         }),
       })
@@ -249,10 +249,28 @@ function FirmarCapacitacionContent() {
           {/* Formulario */}
           <form onSubmit={enviar} className="px-6 py-5 flex flex-col gap-4">
 
-            {/* Nombre */}
+            {/* Número de documento */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
-                Nombre completo <span className="text-red-400">*</span>
+                Número de documento
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={numDocumento}
+                onChange={e => setNumDocumento(e.target.value)}
+                placeholder="Ej. 1234567890"
+                autoComplete="off"
+                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                  focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
+                  transition-colors bg-gray-50 focus:bg-white"
+              />
+            </div>
+
+            {/* Nombre de asistente */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                Nombre de asistente <span className="text-red-400">*</span>
               </label>
               <input
                 type="text"
@@ -267,47 +285,33 @@ function FirmarCapacitacionContent() {
               />
             </div>
 
-            {/* Cédula + Cargo */}
+            {/* Número de teléfono + Cargo o empresa */}
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Cédula</label>
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Número de teléfono</label>
                 <input
-                  type="text"
-                  inputMode="numeric"
-                  value={cedula}
-                  onChange={e => setCedula(e.target.value)}
-                  placeholder="12345678"
+                  type="tel"
+                  inputMode="tel"
+                  value={telefono}
+                  onChange={e => setTelefono(e.target.value)}
+                  placeholder="Ej. 3001234567"
                   className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
                     focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
                     transition-colors bg-gray-50 focus:bg-white"
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Cargo</label>
+                <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Cargo o empresa</label>
                 <input
                   type="text"
-                  value={cargo}
-                  onChange={e => setCargo(e.target.value)}
-                  placeholder="Operario"
+                  value={cargoEmpresa}
+                  onChange={e => setCargoEmpresa(e.target.value)}
+                  placeholder="Operario / Empresa"
                   className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
                     focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
                     transition-colors bg-gray-50 focus:bg-white"
                 />
               </div>
-            </div>
-
-            {/* Área */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Área</label>
-              <input
-                type="text"
-                value={area}
-                onChange={e => setArea(e.target.value)}
-                placeholder="Ej. Producción"
-                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
-                  focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
-                  transition-colors bg-gray-50 focus:bg-white"
-              />
             </div>
 
             {/* Canvas de firma */}
@@ -315,7 +319,7 @@ function FirmarCapacitacionContent() {
               <div className="flex items-center justify-between">
                 <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-1">
                   <PenLine className="w-3.5 h-3.5 text-gray-400" />
-                  Firma digital <span className="text-gray-300 normal-case">(opcional)</span>
+                  Firma digital <span className="text-red-400">*</span>
                 </label>
                 {firmado && (
                   <button
@@ -357,7 +361,7 @@ function FirmarCapacitacionContent() {
             {/* Botón enviar */}
             <button
               type="submit"
-              disabled={estado === 'enviando' || !nombre.trim()}
+              disabled={estado === 'enviando' || !nombre.trim() || !firmado}
               className="w-full py-3 rounded-xl text-sm font-bold text-white transition-all
                 disabled:opacity-50 disabled:cursor-not-allowed
                 active:scale-[0.98]"

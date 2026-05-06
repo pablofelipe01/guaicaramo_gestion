@@ -1,3 +1,13 @@
+/**
+ * @file Toast.tsx
+ * Componente de notificaciones temporales (toast) para el módulo de capacitaciones.
+ * Soporta tipos: 'success', 'error', 'warning', 'info'.
+ * Los toasts desaparecen automáticamente después de 4 segundos por defecto.
+ *
+ * @example
+ * // Disparar un toast desde otro componente usando el hook useToast
+ * showToast('Registro guardado', 'success')
+ */
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'

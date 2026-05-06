@@ -1,3 +1,20 @@
+/**
+ * @file CronogramaContainer.tsx
+ * Contenedor principal del cronograma de capacitaciones.
+ *
+ * Coordina los tres modos de visualización (mensual / trimestral / lista),
+ * el panel de filtros (estado, categoría, búsqueda libre) y la leyenda.
+ * Persiste el modo seleccionado en localStorage para mantenerlo entre navegaciones.
+ *
+ * En móvil (<768px) el modo por defecto es 'lista'.
+ *
+ * @example
+ * <CronogramaContainer
+ *   actividades={records}
+ *   programaciones={progs}
+ *   onUpdate={refetch}
+ * />
+ */
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
@@ -17,6 +34,12 @@ type Modo = 'mensual' | 'trimestral' | 'lista'
 
 const HOY_STR = new Date().toISOString().split('T')[0]
 
+/**
+ * Lee el modo de visualización persitido en localStorage.
+ * Retorna 'lista' en SSR o si el valor almacenado no es válido.
+ *
+ * @returns Modo de visualización: 'mensual' | 'trimestral' | 'lista'.
+ */
 function leerModo(): Modo {
   if (typeof window === 'undefined') return 'mensual'
   const v = localStorage.getItem('cronograma_modo')
@@ -27,8 +50,11 @@ function leerModo(): Modo {
 }
 
 interface Props {
+  /** Lista completa de actividades del plan anual. */
   actividades: Actividad[]
+  /** Lista completa de programaciones (sesiones calendarizadas). */
   programaciones: Prog[]
+  /** Callback para refrescar los datos desde el servidor tras mutaciones. */
   onUpdate: () => void
 }
 

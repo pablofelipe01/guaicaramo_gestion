@@ -1,3 +1,8 @@
+/**
+ * @file CronogramaSeparadorCategoria.tsx
+ * Fila separadora de categoría en el cronograma mensual.
+ * Muestra el ícono, nombre y color de la categoría, con soporte de colapso.
+ */
 'use client'
 
 import { ChevronDown, ChevronRight, Mountain, Car, Bug, FlaskConical, Brain, Wrench } from 'lucide-react'

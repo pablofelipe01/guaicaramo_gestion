@@ -1,11 +1,30 @@
+/**
+ * @file route.ts
+ * Ruta: GET /api/sst/capacitaciones/registros/[id]/asistencias
+ *       POST /api/sst/capacitaciones/registros/[id]/asistencias
+ *
+ * Gestión de la lista de asistentes de un registro de ejecución.
+ *
+ * Seguridad: `firma_encriptada` NUNCA se envía al cliente.
+ * El GET la omite y agrega el campo `tiene_firma: boolean`.
+ */
 import { NextRequest, NextResponse } from 'next/server'
 import { listarAsistenciasRegistro, crearAsistenciaRegistro } from '@/lib/sst/cap'
 import { requireRole } from '@/lib/auth/middleware'
 
 type Ctx = { params: Promise<{ id: string }> }
 
+/** Roles que pueden consultar la lista de asistentes. */
 const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 
+/**
+ * Lista los asistentes de un registro de ejecución.
+ * Reemplaza `firma_encriptada` por `tiene_firma: boolean` por seguridad.
+ *
+ * @param request - Solicitud autenticada.
+ * @param ctx - `id` = ID del registro en `sst_cap_registros`.
+ * @returns `{ records }` con asistencias sin datos de firma.
+ */
 export async function GET(request: NextRequest, ctx: Ctx) {
   const auth = await requireRole(request, ...SST_ROLES)
   if ('error' in auth) return auth.error
@@ -20,6 +39,15 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   return NextResponse.json({ records: recordsSeguros })
 }
 
+/**
+ * Registra manualmente la asistencia de un trabajador.
+ * Restringido a coordinadores SST y administradores.
+ * Para registro público vía QR, usar el endpoint `firmar-publico`.
+ *
+ * @param request - Body JSON con `nombre_trabajador` (requerido), `numero_documento`, `telefono`, `cargo_empresa`, `nota_evaluacion`.
+ * @param ctx - `id` = ID del registro en `sst_cap_registros`.
+ * @returns `{ record }` con status 201.
+ */
 export async function POST(request: NextRequest, ctx: Ctx) {
   const auth = await requireRole(request, 'coordinador_sst', 'administrador')
   if ('error' in auth) return auth.error
@@ -33,9 +61,9 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   const record = await crearAsistenciaRegistro({
     registro_id: id,
     nombre_trabajador: String(body.nombre_trabajador).trim(),
-    cedula: body.cedula ? String(body.cedula).trim() : undefined,
-    cargo: body.cargo ? String(body.cargo).trim() : undefined,
-    area: body.area ? String(body.area).trim() : undefined,
+    numero_documento: body.numero_documento ? String(body.numero_documento).trim() : undefined,
+    telefono:         body.telefono         ? String(body.telefono).trim()         : undefined,
+    cargo_empresa:    body.cargo_empresa    ? String(body.cargo_empresa).trim()    : undefined,
     asistio: body.asistio !== false,
     nota_evaluacion: body.nota_evaluacion != null ? Number(body.nota_evaluacion) : undefined,
   })

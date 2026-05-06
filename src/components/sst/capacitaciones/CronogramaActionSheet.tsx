@@ -1,3 +1,9 @@
+/**
+ * @file CronogramaActionSheet.tsx
+ * Panel deslizable (drawer) para gestionar el estado de una sesión del cronograma.
+ * Permite aprobar/rechazar/reprogramar sesiones directamente desde el cronograma.
+ * En móvil se presenta como bottom sheet; en desktop como panel lateral.
+ */
 'use client'
 
 import { useState, useEffect } from 'react'

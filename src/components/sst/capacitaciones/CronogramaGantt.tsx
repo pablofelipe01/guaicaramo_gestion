@@ -1,3 +1,9 @@
+/**
+ * @file CronogramaGantt.tsx
+ * Vista tipo Gantt del cronograma de capacitaciones.
+ * Agrupa las actividades por categoría y muestra barras horizontales por mes.
+ * Usa `framer-motion` para las animaciones de colapso/expansión de categorías.
+ */
 'use client'
 
 import { useState } from 'react'

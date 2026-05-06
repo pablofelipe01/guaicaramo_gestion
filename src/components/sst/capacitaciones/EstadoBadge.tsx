@@ -1,3 +1,15 @@
+/**
+ * @file EstadoBadge.tsx
+ * Componente visual para el estado de una actividad o sesión del módulo Capacitaciones.
+ *
+ * Muestra un punto de color (con animación de pulso para 'En ejecución') y el
+ * texto del estado. Todos los colores respetan el sistema de tokens CSS definido
+ * en globals.css para coherencia con el resto del SG-SST.
+ *
+ * @example
+ * <EstadoBadge estado="Completado" />
+ * <EstadoBadge estado="En ejecución" size="md" />
+ */
 'use client'
 
 import type { CapEstadoGeneral, CapEstadoProgramacion } from '@/types/sst/cap'
@@ -9,9 +21,11 @@ interface EstadoConfig {
   border: string
   text: string
   dot: string
+  /** Si `true`, el punto renderiza una animación de pulso (solo para 'En ejecución'). */
   dotAnimate?: boolean
 }
 
+/** Mapa de configuraciones visuales por estado. */
 const ESTADOS: Record<string, EstadoConfig> = {
   'Sin programar':  { bg: 'rgba(220,53,69,0.08)', border: '1px solid rgba(220,53,69,0.3)', text: '#DC3545', dot: '#DC3545' },
   'Programado':     { bg: 'rgba(59,130,246,0.08)',                  border: '1px solid rgba(59,130,246,0.3)', text: '#1D4ED8',             dot: 'var(--estado-programado)' },
@@ -23,12 +37,15 @@ const ESTADOS: Record<string, EstadoConfig> = {
   'Vencido':        { bg: 'var(--sst-critico-bg)',                  border: '1px solid rgba(220,53,69,0.25)', text: 'var(--sst-critico)',  dot: 'var(--estado-vencido)' },
 }
 
+/** Configuración por defecto para estados no reconocidos. */
 const DEFAULT: EstadoConfig = {
   bg: 'var(--sst-dark-100)', border: '1px solid var(--sst-dark-300)', text: 'var(--sst-dark-500)', dot: 'var(--sst-dark-500)',
 }
 
 interface Props {
+  /** Estado de la actividad (`CapEstadoGeneral`) o de la sesión (`CapEstadoProgramacion`). */
   estado: EstadoUnion | string
+  /** Tamaño del badge. 'sm' para tablas y listas, 'md' para tarjetas y encabezados. */
   size?: 'sm' | 'md'
 }
 
