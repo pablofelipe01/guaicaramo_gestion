@@ -121,12 +121,18 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Sin programación específica</option>
-            {progFiltradas.map(p => (
-              <option key={p.id} value={p.id}>
-                {p.fields.mes} — Semana {p.fields.semana} ({p.fields.estado})
-              </option>
-            ))}
+            {progFiltradas.map(p => {
+              const cancelado = p.fields.estado === 'Cancelado'
+              return (
+                <option key={p.id} value={p.id} disabled={cancelado} style={cancelado ? { color: '#9ca3af' } : undefined}>
+                  {p.fields.mes} — Semana {p.fields.semana} ({p.fields.estado})
+                </option>
+              )
+            })}
           </select>
+          {form.programacion_id && progFiltradas.find(p => p.id === form.programacion_id)?.fields.estado === 'Cancelado' && (
+            <p className="text-xs text-amber-600 mt-0.5">Esta sesión está cancelada. Considera vincular a otra o dejar sin programación.</p>
+          )}
         </div>
       )}
 
@@ -181,31 +187,58 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Presentes</label>
+          <label className="text-xs font-semibold text-gray-600">
+            Presentes
+            {form.convocados && (
+              <span className="ml-1 font-normal" style={{ color: 'var(--sst-dark-400)' }}>/ {form.convocados} máx.</span>
+            )}
+          </label>
           <input
             type="number" min="0"
+            max={form.convocados ? Number(form.convocados) : undefined}
             value={form.presentes}
             onChange={e => set('presentes', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+              form.presentes && form.convocados && Number(form.presentes) > Number(form.convocados)
+                ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                : 'border-gray-200 focus:ring-blue-500'
+            }`}
           />
+          {form.presentes && form.convocados && Number(form.presentes) > Number(form.convocados) && (
+            <p className="text-xs text-red-600">Los presentes no pueden superar los {form.convocados} convocados.</p>
+          )}
         </div>
         <div className="flex flex-col gap-1">
           <label className="text-xs font-semibold text-gray-600">Evaluaciones realizadas</label>
           <input
             type="number" min="0"
+            max={form.presentes ? Number(form.presentes) : undefined}
             value={form.evaluaciones_realizadas}
             onChange={e => set('evaluaciones_realizadas', e.target.value)}
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div className="flex flex-col gap-1">
-          <label className="text-xs font-semibold text-gray-600">Evaluaciones aprobadas</label>
+          <label className="text-xs font-semibold text-gray-600">
+            Evaluaciones aprobadas
+            {form.evaluaciones_realizadas && (
+              <span className="ml-1 font-normal" style={{ color: 'var(--sst-dark-400)' }}>/ {form.evaluaciones_realizadas} máx.</span>
+            )}
+          </label>
           <input
             type="number" min="0"
+            max={form.evaluaciones_realizadas ? Number(form.evaluaciones_realizadas) : undefined}
             value={form.evaluaciones_aprobadas}
             onChange={e => set('evaluaciones_aprobadas', e.target.value)}
-            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className={`border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 ${
+              form.evaluaciones_aprobadas && form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas)
+                ? 'border-red-400 bg-red-50 focus:ring-red-400'
+                : 'border-gray-200 focus:ring-blue-500'
+            }`}
           />
+          {form.evaluaciones_aprobadas && form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas) && (
+            <p className="text-xs text-red-600">Las aprobadas no pueden superar las {form.evaluaciones_realizadas} realizadas.</p>
+          )}
         </div>
       </div>
 
@@ -229,7 +262,11 @@ export function RegistroForm({ actividades, programaciones, actividadPreseleccio
         </button>
         <button
           type="submit"
-          disabled={guardando}
+          disabled={
+            guardando ||
+            (!!form.presentes && !!form.convocados && Number(form.presentes) > Number(form.convocados)) ||
+            (!!form.evaluaciones_aprobadas && !!form.evaluaciones_realizadas && Number(form.evaluaciones_aprobadas) > Number(form.evaluaciones_realizadas))
+          }
           className="flex-1 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-60"
         >
           {guardando ? 'Guardando…' : 'Guardar registro'}

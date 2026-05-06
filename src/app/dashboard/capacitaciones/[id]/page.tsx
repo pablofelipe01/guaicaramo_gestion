@@ -12,15 +12,17 @@ import { BarraMensual } from '@/components/sst/capacitaciones/BarraMensual'
 import { getCategoriaColor, calcularPct } from '@/lib/sst/cap-client'
 import {
   ArrowLeft, Award, Users, Calendar, ClipboardCheck, BookOpen,
-  AlertTriangle, Plus, Target, Pencil, Trash2,
+  AlertTriangle, Plus, Target, Pencil, Trash2, PenLine, Link2,
+  Copy, CheckCircle2, UserPlus,
 } from 'lucide-react'
-import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapCategoria, CapProveedor } from '@/types/sst/cap'
+import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapAsistenciaRegistroFields, CapCategoria, CapProveedor } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 import { getAuthHeaders } from '@/lib/client/authFetch'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
 type Registro = AirtableRecord<CapRegistroFields>
+type Asistencia = AirtableRecord<CapAsistenciaRegistroFields>
 
 const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
@@ -43,6 +45,16 @@ export default function CapacitacionDetallePage() {
   // Eliminar actividad
   const [confirmEliminar, setConfirmEliminar] = useState(false)
   const [eliminando, setEliminando] = useState(false)
+  // Asistencias individuales
+  const [asistencias, setAsistencias] = useState<Asistencia[]>([])
+  const [registroSeleccionado, setRegistroSeleccionado] = useState<string | null>(null)
+  const [cargandoAsistencias, setCargandoAsistencias] = useState(false)
+  const [modalNuevaAsistencia, setModalNuevaAsistencia] = useState(false)
+  const [formAsistencia, setFormAsistencia] = useState({ nombre: '', cedula: '', cargo: '', area: '' })
+  const [guardandoAsistencia, setGuardandoAsistencia] = useState(false)
+  const [modalEnlace, setModalEnlace] = useState(false)
+  const [enlaceFirma, setEnlaceFirma] = useState('')
+  const [copiado, setCopiado] = useState(false)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -153,6 +165,76 @@ export default function CapacitacionDetallePage() {
       setConfirmEliminar(false)
     }
   }
+
+  const cargarAsistencias = useCallback(async (regId: string) => {
+    setCargandoAsistencias(true)
+    try {
+      const res = await fetch(`/api/sst/capacitaciones/registros/${regId}/asistencias`, { headers: getAuthHeaders() })
+      if (res.ok) setAsistencias((await res.json()).records ?? [])
+    } catch { /* silenciar */ }
+    setCargandoAsistencias(false)
+  }, [])
+
+  const seleccionarRegistro = (regId: string) => {
+    setRegistroSeleccionado(regId)
+    cargarAsistencias(regId)
+  }
+
+  const generarEnlaceFirma = async () => {
+    if (!registroSeleccionado) return
+    try {
+      const res = await fetch(`/api/sst/capacitaciones/registros/${registroSeleccionado}/token`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+      })
+      if (!res.ok) throw new Error('Error al generar enlace')
+      const data = await res.json() as { url: string }
+      setEnlaceFirma(data.url)
+      setModalEnlace(true)
+    } catch (e) {
+      console.error('[generarEnlaceFirma]', e)
+    }
+  }
+
+  const copiarEnlace = async () => {
+    try {
+      await navigator.clipboard.writeText(enlaceFirma)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2500)
+    } catch { /* fallback */ }
+  }
+
+  const guardarAsistencia = async () => {
+    if (!registroSeleccionado || !formAsistencia.nombre.trim()) return
+    setGuardandoAsistencia(true)
+    try {
+      const res = await fetch(`/api/sst/capacitaciones/registros/${registroSeleccionado}/asistencias`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          nombre_trabajador: formAsistencia.nombre.trim(),
+          cedula: formAsistencia.cedula.trim() || undefined,
+          cargo:  formAsistencia.cargo.trim()  || undefined,
+          area:   formAsistencia.area.trim()   || undefined,
+        }),
+      })
+      if (!res.ok) throw new Error('Error al guardar')
+      setModalNuevaAsistencia(false)
+      setFormAsistencia({ nombre: '', cedula: '', cargo: '', area: '' })
+      await cargarAsistencias(registroSeleccionado)
+    } catch (e) {
+      console.error('[guardarAsistencia]', e)
+    }
+    setGuardandoAsistencia(false)
+  }
+
+  // Auto-seleccionar el registro más reciente cuando se carguen
+  useEffect(() => {
+    if (registros.length > 0 && !registroSeleccionado) {
+      seleccionarRegistro(registros[0].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registros])
 
 
   /* â”€â”€ Loading / Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -321,6 +403,102 @@ export default function CapacitacionDetallePage() {
               emptyText="Sin registros de ejecución aún. Haz clic en 'Registrar ejecución' para agregar el primero."
             />
           </Card>
+
+          {/* ── Asistencias individuales ─────────────────────────────────── */}
+          <Card className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
+                <PenLine className="w-4 h-4" style={{ color: 'var(--phase-hacer)' }} />
+                Asistentes individuales
+                {asistencias.length > 0 && (
+                  <span className="ml-1 text-xs" style={{ color: 'var(--sst-dark-500)' }}>({asistencias.length})</span>
+                )}
+              </h2>
+              <div className="flex items-center gap-1.5">
+                {registros.length > 1 && (
+                  <select
+                    value={registroSeleccionado ?? ''}
+                    onChange={e => seleccionarRegistro(e.target.value)}
+                    className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                    style={{ color: 'var(--sst-dark-700)' }}
+                  >
+                    {registros.map((r, i) => (
+                      <option key={r.id} value={r.id}>
+                        {r.fields.fecha_ejecucion ?? `Ejecución ${i + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {registroSeleccionado && (
+                  <>
+                    <button
+                      onClick={generarEnlaceFirma}
+                      className="btn btn-secondary text-xs"
+                      title="Generar enlace de firma"
+                    >
+                      <Link2 className="w-3.5 h-3.5" /> Enlace
+                    </button>
+                    <button
+                      onClick={() => setModalNuevaAsistencia(true)}
+                      className="btn btn-primary text-xs"
+                    >
+                      <UserPlus className="w-3.5 h-3.5" /> Agregar
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {registros.length === 0 ? (
+              <div className="text-center py-6">
+                <ClipboardCheck className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--sst-dark-300)' }} />
+                <p className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>Primero registra una ejecución para gestionar asistentes.</p>
+              </div>
+            ) : cargandoAsistencias ? (
+              <div className="flex justify-center py-6">
+                <div className="animate-spin w-5 h-5 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--phase-hacer)', borderTopColor: 'transparent' }} />
+              </div>
+            ) : asistencias.length === 0 ? (
+              <div className="text-center py-6">
+                <Users className="w-8 h-8 mx-auto mb-2" style={{ color: 'var(--sst-dark-300)' }} />
+                <p className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>Sin asistentes registrados para esta ejecución.</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--sst-dark-400)' }}>Usa el enlace de firma o agrega asistentes manualmente.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-gray-100">
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Nombre</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Cédula</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Cargo</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Área</th>
+                      <th className="text-center py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Firma</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {asistencias.map(a => (
+                      <tr
+                        key={a.id}
+                        className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                      >
+                        <td className="py-1.5 px-2 font-medium" style={{ color: 'var(--sst-dark-800)' }}>{a.fields.nombre_trabajador}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.cedula ?? '—'}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.cargo ?? '—'}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.area ?? '—'}</td>
+                        <td className="py-1.5 px-2 text-center">
+                          {a.fields.firma_url
+                            ? <CheckCircle2 className="w-4 h-4 mx-auto" style={{ color: 'var(--sst-cumple)' }} />
+                            : <span style={{ color: 'var(--sst-dark-300)' }}>—</span>
+                          }
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         </div>
 
         {/* â”€â”€ Columna lateral: programaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -334,7 +512,7 @@ export default function CapacitacionDetallePage() {
               </h2>
               <button
                 onClick={() => setModalProg(true)}
-                className="btn btn-ghost text-xs"
+                className="btn btn-secondary text-xs"
               >
                 <Plus className="w-3.5 h-3.5" /> Agregar
               </button>
@@ -557,6 +735,92 @@ export default function CapacitacionDetallePage() {
         onCancel={() => setConfirmEliminar(false)}
         onConfirm={confirmarEliminar}
       />
+
+      {/* ── Modal: Agregar asistente manualmente ─────────────────────────── */}
+      <Modal open={modalNuevaAsistencia} onClose={() => setModalNuevaAsistencia(false)} title="Agregar asistente">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Nombre completo *</label>
+            <input
+              type="text"
+              value={formAsistencia.nombre}
+              onChange={e => setFormAsistencia(p => ({ ...p, nombre: e.target.value }))}
+              placeholder="Ej. Juan Carlos Gómez"
+              className="input-field"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Cédula</label>
+              <input
+                type="text"
+                value={formAsistencia.cedula}
+                onChange={e => setFormAsistencia(p => ({ ...p, cedula: e.target.value }))}
+                className="input-field"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-gray-600">Cargo</label>
+              <input
+                type="text"
+                value={formAsistencia.cargo}
+                onChange={e => setFormAsistencia(p => ({ ...p, cargo: e.target.value }))}
+                className="input-field"
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Área</label>
+            <input
+              type="text"
+              value={formAsistencia.area}
+              onChange={e => setFormAsistencia(p => ({ ...p, area: e.target.value }))}
+              className="input-field"
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button onClick={() => setModalNuevaAsistencia(false)} className="btn btn-secondary flex-1">Cancelar</button>
+            <button
+              onClick={guardarAsistencia}
+              disabled={guardandoAsistencia || !formAsistencia.nombre.trim()}
+              className="btn btn-primary flex-1 disabled:opacity-60"
+            >
+              {guardandoAsistencia ? 'Guardando…' : 'Agregar'}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Modal: Enlace de firma ────────────────────────────────────────── */}
+      <Modal open={modalEnlace} onClose={() => { setModalEnlace(false); setCopiado(false) }} title="Enlace de firma">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-2 rounded-xl p-3" style={{ background: 'rgba(37,99,235,0.07)', border: '1px solid rgba(37,99,235,0.2)' }}>
+            <Link2 className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--phase-planear)' }} />
+            <p className="text-xs" style={{ color: 'var(--sst-dark-700)' }}>
+              Comparte este enlace con los asistentes. Es válido por <strong>72 horas</strong>. Los participantes podrán registrar su asistencia y firmar digitalmente sin necesidad de una cuenta.
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <input
+              readOnly
+              value={enlaceFirma}
+              className="input-field flex-1 text-xs font-mono truncate"
+              onClick={e => (e.target as HTMLInputElement).select()}
+            />
+            <button
+              onClick={copiarEnlace}
+              className="btn btn-primary text-xs shrink-0"
+              title="Copiar al portapapeles"
+            >
+              {copiado ? <><CheckCircle2 className="w-3.5 h-3.5" /> Copiado</> : <><Copy className="w-3.5 h-3.5" /> Copiar</>}
+            </button>
+          </div>
+          <p className="text-center text-xs" style={{ color: 'var(--sst-dark-400)' }}>
+            También puedes abrir el enlace directamente para probarlo.{' '}
+            <a href={enlaceFirma} target="_blank" rel="noopener noreferrer" className="underline" style={{ color: 'var(--phase-planear)' }}>Abrir</a>
+          </p>
+        </div>
+      </Modal>
     </div>
   )
 }

@@ -5,6 +5,7 @@ import type {
   CapProgramacionFields,
   CapRegistroFields,
   CapIndicadorFields,
+  CapAsistenciaRegistroFields,
   CapProgramaFields,
   CapCapacitacionFields,
   CapPoblacionFields,
@@ -503,4 +504,34 @@ export async function coberturaCapacitaciones() {
     realizadas: caps.filter(c => c.fields.Estado === 'realizada').length,
     porCargo,
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ASISTENCIAS POR REGISTRO — Firma individual de asistentes (nuevo flujo)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export async function listarAsistenciasRegistro(registroId: string) {
+  const { records } = await listRecords<CapAsistenciaRegistroFields>(T_ASISTENCIAS, {
+    filterByFormula: `{registro_id}='${registroId}'`,
+    sort: [{ field: 'nombre_trabajador', direction: 'asc' }],
+  })
+  return records
+}
+
+export async function crearAsistenciaRegistro(
+  fields: Omit<CapAsistenciaRegistroFields, 'asistio'> & { asistio?: boolean }
+) {
+  const payload: CapAsistenciaRegistroFields = {
+    asistio: true,
+    ...fields,
+  }
+  const [record] = await createRecords<CapAsistenciaRegistroFields>(T_ASISTENCIAS, [{ fields: payload }])
+  return record
+}
+
+export async function actualizarAsistenciaRegistro(
+  id: string,
+  fields: Partial<CapAsistenciaRegistroFields>
+) {
+  return updateRecord<CapAsistenciaRegistroFields>(T_ASISTENCIAS, id, fields)
 }

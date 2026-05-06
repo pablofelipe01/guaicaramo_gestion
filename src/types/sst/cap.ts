@@ -88,6 +88,22 @@ export interface CapIndicadorFields {
   estado_meta_cumplimiento?: 'Cumple' | 'No cumple' | 'En riesgo'
 }
 
+// ─── Asistencia individual por registro (nueva estructura snake_case) ─────────
+export interface CapAsistenciaRegistroFields {
+  registro_id: string
+  nombre_trabajador: string
+  cedula?: string
+  cargo?: string
+  area?: string
+  asistio: boolean
+  /** Data URL PNG cifrada con AES-256-GCM. Formato: aes256gcm.{iv}.{tag}.{cipher} (base64) */
+  firma_encriptada?: string
+  /** URL pública (S3/GCS) si la firma se subió a storage externo — uso futuro */
+  firma_url?: string
+  nota_evaluacion?: number
+  fecha_firma?: string
+}
+
 // Legacy types kept for backward compatibility
 export interface CapProgramaFields {
   Titulo: string

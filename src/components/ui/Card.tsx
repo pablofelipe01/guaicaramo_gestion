@@ -2,9 +2,10 @@
   children: React.ReactNode
   className?: string
   padding?: boolean
+  style?: React.CSSProperties
 }
 
-export function Card({ children, className = '', padding = true }: CardProps) {
+export function Card({ children, className = '', padding = true, style }: CardProps) {
   return (
     <div
       className={[
@@ -12,6 +13,7 @@ export function Card({ children, className = '', padding = true }: CardProps) {
         padding ? 'p-6' : '',
         className,
       ].join(' ')}
+      style={style}
     >
       {children}
     </div>
