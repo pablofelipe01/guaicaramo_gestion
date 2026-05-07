@@ -58,15 +58,21 @@ export async function POST(request: NextRequest, ctx: Ctx) {
   if (!body.nombre_trabajador?.trim())
     return NextResponse.json({ message: 'nombre_trabajador es requerido' }, { status: 400 })
 
-  const record = await crearAsistenciaRegistro({
-    registro_id: id,
-    nombre_trabajador: String(body.nombre_trabajador).trim(),
-    numero_documento: body.cedula ? String(body.cedula).trim() : undefined,
-    cargo_empresa: body.cargo ? String(body.cargo).trim() : undefined,
-    correo_externo: body.correo_externo ? String(body.correo_externo).trim() : undefined,
-    telefono: body.area ? String(body.area).trim() : undefined,
-    asistio: body.asistio !== false,
-    nota_evaluacion: body.nota_evaluacion != null ? Number(body.nota_evaluacion) : undefined,
-  })
-  return NextResponse.json({ record }, { status: 201 })
+  try {
+    const record = await crearAsistenciaRegistro({
+      registro_id: id,
+      nombre_trabajador: String(body.nombre_trabajador).trim(),
+      numero_documento: body.numero_documento ? String(body.numero_documento).trim() : undefined,
+      cargo_empresa: body.cargo_empresa ? String(body.cargo_empresa).trim() : undefined,
+      correo_externo: body.correo_externo ? String(body.correo_externo).trim() : undefined,
+      telefono: body.telefono ? String(body.telefono).trim() : undefined,
+      asistio: body.asistio !== false,
+      nota_evaluacion: body.nota_evaluacion != null ? Number(body.nota_evaluacion) : undefined,
+    })
+    return NextResponse.json({ record }, { status: 201 })
+  } catch (error) {
+    console.error('[asistencias POST]', error)
+    const msg = error instanceof Error ? error.message : 'Error al registrar asistencia'
+    return NextResponse.json({ message: msg }, { status: 500 })
+  }
 }

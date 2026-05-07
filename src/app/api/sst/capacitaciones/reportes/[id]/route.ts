@@ -1,11 +1,13 @@
 /**
  * @file route.ts
- * GET   /api/sst/capacitaciones/reportes/[id]  — detalle completo (incluye firmas)
- * PATCH /api/sst/capacitaciones/reportes/[id]  — guardar firma de capacitador o director
+ * GET    /api/sst/capacitaciones/reportes/[id]  — detalle completo (incluye firmas)
+ * PATCH  /api/sst/capacitaciones/reportes/[id]  — guardar firma de capacitador o director
+ * DELETE /api/sst/capacitaciones/reportes/[id]  — eliminar reporte
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth/middleware'
 import { obtenerReporte, actualizarFirmaReporte } from '@/lib/sst/reportes'
+import { deleteRecord } from '@/lib/airtable-client'
 import type { CapReporteFields } from '@/types/sst/reportes'
 
 type Ctx = { params: Promise<{ id: string }> }
@@ -68,4 +70,19 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
 
   const record = await actualizarFirmaReporte(id, camposFirma, camposActuales)
   return NextResponse.json({ record })
+}
+
+/** Elimina un reporte por su ID. Solo coordinador SST y administrador. */
+export async function DELETE(request: NextRequest, ctx: Ctx) {
+  const auth = await requireRole(request, 'coordinador_sst', 'administrador')
+  if ('error' in auth) return auth.error
+
+  const { id } = await ctx.params
+  try {
+    await deleteRecord('sst_cap_reportes', id)
+    return NextResponse.json({ ok: true })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Error al eliminar el reporte'
+    return NextResponse.json({ message: msg }, { status: 500 })
+  }
 }

@@ -323,15 +323,18 @@ function drawTablaAsistentes(
     { label: 'NOMBRE DEL ASISTENTE',  w: COL_NOMBRE_W, align: 'left'   as const },
     { label: 'CARGO O EMPRESA',       w: COL_CARGO_W,  align: 'left'   as const },
     { label: 'No. TELÉFONO',          w: COL_TEL_W,    align: 'center' as const },
-    { label: 'CORREO ELECTRÓNICO',    w: COL_EMAIL_W,  align: 'left'   as const },
+    { label: 'CORREO ELECTRÓNICO\n(personal externo)', w: COL_EMAIL_W,  align: 'left'   as const },
     { label: 'FIRMA',                 w: COL_FIRMA_W,  align: 'center' as const },
   ]
 
   doc.rect(x0, y, CONTENT_W, HEADER_H).fill(VERDE_DARK)
   let cx = x0
   cols.forEach(col => {
-    doc.fillColor('#FFFFFF').fontSize(7.5).font('Helvetica-Bold')
-      .text(col.label, cx + 2, y + 5, { width: col.w - 4, align: col.align, lineBreak: false })
+    const hasNewline = col.label.includes('\n')
+    const fs = hasNewline ? 6 : 7.5
+    const ty = hasNewline ? y + 2 : y + 5
+    doc.fillColor('#FFFFFF').fontSize(fs).font('Helvetica-Bold')
+      .text(col.label, cx + 2, ty, { width: col.w - 4, align: col.align, lineBreak: true })
     cx += col.w
   })
   cx = x0

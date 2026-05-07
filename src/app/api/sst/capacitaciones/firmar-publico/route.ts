@@ -61,19 +61,25 @@ export async function POST(request: NextRequest) {
     firma_encriptada = encriptarFirma(firma_data_url)
   }
 
-  const record = await crearAsistenciaRegistro({
-    registro_id:       payload.registroId,
-    nombre_trabajador: String(nombre_trabajador).trim(),
-    numero_documento:  typeof numero_documento === 'string' ? numero_documento.trim() : undefined,
-    telefono:          typeof telefono          === 'string' ? telefono.trim()         : undefined,
-    cargo_empresa:     typeof cargo_empresa     === 'string' ? cargo_empresa.trim()    : undefined,
-    correo_externo:    typeof correo_externo    === 'string' ? correo_externo.trim()   : undefined,
-    asistio:           true,
-    firma_encriptada,
-    fecha_firma:       new Date().toISOString().split('T')[0],
-  })
+  try {
+    const record = await crearAsistenciaRegistro({
+      registro_id:       payload.registroId,
+      nombre_trabajador: String(nombre_trabajador).trim(),
+      numero_documento:  typeof numero_documento === 'string' ? numero_documento.trim() : undefined,
+      telefono:          typeof telefono          === 'string' ? telefono.trim()         : undefined,
+      cargo_empresa:     typeof cargo_empresa     === 'string' ? cargo_empresa.trim()    : undefined,
+      correo_externo:    typeof correo_externo    === 'string' ? correo_externo.trim()   : undefined,
+      asistio:           true,
+      firma_encriptada,
+      fecha_firma:       new Date().toISOString().split('T')[0],
+    })
 
-  // No devolver la firma encriptada en la respuesta — solo confirmación
-  const { firma_encriptada: _omit, ...camposSeguros } = record.fields
-  return NextResponse.json({ record: { ...record, fields: camposSeguros } }, { status: 201 })
+    // No devolver la firma encriptada en la respuesta — solo confirmación
+    const { firma_encriptada: _omit, ...camposSeguros } = record.fields
+    return NextResponse.json({ record: { ...record, fields: camposSeguros } }, { status: 201 })
+  } catch (error) {
+    console.error('[firmar-publico POST]', error)
+    const msg = error instanceof Error ? error.message : 'Error al registrar la asistencia'
+    return NextResponse.json({ message: msg }, { status: 500 })
+  }
 }

@@ -7,7 +7,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { requireRole } from '@/lib/auth/middleware'
-import { crearReporte, listarReportesPorActividad } from '@/lib/sst/reportes'
+import { crearReporte, listarReportesPorActividad, listarReportesPorRegistro } from '@/lib/sst/reportes'
 import type { CapReporteFields } from '@/types/sst/reportes'
 
 const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'administrador'] as const
@@ -21,22 +21,25 @@ export async function GET(request: NextRequest) {
   if ('error' in auth) return auth.error
 
   const actividadId = request.nextUrl.searchParams.get('id_actividad')
-  if (!actividadId)
-    return NextResponse.json({ message: 'id_actividad es requerido' }, { status: 400 })
+  const registroId  = request.nextUrl.searchParams.get('id_registro')
+  if (!actividadId && !registroId)
+    return NextResponse.json({ message: 'id_actividad o id_registro es requerido' }, { status: 400 })
 
   try {
-    const records = await listarReportesPorActividad(actividadId)
+    const records = registroId
+      ? await listarReportesPorRegistro(registroId)
+      : await listarReportesPorActividad(actividadId!)
 
-    // Omitir las firmas (base64 pesado) en la lista — se carga en el detalle
+    // Incluir datos de firma para que FirmaInline pueda mostrar firmas existentes
     const recordsLimpios = records.map(r => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { firma_capacitador, firma_director, datos_encabezado, ...campos } = r.fields
+      const { datos_encabezado, ...campos } = r.fields
       return {
         ...r,
         fields: {
           ...campos,
-          tiene_firma_cap: !!firma_capacitador,
-          tiene_firma_dir: !!firma_director,
+          tiene_firma_cap: !!campos.firma_capacitador,
+          tiene_firma_dir: !!campos.firma_director,
         },
       }
     })

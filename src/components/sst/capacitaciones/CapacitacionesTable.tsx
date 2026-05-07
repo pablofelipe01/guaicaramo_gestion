@@ -56,7 +56,8 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
     <div className="flex flex-col gap-3">
       {/* Barra de búsqueda + filtros */}
       <div className="flex flex-wrap gap-2 items-center">
-        <div className="relative flex-1 min-w-[200px]">
+        {/* Búsqueda: ancho completo en móvil */}
+        <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400 pointer-events-none" />
           <input
             type="text"
@@ -67,43 +68,46 @@ export function CapacitacionesTable({ actividades, onSelect }: Props) {
           />
         </div>
 
-        <select
-          value={catFiltro}
-          onChange={e => setCatFiltro(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
-        >
-          <option value="">Todas las categorías</option>
-          {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        {/* Selects: en móvil ocupan toda la fila en 2 columnas; en sm+ son inline */}
+        <div className="flex gap-2 w-full sm:contents">
+          <select
+            value={catFiltro}
+            onChange={e => setCatFiltro(e.target.value)}
+            className="flex-1 sm:flex-none min-w-0 text-sm border border-gray-200 rounded-lg px-2 sm:px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
+          >
+            <option value="">Categoría</option>
+            {CATEGORIAS_CAP.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
 
-        <select
-          value={estadoFiltro}
-          onChange={e => setEstado(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
-        >
-          <option value="">Todos los estados</option>
-          {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
-        </select>
+          <select
+            value={estadoFiltro}
+            onChange={e => setEstado(e.target.value)}
+            className="flex-1 sm:flex-none min-w-0 text-sm border border-gray-200 rounded-lg px-2 sm:px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
+          >
+            <option value="">Estado</option>
+            {ESTADOS.map(e => <option key={e} value={e}>{e}</option>)}
+          </select>
 
-        <select
-          value={provFiltro}
-          onChange={e => setProv(e.target.value)}
-          className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
-        >
-          <option value="">Todos los proveedores</option>
-          {PROVEEDORES_CAP.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
+          <select
+            value={provFiltro}
+            onChange={e => setProv(e.target.value)}
+            className="flex-1 sm:flex-none min-w-0 text-sm border border-gray-200 rounded-lg px-2 sm:px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-700/20 bg-white"
+          >
+            <option value="">Proveedor</option>
+            {PROVEEDORES_CAP.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
 
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
           {hasFilters && (
             <button
               onClick={clearAll}
               className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-500 transition-colors px-2 py-1 rounded-md hover:bg-red-50"
             >
-              <X className="w-3.5 h-3.5" /> Limpiar
+              <X className="w-3.5 h-3.5" /> Limpiar filtros
             </button>
           )}
-          <span className="text-xs text-gray-400 whitespace-nowrap">
+          <span className="text-xs text-gray-400 whitespace-nowrap ml-auto sm:ml-0">
             <span className="font-semibold text-gray-600">{filtradas.length}</span> de {actividades.length}
           </span>
         </div>

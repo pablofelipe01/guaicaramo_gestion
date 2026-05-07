@@ -31,6 +31,17 @@ export async function listarReportesPorActividad(
   return records
 }
 
+/** Lista todos los reportes de un registro de ejecución, ordenados por fecha descendente. */
+export async function listarReportesPorRegistro(
+  registroId: string
+): Promise<AirtableRecord<CapReporteFields>[]> {
+  const { records } = await listRecords<CapReporteFields>(T_REPORTES, {
+    filterByFormula: `{id_registro}="${registroId}"`,
+    sort: [{ field: 'fecha_generacion', direction: 'desc' }],
+  })
+  return records
+}
+
 /** Obtiene el detalle completo de un reporte por su ID de Airtable. */
 export async function obtenerReporte(
   id: string

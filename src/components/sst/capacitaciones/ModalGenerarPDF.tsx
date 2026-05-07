@@ -6,7 +6,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Download, Loader2, FileText, CheckCircle2 } from 'lucide-react'
+import { X, Save, Loader2, FileText, CheckCircle2 } from 'lucide-react'
 import { getAuthHeaders } from '@/lib/client/authFetch'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -30,6 +30,7 @@ interface ModalGenerarPDFProps {
   actividadId: string
   datosIniciales: DatosIniciales
   totalAsistentes?: number
+  onSuccess?: () => void
 }
 
 const TIPOS_ACTIVIDAD = [
@@ -171,6 +172,7 @@ export function ModalGenerarPDF({
   actividadId,
   datosIniciales,
   totalAsistentes,
+  onSuccess,
 }: ModalGenerarPDFProps) {
   const { user } = useAuth()
   const [form, setForm] = useState<DatosIniciales>(datosIniciales)
@@ -219,20 +221,7 @@ export function ModalGenerarPDF({
         throw new Error(errBody.error ?? `HTTP ${response.status}`)
       }
 
-      const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
       const fechaDisplay = payload.fecha.includes('/') ? payload.fecha : isoToDisplay(payload.fecha)
-      const temaSlug = (form.tema_principal || 'asistencia')
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '_')
-        .slice(0, 30)
-      link.download = `control_asistencia_${fechaDisplay.replace(/\//g, '-')}_${temaSlug}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
 
       setExito(true)
 
@@ -254,6 +243,7 @@ export function ModalGenerarPDF({
       setTimeout(() => {
         setExito(false)
         onClose()
+        onSuccess?.()
       }, 1800)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error al generar el PDF')
@@ -276,7 +266,7 @@ export function ModalGenerarPDF({
 
       {/* Modal */}
       <div
-        className="relative z-10 w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden"
+        className="relative z-10 w-full max-w-3xl max-h-[90vh] flex flex-col rounded-2xl shadow-2xl overflow-hidden mx-2 sm:mx-4"
         style={{ background: '#fff' }}
       >
         {/* Header */}
@@ -352,7 +342,7 @@ export function ModalGenerarPDF({
             </div>
 
             {/* Fila: Fecha + Duración + Convocados */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Fecha</label>
                 <input
@@ -388,7 +378,7 @@ export function ModalGenerarPDF({
             </div>
 
             {/* Lugar + Capacitador */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-600">Lugar del evento</label>
                 <input
@@ -471,7 +461,7 @@ export function ModalGenerarPDF({
             {/* Firmas de verificación */}
             <div>
               <p className="text-xs font-bold text-gray-700 mb-2">Firmas de verificación</p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SignatureCanvas
                   label="Capacitador u organizador"
                   value={firmaCapacitador}
@@ -520,8 +510,8 @@ export function ModalGenerarPDF({
               </>
             ) : (
               <>
-                <Download className="w-4 h-4" />
-                Descargar PDF
+                <Save className="w-4 h-4" />
+                Guardar PDF
               </>
             )}
           </button>
