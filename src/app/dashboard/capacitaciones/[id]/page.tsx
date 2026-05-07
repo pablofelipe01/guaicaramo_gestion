@@ -19,6 +19,8 @@ import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapA
 import type { AirtableRecord } from '@/lib/airtable-client'
 import { getAuthHeaders } from '@/lib/client/authFetch'
 import QRCode from 'react-qr-code'
+import { ModalGenerarPDF } from '@/components/sst/capacitaciones/ModalGenerarPDF'
+import type { DatosIniciales } from '@/components/sst/capacitaciones/ModalGenerarPDF'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
@@ -51,11 +53,14 @@ export default function CapacitacionDetallePage() {
   const [registroSeleccionado, setRegistroSeleccionado] = useState<string | null>(null)
   const [cargandoAsistencias, setCargandoAsistencias] = useState(false)
   const [modalNuevaAsistencia, setModalNuevaAsistencia] = useState(false)
-  const [formAsistencia, setFormAsistencia] = useState({ nombre: '', numero_documento: '', telefono: '', cargo_empresa: '' })
+  const [formAsistencia, setFormAsistencia] = useState({ nombre: '', numero_documento: '', telefono: '', cargo_empresa: '', correo_externo: '' })
   const [guardandoAsistencia, setGuardandoAsistencia] = useState(false)
   const [modalEnlace, setModalEnlace] = useState(false)
   const [enlaceFirma, setEnlaceFirma] = useState('')
   const [copiado, setCopiado] = useState(false)
+  // PDF Control de Asistencia
+  const [modalPDF, setModalPDF] = useState(false)
+  const [datosInicalesPDF, setDatosInicialesPDF] = useState<DatosIniciales | null>(null)
 
   const cargar = useCallback(async () => {
     setLoading(true)
@@ -236,11 +241,12 @@ export default function CapacitacionDetallePage() {
           numero_documento: formAsistencia.numero_documento.trim() || undefined,
           telefono:         formAsistencia.telefono.trim()         || undefined,
           cargo_empresa:    formAsistencia.cargo_empresa.trim()    || undefined,
+          correo_externo:   formAsistencia.correo_externo.trim()   || undefined,
         }),
       })
       if (!res.ok) throw new Error('Error al guardar')
       setModalNuevaAsistencia(false)
-      setFormAsistencia({ nombre: '', numero_documento: '', telefono: '', cargo_empresa: '' })
+      setFormAsistencia({ nombre: '', numero_documento: '', telefono: '', cargo_empresa: '', correo_externo: '' })
       await cargarAsistencias(registroSeleccionado)
     } catch (e) {
       console.error('[guardarAsistencia]', e)
@@ -464,6 +470,42 @@ export default function CapacitacionDetallePage() {
                     >
                       <UserPlus className="w-3.5 h-3.5" /> Agregar
                     </button>
+                    <button
+                      onClick={() => {
+                        const reg = registros.find(r => r.id === registroSeleccionado)
+                        setDatosInicialesPDF({
+                          tipo_actividad: 'CAPACITACIÓN',
+                          fecha: reg?.fields.fecha_ejecucion ?? '',
+                          duracion_horas: String(reg?.fields.duracion_horas ?? ''),
+                          lugar: reg?.fields.lugar ?? '',
+                          capacitador: reg?.fields.facilitador ?? actividad?.fields.responsable ?? '',
+                          num_convocados: String(reg?.fields.convocados ?? asistencias.length),
+                          tema_principal: actividad?.fields.tema ?? '',
+                          objetivo: actividad?.fields.objetivo ?? '',
+                          contenido: reg?.fields.observaciones ?? '',
+                          plan_capacitacion: 'SI',
+                        })
+                        setModalPDF(true)
+                      }}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-white transition-colors btn btn-primary"
+                      title="Generar Control de Asistencia en PDF"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      PDF
+                    </button>
+                    <a
+                      href={`/dashboard/capacitaciones/${id}/reportes`}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors"
+                      style={{ background: 'rgba(37,99,235,0.08)', color: 'var(--phase-planear)', border: '1px solid rgba(37,99,235,0.2)' }}
+                      title="Ver historial de reportes de asistencia"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Historial
+                    </a>
                   </>
                 )}
               </div>
@@ -493,6 +535,7 @@ export default function CapacitacionDetallePage() {
                       <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>No. documento</th>
                       <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Teléfono</th>
                       <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Cargo / Empresa</th>
+                      <th className="text-left py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Correo</th>
                       <th className="text-center py-1.5 px-2 font-semibold" style={{ color: 'var(--sst-dark-500)' }}>Firma</th>
                     </tr>
                   </thead>
@@ -506,6 +549,7 @@ export default function CapacitacionDetallePage() {
                         <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.numero_documento ?? '—'}</td>
                         <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.telefono ?? '—'}</td>
                         <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.cargo_empresa ?? '—'}</td>
+                        <td className="py-1.5 px-2" style={{ color: 'var(--sst-dark-600)' }}>{a.fields.correo_externo ?? '—'}</td>
                         <td className="py-1.5 px-2 text-center">
                           {a.fields.firma_url
                             ? <CheckCircle2 className="w-4 h-4 mx-auto" style={{ color: 'var(--sst-cumple)' }} />
@@ -802,6 +846,16 @@ export default function CapacitacionDetallePage() {
               />
             </div>
           </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-gray-600">Correo electrónico <span className="font-normal text-gray-400">(personal externo)</span></label>
+            <input
+              type="email"
+              value={formAsistencia.correo_externo}
+              onChange={e => setFormAsistencia(p => ({ ...p, correo_externo: e.target.value }))}
+              placeholder="Ej. nombre@empresa.com"
+              className="input-field"
+            />
+          </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => setModalNuevaAsistencia(false)} className="btn btn-secondary flex-1">Cancelar</button>
             <button
@@ -814,6 +868,18 @@ export default function CapacitacionDetallePage() {
           </div>
         </div>
       </Modal>
+
+      {/* ── Modal: PDF Control de Asistencia ─────────────────────────────── */}
+      {modalPDF && datosInicalesPDF && registroSeleccionado && (
+        <ModalGenerarPDF
+          isOpen={modalPDF}
+          onClose={() => { setModalPDF(false); setDatosInicialesPDF(null) }}
+          registroId={registroSeleccionado}
+          actividadId={id}
+          datosIniciales={datosInicalesPDF}
+          totalAsistentes={asistencias.length}
+        />
+      )}
 
       {/* ── Modal: Enlace de firma ────────────────────────────────────────── */}
       <Modal open={modalEnlace} onClose={() => { setModalEnlace(false); setCopiado(false) }} title="Enlace de firma">

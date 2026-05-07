@@ -238,6 +238,8 @@ export interface CapAsistenciaRegistroFields {
   telefono?: string
   /** Cargo dentro de la empresa o nombre de la empresa contratista. */
   cargo_empresa?: string
+  /** Correo electrónico del asistente (personal externo). */
+  correo_externo?: string
   /** Siempre true en el flujo actual. Se reserva false para ausencias justificadas. */
   asistio: boolean
   /**

@@ -44,7 +44,7 @@ export async function GET(request: NextRequest, ctx: Ctx) {
  * Restringido a coordinadores SST y administradores.
  * Para registro público vía QR, usar el endpoint `firmar-publico`.
  *
- * @param request - Body JSON con `nombre_trabajador` (requerido), `cedula`, `cargo`, `area`, `nota_evaluacion`.
+ * @param request - Body JSON con `nombre_trabajador` (requerido), `cedula`, `cargo`, `area`, `correo_externo`, `nota_evaluacion`.
  * @param ctx - `id` = ID del registro en `sst_cap_registros`.
  * @returns `{ record }` con status 201.
  */
@@ -63,6 +63,7 @@ export async function POST(request: NextRequest, ctx: Ctx) {
     nombre_trabajador: String(body.nombre_trabajador).trim(),
     numero_documento: body.cedula ? String(body.cedula).trim() : undefined,
     cargo_empresa: body.cargo ? String(body.cargo).trim() : undefined,
+    correo_externo: body.correo_externo ? String(body.correo_externo).trim() : undefined,
     telefono: body.area ? String(body.area).trim() : undefined,
     asistio: body.asistio !== false,
     nota_evaluacion: body.nota_evaluacion != null ? Number(body.nota_evaluacion) : undefined,

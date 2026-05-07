@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
  * Recibe el token + datos del asistente + firma (data URL base64) y registra
  * la asistencia individual.
  *
- * Body: { token, nombre_trabajador, numero_documento?, telefono?, cargo_empresa?, firma_data_url? }
+ * Body: { token, nombre_trabajador, numero_documento?, telefono?, cargo_empresa?, correo_externo?, firma_data_url? }
  */
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown>
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: 'Cuerpo de solicitud inválido' }, { status: 400 })
   }
 
-  const { token, nombre_trabajador, numero_documento, telefono, cargo_empresa, firma_data_url } = body
+  const { token, nombre_trabajador, numero_documento, telefono, cargo_empresa, correo_externo, firma_data_url } = body
 
   if (!token || typeof token !== 'string')
     return NextResponse.json({ message: 'Token requerido' }, { status: 400 })
@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
     numero_documento:  typeof numero_documento === 'string' ? numero_documento.trim() : undefined,
     telefono:          typeof telefono          === 'string' ? telefono.trim()         : undefined,
     cargo_empresa:     typeof cargo_empresa     === 'string' ? cargo_empresa.trim()    : undefined,
+    correo_externo:    typeof correo_externo    === 'string' ? correo_externo.trim()   : undefined,
     asistio:           true,
     firma_encriptada,
     fecha_firma:       new Date().toISOString().split('T')[0],
