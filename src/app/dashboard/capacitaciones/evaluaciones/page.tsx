@@ -129,6 +129,8 @@ function NuevaPlantillaForm({
       if (!p.texto.trim()) { setError(`La Pregunta ${i + 2} necesita enunciado.`); return }
       const validas = p.opciones.filter(o => o.trim())
       if (validas.length < 2) { setError(`La Pregunta ${i + 2} necesita al menos 2 opciones.`); return }
+      const unicasSet = new Set(validas.map(o => o.toLowerCase()))
+      if (unicasSet.size !== validas.length) { setError(`La Pregunta ${i + 2} tiene opciones duplicadas.`); return }
       if (p.correcta === '') { setError(`Selecciona la respuesta correcta de la Pregunta ${i + 2}.`); return }
     }
 

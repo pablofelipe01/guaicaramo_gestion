@@ -16,7 +16,8 @@ export async function GET(
 ) {
   const { token } = await params
 
-  if (!token || token.length < 10)
+  // Validar formato UUID del token antes de consultar Airtable
+  if (!token || !/^[0-9a-f-]{8,36}$/i.test(token))
     return NextResponse.json({ message: 'Token inválido' }, { status: 400 })
 
   try {

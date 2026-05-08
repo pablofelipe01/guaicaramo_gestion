@@ -48,10 +48,15 @@ export async function obtenerPlantilla(id: string) {
   return getRecord<CapPlantillaFields>(T_PLANTILLAS, id)
 }
 
+/** Escapa caracteres que romperían una fórmula Airtable. */
+function esc(v: string): string {
+  return v.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/[\r\n]/g, ' ')
+}
+
 /** Obtiene una plantilla activa por su qr_token (acceso público). */
 export async function obtenerPlantillaPorToken(token: string) {
   const { records } = await listRecords<CapPlantillaFields>(T_PLANTILLAS, {
-    filterByFormula: `AND({qr_token}='${token.replace(/'/g, "\\'")}',{activo}=TRUE())`,
+    filterByFormula: `AND({qr_token}='${esc(token)}',{activo}=TRUE())`,
     maxRecords: 1,
   })
   return records[0] ?? null
@@ -84,13 +89,13 @@ export interface FiltrosEvaluacion {
 /** Lista evaluaciones con filtros opcionales, ordenadas por fecha descendente. */
 export async function listarEvaluaciones(filtros?: FiltrosEvaluacion) {
   const conditions: string[] = []
-  if (filtros?.fecha_desde)        conditions.push(`{fecha}>='${filtros.fecha_desde}'`)
-  if (filtros?.fecha_hasta)        conditions.push(`{fecha}<='${filtros.fecha_hasta}'`)
-  if (filtros?.area)               conditions.push(`{area}='${filtros.area}'`)
-  if (filtros?.nombre_capacitacion) conditions.push(`{nombre_capacitacion}='${filtros.nombre_capacitacion}'`)
+  if (filtros?.fecha_desde)         conditions.push(`{fecha}>='${esc(filtros.fecha_desde)}'`)
+  if (filtros?.fecha_hasta)         conditions.push(`{fecha}<='${esc(filtros.fecha_hasta)}'`)
+  if (filtros?.area)                conditions.push(`{area}='${esc(filtros.area)}'`)
+  if (filtros?.nombre_capacitacion) conditions.push(`{nombre_capacitacion}='${esc(filtros.nombre_capacitacion)}'`)
   if (filtros?.puntaje_minimo != null)
-    conditions.push(`{puntaje}>=${filtros.puntaje_minimo}`)
-  if (filtros?.qr_token)           conditions.push(`{qr_token}='${filtros.qr_token}'`)
+    conditions.push(`{puntaje}>=${Number(filtros.puntaje_minimo)}`)
+  if (filtros?.qr_token)            conditions.push(`{qr_token}='${esc(filtros.qr_token)}'`)
 
   const formula =
     conditions.length === 0 ? undefined

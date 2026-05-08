@@ -150,7 +150,7 @@ function RadioGroup({
       <div className="flex flex-col gap-3">
         {opciones.map((op, i) => (
           <label
-            key={op}
+            key={`${i}-${op}`}
             className="flex items-center gap-3 p-3.5 rounded-xl cursor-pointer transition-all select-none active:scale-[0.99]"
             style={{
               border: `2px solid ${valor === op ? VERDE : '#dee2e6'}`,

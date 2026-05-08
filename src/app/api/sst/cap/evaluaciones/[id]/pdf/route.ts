@@ -26,7 +26,9 @@ export async function GET(
 
     const pdfBuffer = await generarEvaluacionPDF(evaluacion, plantilla)
 
-    const nombre = `evaluacion_${evaluacion.fields.nombre_trabajador?.replace(/\s+/g, '_')}_${evaluacion.fields.fecha}.pdf`
+    // Sanitizar nombre de archivo — solo alfanuméricos, guiones y guiones bajos
+    const nombreRaw = `evaluacion_${evaluacion.fields.nombre_trabajador ?? 'sin_nombre'}_${evaluacion.fields.fecha ?? 'sin_fecha'}.pdf`
+    const nombre    = nombreRaw.replace(/[^a-zA-Z0-9_\-.]/g, '_')
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

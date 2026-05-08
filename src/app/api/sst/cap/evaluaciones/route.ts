@@ -52,6 +52,20 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
 
+    // Limitar tamaño de firma_base64 (máx 500 KB en base64 ≈ 375 KB binario)
+    if (typeof body.firma_base64 === 'string' && body.firma_base64.length > 512_000)
+      return NextResponse.json(
+        { message: 'La imagen de firma supera el tamaño permitido (500 KB)' },
+        { status: 413 }
+      )
+
+    // qr_token solo debe contener caracteres UUID
+    if (!/^[0-9a-f-]{8,36}$/i.test(body.qr_token))
+      return NextResponse.json(
+        { message: 'Token de evaluación con formato inválido' },
+        { status: 400 }
+      )
+
     // Obtener la plantilla para calificar (el servidor valida el token)
     const plantilla = await obtenerPlantillaPorToken(body.qr_token)
     if (!plantilla)
