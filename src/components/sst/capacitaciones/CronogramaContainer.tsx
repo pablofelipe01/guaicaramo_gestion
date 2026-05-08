@@ -133,13 +133,14 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
               style={{ color: modo === key ? 'var(--sst-green-700)' : 'var(--sst-dark-500)' }}
             >
               <Icon className="w-3.5 h-3.5" />
-              {label}
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">{key === 'mensual' ? 'Mensual' : key === 'trimestral' ? 'Trim.' : 'Lista'}</span>
             </button>
           ))}
         </div>
 
         {/* Búsqueda */}
-        <div className="flex-1 flex items-center max-w-xs rounded-xl border px-2.5 gap-2" style={{ borderColor: 'var(--border)', background: '#fff', height: 36 }}>
+        <div className="w-full sm:flex-1 sm:max-w-xs flex items-center rounded-xl border px-2.5 gap-2" style={{ borderColor: 'var(--border)', background: '#fff', height: 36 }}>
           <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--sst-dark-500)' }} />
           <input
             type="text"

@@ -203,7 +203,7 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
           <thead>
             <tr style={{ background: 'var(--sst-green-700)', borderBottom: '1px solid var(--border)' }}>
               <th
-                className="px-4 py-3 text-left font-semibold sticky left-0 z-10 min-w-[260px]"
+                className="px-3 sm:px-4 py-3 text-left font-semibold sticky left-0 z-10 min-w-[140px] sm:min-w-[220px] md:min-w-[260px]"
                 style={{ color: '#fff', background: 'var(--sst-green-700)', borderRight: '1px solid rgba(255,255,255,0.2)' }}
               >
                 <span className="text-[10px] uppercase tracking-wider">Actividad</span>
@@ -213,7 +213,7 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                 return (
                   <th
                     key={s}
-                    className="px-2 py-3 text-center font-semibold min-w-[140px]"
+                    className="px-1 sm:px-2 py-3 text-center font-semibold min-w-[80px] sm:min-w-[110px] md:min-w-[140px]"
                     style={{
                       color: '#fff',
                       background: 'var(--sst-green-700)',
@@ -222,9 +222,9 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                     }}
                   >
                     <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-xs">Semana {s}</span>
+                      <span className="text-xs">S{s}<span className="hidden sm:inline">emana {s}</span></span>
                     </div>
-                    <div className="text-[10px] font-medium mt-0.5" style={{ color: 'rgba(255,255,255,0.85)' }}>{semanaHeaders[s - 1]}</div>
+                    <div className="text-[10px] font-medium mt-0.5 hidden sm:block" style={{ color: 'rgba(255,255,255,0.85)' }}>{semanaHeaders[s - 1]}</div>
                   </th>
                 )
               })}
@@ -262,18 +262,18 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                         if (firstTd) firstTd.style.borderLeft = ''
                       }}
                     >
-                      <td className="px-4 py-3 sticky left-0 z-10 border-r" style={{ borderColor: 'var(--border)', background: 'inherit' }}>
+                      <td className="px-3 sm:px-4 py-3 sticky left-0 z-10 border-r" style={{ borderColor: 'var(--border)', background: 'inherit' }}>
                         <button
                           onClick={() => router.push(`/dashboard/capacitaciones/${a.id}`)}
                           className="flex items-start gap-2 w-full text-left transition-colors"
                           onMouseEnter={e => { const span = e.currentTarget.querySelectorAll('span')[1]; if (span) (span as HTMLElement).style.color = 'var(--sst-green-700)' }}
                           onMouseLeave={e => { const span = e.currentTarget.querySelectorAll('span')[1]; if (span) (span as HTMLElement).style.color = 'var(--sst-dark-700)' }}
                         >
-                          <span className="text-[10px] font-semibold flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded" style={{ color: 'var(--sst-dark-500)', background: 'var(--sst-dark-100)' }}>#{a.fields.item_numero}</span>
+                          <span className="text-[10px] font-semibold flex-shrink-0 mt-0.5 px-1.5 py-0.5 rounded hidden sm:inline" style={{ color: 'var(--sst-dark-500)', background: 'var(--sst-dark-100)' }}>#{a.fields.item_numero}</span>
                           <div className="flex-1 min-w-0">
                             <span className="line-clamp-2 leading-snug font-medium transition-colors block" style={{ color: 'var(--sst-dark-700)' }}>{a.fields.tema}</span>
                             {a.fields.responsable && (
-                              <span className="text-[10px] block mt-0.5 truncate" style={{ color: 'var(--sst-dark-500)' }}>{a.fields.responsable}</span>
+                              <span className="text-[10px] block mt-0.5 truncate hidden sm:block" style={{ color: 'var(--sst-dark-500)' }}>{a.fields.responsable}</span>
                             )}
                           </div>
                           {a.fields.requiere_certificacion && (
@@ -285,7 +285,7 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                         const prog = idx[`${a.id}|${mes}|${s}`] ?? null
                         const mostrar = pasaFiltroEstado(prog)
                         return (
-                          <td key={s} className="p-2" style={{ borderLeft: '1px solid var(--sst-dark-100)' }}>
+                          <td key={s} className="p-1 sm:p-2" style={{ borderLeft: '1px solid var(--sst-dark-100)' }}>
                             {mostrar ? (
                               <CronogramaCelda
                                 prog={prog}

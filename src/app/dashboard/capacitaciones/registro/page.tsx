@@ -124,11 +124,11 @@ export default function RegistrosPage() {
               <thead style={{ background: 'var(--sst-dark-100)' }}>
                 <tr>
                   <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Actividad</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Fecha</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Facilitador</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide hidden sm:table-cell" style={{ color: 'var(--sst-dark-500)' }}>Fecha</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide hidden md:table-cell" style={{ color: 'var(--sst-dark-500)' }}>Facilitador</th>
                   <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Asistentes</th>
-                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Evaluaciones</th>
-                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide hidden md:table-cell" style={{ color: 'var(--sst-dark-500)' }}>Lugar</th>
+                  <th className="px-3 py-2.5 text-center text-xs font-semibold uppercase tracking-wide hidden sm:table-cell" style={{ color: 'var(--sst-dark-500)' }}>Evaluaciones</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-semibold uppercase tracking-wide hidden lg:table-cell" style={{ color: 'var(--sst-dark-500)' }}>Lugar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -142,18 +142,22 @@ export default function RegistrosPage() {
                     : null
                   return (
                     <tr key={r.id} style={{ background: i % 2 === 0 ? '#fff' : 'var(--sst-dark-100)' }}>
-                      <td className="px-3 py-2.5 font-medium max-w-[200px]" style={{ color: 'var(--sst-dark-800)' }}>
+                      <td className="px-3 py-2.5 font-medium max-w-[140px] sm:max-w-[200px]" style={{ color: 'var(--sst-dark-800)' }}>
                         <span className="line-clamp-2">
                           {rf.actividad_tema ?? actIdx[rf.actividad_id] ?? rf.actividad_id}
                         </span>
+                        {/* Fecha y facilitador visibles sólo en móvil bajo el tema */}
+                        <span className="text-[10px] flex items-center gap-1 mt-0.5 sm:hidden" style={{ color: 'var(--sst-dark-500)' }}>
+                          <Calendar className="w-3 h-3" />{rf.fecha_ejecucion ?? '—'}
+                        </span>
                       </td>
-                      <td className="px-3 py-2.5" style={{ color: 'var(--sst-dark-700)' }}>
+                      <td className="px-3 py-2.5 hidden sm:table-cell" style={{ color: 'var(--sst-dark-700)' }}>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3.5 h-3.5" style={{ color: 'var(--sst-dark-500)' }} />
                           {rf.fecha_ejecucion}
                         </span>
                       </td>
-                      <td className="px-3 py-2.5" style={{ color: 'var(--sst-dark-700)' }}>{rf.facilitador ?? '—'}</td>
+                      <td className="px-3 py-2.5 hidden md:table-cell" style={{ color: 'var(--sst-dark-700)' }}>{rf.facilitador ?? '—'}</td>
                       <td className="px-3 py-2.5 text-center">
                         {rf.presentes != null ? (
                           <span
@@ -164,11 +168,12 @@ export default function RegistrosPage() {
                               border: `1px solid ${pct != null && pct >= 80 ? 'rgba(22,101,52,0.2)' : pct != null && pct >= 60 ? 'rgba(217,119,6,0.2)' : 'rgba(220,53,69,0.2)'}`,
                             }}
                           >
-                            {rf.presentes}/{rf.convocados ?? '?'} ({pct ?? '?'}%)
+                            <span className="hidden sm:inline">{rf.presentes}/{rf.convocados ?? '?'} ({pct ?? '?'}%)</span>
+                            <span className="sm:hidden">{rf.presentes}/{rf.convocados ?? '?'}</span>
                           </span>
                         ) : '—'}
                       </td>
-                      <td className="px-3 py-2.5 text-center">
+                      <td className="px-3 py-2.5 text-center hidden sm:table-cell">
                         {rf.evaluaciones_realizadas != null ? (
                           <span
                             className="text-xs font-semibold px-2 py-0.5 rounded-full"
@@ -182,7 +187,7 @@ export default function RegistrosPage() {
                           </span>
                         ) : '—'}
                       </td>
-                      <td className="px-3 py-2.5 hidden md:table-cell text-xs" style={{ color: 'var(--sst-dark-500)' }}>{rf.lugar ?? '—'}</td>
+                      <td className="px-3 py-2.5 hidden lg:table-cell text-xs" style={{ color: 'var(--sst-dark-500)' }}>{rf.lugar ?? '—'}</td>
                     </tr>
                   )
                 })}

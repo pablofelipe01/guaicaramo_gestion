@@ -11,7 +11,7 @@ import { KpiRing } from '@/components/sst/capacitaciones/KpiRing'
 import { ToastContainer, useToast } from '@/components/sst/capacitaciones/Toast'
 import {
   BookOpen, Plus, Calendar, ClipboardCheck, BarChart3,
-  AlertTriangle, Award, RefreshCw, BookMarked, PlayCircle,
+  AlertTriangle, Award, RefreshCw, BookMarked, PlayCircle, ClipboardList,
 } from 'lucide-react'
 import { CATEGORIAS_CAP, PROVEEDORES_CAP, calcularPct, getCategoriaColor } from '@/lib/sst/cap-client'
 import type { CapActividadFields } from '@/types/sst/cap'
@@ -159,6 +159,12 @@ export default function CapacitacionesPage() {
               className="btn btn-secondary"
             >
               <ClipboardCheck className="w-4 h-4" /> Registros
+            </button>
+            <button
+              onClick={() => router.push('/dashboard/capacitaciones/evaluaciones')}
+              className="btn btn-secondary"
+            >
+              <ClipboardList className="w-4 h-4" /> Evaluaciones
             </button>
             <button
               onClick={() => router.push('/dashboard/capacitaciones/indicadores')}

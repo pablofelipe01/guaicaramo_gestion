@@ -312,3 +312,92 @@ export interface CapAsistenciaFields {
   'Nota Evaluacion'?: number
   'Fecha Registro'?: string
 }
+
+// =============================================================================
+// EVALUACIONES DE EFICACIA — Tablas sst_cap_plantillas / sst_cap_evaluaciones
+// Decreto 1072/2015 · Resolución 0312/2019 · Formato GH-FO-14
+// =============================================================================
+
+/** Estado de una evaluación de eficacia de capacitación. */
+export type CapEvaluacionEstado = 'borrador' | 'completado' | 'aprobado'
+
+/**
+ * Plantilla configurable de preguntas para la evaluación de eficacia.
+ * Tabla: `sst_cap_plantillas`
+ *
+ * El administrador crea una plantilla por tema de capacitación.
+ * Las preguntas 2, 3 y 4 son de selección múltiple; la pregunta 1 es texto abierto.
+ * Las opciones de selección se almacenan como JSON array en Airtable.
+ */
+export interface CapPlantillaFields {
+  /** Nombre identificador de la plantilla / capacitación. */
+  nombre_capacitacion: string
+  /** Enunciado de la pregunta 1 (respuesta abierta). */
+  pregunta_1_texto: string
+  /** Enunciado de la pregunta 2 (selección múltiple). */
+  pregunta_2_texto: string
+  /** JSON array de strings con las opciones de la pregunta 2. */
+  pregunta_2_opciones: string
+  /** Opción correcta de la pregunta 2. */
+  pregunta_2_correcta: string
+  /** Enunciado de la pregunta 3. */
+  pregunta_3_texto: string
+  /** JSON array de strings con las opciones de la pregunta 3. */
+  pregunta_3_opciones: string
+  /** Opción correcta de la pregunta 3. */
+  pregunta_3_correcta: string
+  /** Enunciado de la pregunta 4. */
+  pregunta_4_texto: string
+  /** JSON array de strings con las opciones de la pregunta 4. */
+  pregunta_4_opciones: string
+  /** Opción correcta de la pregunta 4. */
+  pregunta_4_correcta: string
+  /** Token único que genera la URL pública del QR. */
+  qr_token: string
+  /** Si la plantilla está disponible para nuevas evaluaciones. */
+  activo: boolean
+}
+
+/**
+ * Evaluación de eficacia completada por un trabajador.
+ * Tabla: `sst_cap_evaluaciones`
+ *
+ * El puntaje se calcula automáticamente en el servidor antes de persistir:
+ *   - Pregunta 1 (texto abierto): 2.5 pts si no está vacía
+ *   - Preguntas 2, 3, 4 (selección): 2.5 pts si === respuesta_correcta
+ *   - Puntaje total: 0–10 (aprueba con ≥ 7.5)
+ */
+export interface CapEvaluacionFields {
+  /** Fecha de la capacitación evaluada (ISO 8601). */
+  fecha: string
+  /** Tema evaluado (puede diferir del nombre de la plantilla). */
+  tema: string
+  /** Nombre de la capacitación. */
+  nombre_capacitacion: string
+  /** Nombre completo del trabajador que responde. */
+  nombre_trabajador: string
+  /** Área del trabajador. */
+  area: string
+  /** Nombre del capacitador / instructor. */
+  nombre_capacitador: string
+  /** Entidad que dictó la capacitación. */
+  entidad: string
+  /** Respuesta libre a la pregunta 1. */
+  respuesta_1: string
+  /** Opción seleccionada en la pregunta 2. */
+  respuesta_2: string
+  /** Opción seleccionada en la pregunta 3. */
+  respuesta_3: string
+  /** Opción seleccionada en la pregunta 4. */
+  respuesta_4: string
+  /** Calificación calculada automáticamente (0–10, dos decimales). */
+  puntaje: number
+  /** Firma digital del trabajador codificada en base64 (data URL). */
+  firma_base64: string
+  /** Token del QR que originó el acceso a este formulario. */
+  qr_token: string
+  /** FK → sst_cap_plantillas.id (Record ID de Airtable). */
+  id_plantilla: string
+  /** Estado del ciclo de vida de la evaluación. */
+  estado: CapEvaluacionEstado
+}
