@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
  * Validaciones de negocio aplicadas:
  *  - `presentes ≤ convocados`
  *  - `evaluaciones_aprobadas ≤ evaluaciones_realizadas`
- *  - `fecha_ejecucion` no puede ser futura
  *
  * Campos `actividad_tema` y `registrado_por` se descartan porque son campos
  * lookup/calculados de solo lectura en Airtable.
@@ -60,9 +59,6 @@ export async function POST(request: NextRequest) {
   if (body.evaluaciones_aprobadas != null && body.evaluaciones_realizadas != null
       && body.evaluaciones_aprobadas > body.evaluaciones_realizadas)
     return NextResponse.json({ message: 'evaluaciones_aprobadas no puede superar evaluaciones_realizadas' }, { status: 400 })
-
-  if (body.fecha_ejecucion > new Date().toISOString().split('T')[0])
-    return NextResponse.json({ message: 'fecha_ejecucion no puede ser en el futuro' }, { status: 400 })
 
   // Descartar campos lookup de solo lectura antes de escribir en Airtable
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

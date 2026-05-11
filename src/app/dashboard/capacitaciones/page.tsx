@@ -84,7 +84,7 @@ export default function CapacitacionesPage() {
   useEffect(() => { cargar() }, [cargar])
 
   const total       = actividades.length
-  const completadas = actividades.filter(a => a.fields.estado_general === 'Completado').length
+  const completadas = actividades.filter(a => a.fields.estado_general === 'Ejecutada' || a.fields.estado_general === 'Completado').length
   const enEjecucion = actividades.filter(a => a.fields.estado_general === 'En ejecución').length
   const sinProg     = actividades.filter(a => a.fields.estado_general === 'Sin programar').length
   const pctAvance   = calcularPct(completadas + enEjecucion, total)

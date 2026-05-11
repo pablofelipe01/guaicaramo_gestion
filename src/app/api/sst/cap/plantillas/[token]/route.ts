@@ -2,13 +2,14 @@
  * @file route.ts
  * Ruta PÚBLICA: GET /api/sst/cap/plantillas/[token]
  *
- * Devuelve los datos de la plantilla necesarios para renderizar el formulario
- * público de evaluación. NO requiere autenticación (acceso por QR).
- * Solo se exponen los campos que el trabajador necesita ver; las respuestas
- * correctas NO se incluyen en la respuesta para evitar trampas en cliente.
+ * Devuelve los datos de la plantilla + contexto de la capacitación para
+ * pre-rellenar el formulario público de evaluación. NO requiere autenticación.
+ * Las respuestas correctas NO se incluyen para evitar trampas en cliente.
+ * Si la plantilla tiene `id_capacitacion`, también devuelve datos del registro
+ * de ejecución (fecha, tema, facilitador, lugar) para auto-completar el form.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { obtenerPlantillaPorToken } from '@/lib/sst/cap-evaluaciones'
+import { obtenerContextoDesdeToken } from '@/lib/sst/cap-evaluaciones'
 
 export async function GET(
   _req: NextRequest,
@@ -16,19 +17,12 @@ export async function GET(
 ) {
   const { token } = await params
 
-  // Validar formato UUID del token antes de consultar Airtable
   if (!token || !/^[0-9a-f-]{8,36}$/i.test(token))
     return NextResponse.json({ message: 'Token inválido' }, { status: 400 })
 
   try {
-    const plantilla = await obtenerPlantillaPorToken(token)
-    if (!plantilla)
-      return NextResponse.json(
-        { message: 'Plantilla no encontrada o inactiva' },
-        { status: 404 }
-      )
+    const { plantilla, contexto } = await obtenerContextoDesdeToken(token)
 
-    // Devolver SOLO los campos que el trabajador necesita — omitir respuestas correctas
     const { fields: f } = plantilla
     const publica = {
       id: plantilla.id,
@@ -43,12 +37,11 @@ export async function GET(
       qr_token:            f.qr_token,
     }
 
-    return NextResponse.json({ plantilla: publica })
+    return NextResponse.json({ plantilla: publica, capacitacion: contexto })
   } catch (e) {
     console.error('[GET /api/sst/cap/plantillas/[token]]', e)
-    return NextResponse.json(
-      { message: e instanceof Error ? e.message : 'Error interno del servidor' },
-      { status: 500 }
-    )
+    const msg = e instanceof Error ? e.message : 'Error interno del servidor'
+    const status = msg.includes('inválido') || msg.includes('inactiva') ? 404 : 500
+    return NextResponse.json({ message: msg }, { status })
   }
 }

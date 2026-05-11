@@ -18,6 +18,16 @@ interface PlantillaPublica {
   qr_token: string
 }
 
+interface ContextoCapacitacion {
+  fecha: string
+  tema: string
+  nombre_capacitacion: string
+  facilitador: string
+  entidad: string
+  lugar?: string
+  id_capacitacion: string
+}
+
 type Estado = 'cargando' | 'formulario' | 'enviando' | 'exito' | 'error_token' | 'error_envio'
 
 // ─── Paleta corporativa ────────────────────────────────────────────────────────
@@ -184,6 +194,21 @@ function RadioGroup({
   )
 }
 
+// ─── Campo de solo lectura (cuando hay contexto pre-cargado) ──────────────────
+function CampoSoloLectura({ label, valor }: { label: string; valor: string }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>{label}</label>
+      <div
+        className="w-full rounded-xl border px-3 py-3"
+        style={{ background: '#f8f9fa', borderColor: '#dee2e6', color: '#495057', fontSize: 16, minHeight: 48 }}
+      >
+        {valor}
+      </div>
+    </div>
+  )
+}
+
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function EvaluacionPage() {
   return (
@@ -203,11 +228,12 @@ function EvaluacionContent() {
 
   const [estado, setEstado]         = useState<Estado>('cargando')
   const [plantilla, setPlantilla]   = useState<PlantillaPublica | null>(null)
+  const [contexto, setContexto]     = useState<ContextoCapacitacion | null>(null)
   const [errorMsg, setErrorMsg]     = useState('')
   const [puntajeFinal, setPuntaje]  = useState<number | null>(null)
   const [aprobado, setAprobado]     = useState(false)
 
-  // Campos de control
+  // Campos de control — solo nombre_trabajador y área son siempre editables por el trabajador
   const [fecha, setFecha]               = useState(new Date().toISOString().split('T')[0])
   const [tema, setTema]                 = useState('')
   const [trabajador, setTrabajador]     = useState('')
@@ -231,9 +257,19 @@ function EvaluacionContent() {
 
     fetch(`/api/sst/cap/plantillas/${encodeURIComponent(token)}`)
       .then(r => r.ok ? r.json() : r.json().then((e: { message?: string }) => Promise.reject(e.message ?? 'Token inválido')))
-      .then((data: { plantilla: PlantillaPublica }) => {
+      .then((data: { plantilla: PlantillaPublica; capacitacion: ContextoCapacitacion | null }) => {
         setPlantilla(data.plantilla)
-        setTema(data.plantilla.nombre_capacitacion)
+        const ctx = data.capacitacion
+        if (ctx) {
+          // Pre-rellenar campos de control desde el contexto de la ejecución registrada
+          setContexto(ctx)
+          setFecha(ctx.fecha)
+          setTema(ctx.tema)
+          setCapacitador(ctx.facilitador)
+          setEntidad(ctx.entidad)
+        } else {
+          setTema(data.plantilla.nombre_capacitacion)
+        }
         setEstado('formulario')
       })
       .catch((msg: string | unknown) => {
@@ -254,7 +290,6 @@ function EvaluacionContent() {
     e.preventDefault()
     if (!plantilla) return
 
-    // Validación cliente
     if (!firmado) { alert('Por favor dibuje su firma para continuar.'); return }
     if (!resp2)   { alert('Seleccione una respuesta para la pregunta 2.'); return }
     if (!resp3)   { alert('Seleccione una respuesta para la pregunta 3.'); return }
@@ -269,20 +304,21 @@ function EvaluacionContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fecha,
-          tema,
-          nombre_capacitacion: plantilla.nombre_capacitacion,
-          nombre_trabajador:   trabajador,
+          qr_token:    token,
+          nombre_trabajador: trabajador,
           area,
-          nombre_capacitador:  capacitador,
-          entidad,
           respuesta_1: resp1,
           respuesta_2: resp2,
           respuesta_3: resp3,
           respuesta_4: resp4,
           firma_base64,
-          qr_token:    token,
-          id_plantilla: plantilla.id,
+          // Fallback: solo usado en servidor si plantilla no tiene id_capacitacion
+          fecha,
+          tema,
+          nombre_capacitacion: plantilla?.nombre_capacitacion,
+          nombre_capacitador:  capacitador,
+          entidad,
+          id_plantilla: plantilla?.id,
         }),
       })
 
@@ -299,7 +335,7 @@ function EvaluacionContent() {
     }
   }
 
-  // ── Renders ───────────────────────────────────────────────────────────────
+  // ── Renders de estado ─────────────────────────────────────────────────────
   if (estado === 'cargando') {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#f8f9fa' }}>
@@ -337,11 +373,8 @@ function EvaluacionContent() {
           <h2 className="text-xl font-bold mb-1" style={{ color: aprobado ? '#155724' : '#721c24' }}>
             {aprobado ? '¡Aprobado!' : 'No aprobado'}
           </h2>
-          <p className="text-sm mb-4" style={{ color: GRIS }}>
-            Evaluación registrada exitosamente
-          </p>
+          <p className="text-sm mb-4" style={{ color: GRIS }}>Evaluación registrada exitosamente</p>
 
-          {/* Puntaje visual */}
           <div className="rounded-2xl p-6 mb-4" style={{ background: aprobado ? '#f0fdf4' : '#fef2f2' }}>
             <p className="text-5xl font-bold" style={{ color: aprobado ? VERDE : ROJO, fontFamily: 'system-ui' }}>
               {puntajeFinal?.toFixed(1)}
@@ -356,7 +389,7 @@ function EvaluacionContent() {
           </div>
 
           <p className="text-xs" style={{ color: GRIS }}>
-            La evaluación se aprueba con un puntaje igual o superior a 7.5 puntos.
+            La evaluación se aprueba con un puntaje igual o superior a 6.0 puntos.
           </p>
         </div>
       </div>
@@ -390,9 +423,7 @@ function EvaluacionContent() {
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <ClipboardList className="w-6 h-6 text-white flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-white font-bold text-sm leading-tight truncate">
-              Evaluación de Eficacia
-            </p>
+            <p className="text-white font-bold text-sm leading-tight truncate">Evaluación de Eficacia</p>
             <p className="text-white/75 text-xs truncate">{plantilla?.nombre_capacitacion}</p>
           </div>
           <span className="text-white/75 text-xs font-mono flex-shrink-0">GH-FO-14</span>
@@ -403,39 +434,63 @@ function EvaluacionContent() {
 
         {/* ── Sección A: Datos de control ─────────────────────────────────── */}
         <div className="bg-white rounded-2xl p-5 sm:p-6 shadow-sm" style={{ border: '1px solid #e9ecef' }}>
-          <h2 className="text-sm font-bold mb-5 flex items-center gap-2" style={{ color: '#212529' }}>
-            <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: VERDE }}>A</span>
-            Datos de control
-          </h2>
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-sm font-bold flex items-center gap-2" style={{ color: '#212529' }}>
+              <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: VERDE }}>A</span>
+              Datos de control
+            </h2>
+            {contexto && (
+              <span
+                className="text-xs font-semibold px-2.5 py-1 rounded-full"
+                style={{ background: '#d4edda', color: '#155724' }}
+              >
+                Pre-cargado automáticamente
+              </span>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Fecha *</label>
-              <input
-                type="date"
-                required
-                value={fecha}
-                onChange={e => setFecha(e.target.value)}
-                className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
-                style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
-                onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
-                onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Tema capacitación *</label>
-              <input
-                type="text"
-                required
-                value={tema}
-                onChange={e => setTema(e.target.value)}
-                placeholder="Ej: Alturas y espacios confinados"
-                className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
-                style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
-                onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
-                onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
-              />
-            </div>
+
+            {/* Fecha — solo lectura si hay contexto */}
+            {contexto ? (
+              <CampoSoloLectura label="Fecha" valor={fecha} />
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Fecha *</label>
+                <input
+                  type="date"
+                  required
+                  value={fecha}
+                  onChange={e => setFecha(e.target.value)}
+                  className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
+                  style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
+                  onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
+                  onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            )}
+
+            {/* Tema — solo lectura si hay contexto */}
+            {contexto ? (
+              <CampoSoloLectura label="Tema capacitación" valor={tema} />
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Tema capacitación *</label>
+                <input
+                  type="text"
+                  required
+                  value={tema}
+                  onChange={e => setTema(e.target.value)}
+                  placeholder="Ej: Alturas y espacios confinados"
+                  className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
+                  style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
+                  onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
+                  onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            )}
+
+            {/* Nombre trabajador — siempre editable */}
             <div>
               <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Nombre trabajador *</label>
               <input
@@ -450,6 +505,8 @@ function EvaluacionContent() {
                 onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
               />
             </div>
+
+            {/* Área — siempre editable */}
             <div>
               <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Área *</label>
               <input
@@ -464,34 +521,47 @@ function EvaluacionContent() {
                 onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Capacitador *</label>
-              <input
-                type="text"
-                required
-                value={capacitador}
-                onChange={e => setCapacitador(e.target.value)}
-                placeholder="Nombre del instructor"
-                className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
-                style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
-                onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
-                onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Entidad *</label>
-              <input
-                type="text"
-                required
-                value={entidad}
-                onChange={e => setEntidad(e.target.value)}
-                placeholder="Ej: ARL SURA / SENA"
-                className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
-                style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
-                onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
-                onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
-              />
-            </div>
+
+            {/* Capacitador — solo lectura si hay contexto */}
+            {contexto ? (
+              <CampoSoloLectura label="Capacitador" valor={capacitador} />
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Capacitador *</label>
+                <input
+                  type="text"
+                  required
+                  value={capacitador}
+                  onChange={e => setCapacitador(e.target.value)}
+                  placeholder="Nombre del instructor"
+                  className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
+                  style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
+                  onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
+                  onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            )}
+
+            {/* Entidad — solo lectura si hay contexto */}
+            {contexto ? (
+              <CampoSoloLectura label="Entidad" valor={entidad} />
+            ) : (
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: GRIS }}>Entidad *</label>
+                <input
+                  type="text"
+                  required
+                  value={entidad}
+                  onChange={e => setEntidad(e.target.value)}
+                  placeholder="Ej: ARL SURA / SENA"
+                  className="w-full rounded-xl border px-3 py-3 outline-none transition-all"
+                  style={{ borderColor: '#dee2e6', color: '#212529', fontSize: 16 }}
+                  onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
+                  onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
+                />
+              </div>
+            )}
+
           </div>
         </div>
 
@@ -501,9 +571,7 @@ function EvaluacionContent() {
             <h2 className="text-sm font-bold flex items-center gap-2" style={{ color: '#212529' }}>
               <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{ background: VERDE }}>B</span>
               Cuestionario
-              <span className="text-xs font-normal ml-1" style={{ color: GRIS }}>
-                Cada pregunta vale 2.5 puntos
-              </span>
+              <span className="text-xs font-normal ml-1" style={{ color: GRIS }}>Cada pregunta vale 2.5 puntos</span>
             </h2>
 
             {/* Pregunta 1 — Texto abierto */}
@@ -527,7 +595,7 @@ function EvaluacionContent() {
               />
             </div>
 
-            {/* Preguntas 2, 3, 4 — Selección */}
+            {/* Preguntas 2, 3, 4 — Selección múltiple */}
             <RadioGroup
               pregNum={2}
               texto={plantilla.pregunta_2_texto}
@@ -568,7 +636,7 @@ function EvaluacionContent() {
 
         {/* Aviso legal */}
         <p className="text-xs text-center" style={{ color: GRIS }}>
-          La evaluación se aprueba con un puntaje igual o superior a 7.5 puntos.
+          La evaluación se aprueba con un puntaje igual o superior a 6.0 puntos.
           Al enviar confirma que las respuestas son propias.
         </p>
 

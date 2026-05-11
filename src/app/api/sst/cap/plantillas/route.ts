@@ -46,7 +46,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const record = await crearPlantilla(body)
+    // id_capacitacion es opcional — vincula la plantilla a un sst_cap_registros.id
+    const payload = {
+      nombre_capacitacion:  body.nombre_capacitacion,
+      pregunta_1_texto:     body.pregunta_1_texto,
+      pregunta_2_texto:     body.pregunta_2_texto,
+      pregunta_2_opciones:  body.pregunta_2_opciones,
+      pregunta_2_correcta:  body.pregunta_2_correcta,
+      pregunta_3_texto:     body.pregunta_3_texto,
+      pregunta_3_opciones:  body.pregunta_3_opciones,
+      pregunta_3_correcta:  body.pregunta_3_correcta,
+      pregunta_4_texto:     body.pregunta_4_texto,
+      pregunta_4_opciones:  body.pregunta_4_opciones,
+      pregunta_4_correcta:  body.pregunta_4_correcta,
+      activo:               body.activo ?? true,
+      ...(body.id_capacitacion ? { id_capacitacion: String(body.id_capacitacion) } : {}),
+    }
+
+    const record = await crearPlantilla(payload)
     return NextResponse.json({ record }, { status: 201 })
   } catch (e) {
     console.error('[POST /api/sst/cap/plantillas]', e)

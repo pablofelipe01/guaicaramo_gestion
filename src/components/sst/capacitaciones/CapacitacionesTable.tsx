@@ -16,12 +16,13 @@ import type { AirtableRecord } from '@/lib/airtable-client'
 
 type Actividad = AirtableRecord<CapActividadFields>
 
-const ESTADOS: CapEstadoGeneral[] = ['Sin programar', 'Programado', 'En ejecución', 'Completado', 'Cancelado']
+const ESTADOS: CapEstadoGeneral[] = ['Sin programar', 'Programado', 'En ejecución', 'Ejecutada', 'Completado', 'Cancelado']
 
 const ESTADO_DOT: Record<string, string> = {
   'Sin programar': '#DC3545',
   'Programado':    '#3B82F6',
   'En ejecución':  '#F97316',
+  'Ejecutada':     '#22C55E',
   'Completado':    '#22C55E',
   'Cancelado':     '#EF4444',
 }

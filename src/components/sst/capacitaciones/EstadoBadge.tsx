@@ -31,6 +31,7 @@ const ESTADOS: Record<string, EstadoConfig> = {
   'Programado':     { bg: 'rgba(59,130,246,0.08)',                  border: '1px solid rgba(59,130,246,0.3)', text: '#1D4ED8',             dot: 'var(--estado-programado)' },
   'En ejecución':   { bg: 'rgba(245,158,11,0.1)',                   border: '1px solid rgba(245,158,11,0.3)', text: '#92400E',             dot: '#F59E0B', dotAnimate: true },
   'Completado':     { bg: 'var(--sst-cumple-bg)',                   border: '1px solid rgba(22,101,52,0.25)', text: 'var(--sst-cumple)',   dot: 'var(--sst-cumple)' },
+  'Ejecutada':      { bg: 'var(--sst-cumple-bg)',                   border: '1px solid rgba(22,101,52,0.25)', text: 'var(--sst-cumple)',   dot: 'var(--estado-ejecutado)' },
   'Cancelado':      { bg: 'var(--sst-critico-bg)',                  border: '1px solid rgba(220,53,69,0.25)', text: 'var(--sst-critico)',  dot: 'var(--sst-critico)' },
   'Ejecutado':      { bg: 'var(--sst-cumple-bg)',                   border: '1px solid rgba(22,101,52,0.25)', text: 'var(--sst-cumple)',   dot: 'var(--estado-ejecutado)' },
   'Reprogramado':   { bg: 'var(--sst-riesgo-bg)',                   border: '1px solid rgba(217,119,6,0.25)', text: 'var(--sst-riesgo)',   dot: 'var(--estado-reprogramado)' },

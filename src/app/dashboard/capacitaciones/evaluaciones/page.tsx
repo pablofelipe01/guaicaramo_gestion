@@ -126,12 +126,12 @@ function NuevaPlantillaForm({
 
     for (let i = 0; i < 3; i++) {
       const p = form.preguntas[i]
-      if (!p.texto.trim()) { setError(`La Pregunta ${i + 2} necesita enunciado.`); return }
+      if (!p.texto.trim()) { setOpenQ(i + 2); setError(`La Pregunta ${i + 2} necesita enunciado.`); return }
       const validas = p.opciones.filter(o => o.trim())
-      if (validas.length < 2) { setError(`La Pregunta ${i + 2} necesita al menos 2 opciones.`); return }
+      if (validas.length < 2) { setOpenQ(i + 2); setError(`La Pregunta ${i + 2} necesita al menos 2 opciones.`); return }
       const unicasSet = new Set(validas.map(o => o.toLowerCase()))
-      if (unicasSet.size !== validas.length) { setError(`La Pregunta ${i + 2} tiene opciones duplicadas.`); return }
-      if (p.correcta === '') { setError(`Selecciona la respuesta correcta de la Pregunta ${i + 2}.`); return }
+      if (unicasSet.size !== validas.length) { setOpenQ(i + 2); setError(`La Pregunta ${i + 2} tiene opciones duplicadas.`); return }
+      if (p.correcta === '') { setOpenQ(i + 2); setError(`Selecciona la respuesta correcta de la Pregunta ${i + 2}.`); return }
     }
 
     const toPayload = (p: PreguntaSeleccion) => ({
@@ -420,11 +420,16 @@ export default function EvaluacionesAdminPage() {
   useEffect(() => { cargar() }, [cargar])
 
   const crearPlantilla = async (data: PlantillaPayload) => {
-    const res = await fetch('/api/sst/cap/plantillas', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
+    let res: Response
+    try {
+      res = await fetch('/api/sst/cap/plantillas', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      })
+    } catch {
+      throw new Error('Sin conexión con el servidor. Verifica que la aplicación esté corriendo.')
+    }
     if (!res.ok) {
       const err = await res.json() as { message?: string }
       throw new Error(err.message ?? 'Error al crear plantilla')

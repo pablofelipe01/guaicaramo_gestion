@@ -222,7 +222,8 @@ export function CronogramaMensual({ actividades, programaciones, filtroEstados, 
                     }}
                   >
                     <div className="flex items-center justify-center gap-1.5">
-                      <span className="text-xs">S{s}<span className="hidden sm:inline">emana {s}</span></span>
+                      <span className="text-xs sm:hidden">S{s}</span>
+                      <span className="text-xs hidden sm:inline">Semana {s}</span>
                     </div>
                     <div className="text-[10px] font-medium mt-0.5 hidden sm:block" style={{ color: 'rgba(255,255,255,0.85)' }}>{semanaHeaders[s - 1]}</div>
                   </th>

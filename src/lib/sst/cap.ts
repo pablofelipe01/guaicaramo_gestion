@@ -230,41 +230,142 @@ export async function actualizarProgramacion(id: string, fields: Partial<CapProg
 }
 
 /**
- * Recalcula y persiste el estado_general de una actividad según el conjunto
- * actual de sus programaciones:
+ * Mapa de meses en español a índice de mes JavaScript (0-based).
+ */
+const MES_INDEX: Record<string, number> = {
+  Enero: 0, Febrero: 1, Marzo: 2, Abril: 3, Mayo: 4, Junio: 5,
+  Julio: 6, Agosto: 7, Septiembre: 8, Octubre: 9, Noviembre: 10, Diciembre: 11,
+}
+
+/**
+ * Calcula el rango de fechas (inicio y fin) para una semana dentro de un mes.
+ * Semana 1 = días 1-7, Semana 2 = días 8-14, Semana 3 = días 15-21,
+ * Semana 4 = días 22-28, Semana 5 = día 29 hasta fin del mes.
+ */
+function getSemanaRange(mes: string, semana: number, anio: number): { inicio: Date; fin: Date } {
+  const mesIdx = MES_INDEX[mes] ?? 0
+  const diaInicio = (semana - 1) * 7 + 1
+  const inicio = new Date(anio, mesIdx, diaInicio)
+  inicio.setHours(0, 0, 0, 0)
+  const ultimoDiaMes = new Date(anio, mesIdx + 1, 0).getDate()
+  const diaFin = Math.min(diaInicio + 6, ultimoDiaMes)
+  const fin = new Date(anio, mesIdx, diaFin)
+  fin.setHours(23, 59, 59, 999)
+  return { inicio, fin }
+}
+
+/**
+ * Recalcula y persiste el estado_general de una actividad:
  *
- *  - Sin programaciones          → "Sin programar"
- *  - Todas Cancelado             → "Cancelado"
- *  - Todas Ejecutado             → "Completado"
- *  - Al menos una Ejecutado      → "En ejecución"
- *  - Al menos una Programado/Reprogramado, ninguna Ejecutado → "Programado"
+ *  - Sin programaciones ni registros        → "Sin programar"
+ *  - Todas las programaciones canceladas
+ *    y sin registros                        → "Cancelado"
+ *  - Registros en una semana programada
+ *    cuyo período coincide con hoy          → "En ejecución"
+ *  - Registros en semanas ya finalizadas    → "Ejecutada"
+ *  - Programaciones sin registros todavía  → "Programado"
  */
 async function recalcularEstadoActividad(actividadId: string): Promise<void> {
-  const programaciones = await listarProgramacion({ actividadId })
+  const [programaciones, registros, act] = await Promise.all([
+    listarProgramacion({ actividadId }),
+    listarRegistros({ actividadId }),
+    getRecord<CapActividadFields>(T_ACTIVIDADES, actividadId).catch(() => null),
+  ])
+
+  if (!act) return
+
+  const anio: number = act.fields.anio ?? 2026
+  const hoy = new Date()
+  hoy.setHours(0, 0, 0, 0)
 
   let nuevoEstado: import('@/types/sst/cap').CapEstadoGeneral
 
-  if (programaciones.length === 0) {
+  if (programaciones.length === 0 && registros.length === 0) {
     nuevoEstado = 'Sin programar'
   } else {
     const estados = programaciones.map(p => p.fields.estado)
-    const todasCancelado   = estados.every(e => e === 'Cancelado')
-    const todasEjecutado   = estados.every(e => e === 'Ejecutado')
-    const algunaEjecutado  = estados.some(e => e === 'Ejecutado')
+    const todasCancelado = estados.length > 0 && estados.every(e => e === 'Cancelado')
 
-    if (todasCancelado)  nuevoEstado = 'Cancelado'
-    else if (todasEjecutado)  nuevoEstado = 'Completado'
-    else if (algunaEjecutado) nuevoEstado = 'En ejecución'
-    else                      nuevoEstado = 'Programado'
+    if (todasCancelado && registros.length === 0) {
+      nuevoEstado = 'Cancelado'
+    } else {
+      // Agrupar registros por programacion_id
+      const regPorProg = new Map<string, typeof registros>()
+      const regsSinProg: typeof registros = []
+      for (const reg of registros) {
+        if (reg.fields.programacion_id) {
+          const arr = regPorProg.get(reg.fields.programacion_id) ?? []
+          arr.push(reg)
+          regPorProg.set(reg.fields.programacion_id, arr)
+        } else {
+          regsSinProg.push(reg)
+        }
+      }
+
+      let hayEjecucionEnSemanaActual = false
+      let hayEjecucionEnSemanaAnterior = false
+
+      // Evaluar programaciones que tienen registros vinculados
+      for (const prog of programaciones) {
+        if (prog.fields.estado === 'Cancelado') continue
+        const regsVinculados = regPorProg.get(prog.id) ?? []
+        if (regsVinculados.length === 0) continue
+
+        let inicio: Date
+        let fin: Date
+        if (prog.fields.fecha_programada) {
+          // Usar la semana ISO que contiene la fecha programada
+          const base = new Date(prog.fields.fecha_programada)
+          const dow = base.getDay()
+          const diff = dow === 0 ? -6 : 1 - dow // retroceder al lunes
+          inicio = new Date(base)
+          inicio.setDate(base.getDate() + diff)
+          inicio.setHours(0, 0, 0, 0)
+          fin = new Date(inicio)
+          fin.setDate(inicio.getDate() + 6)
+          fin.setHours(23, 59, 59, 999)
+        } else {
+          ;({ inicio, fin } = getSemanaRange(prog.fields.mes, prog.fields.semana, anio))
+        }
+
+        if (hoy >= inicio && hoy <= fin) {
+          hayEjecucionEnSemanaActual = true
+        } else if (fin < hoy) {
+          hayEjecucionEnSemanaAnterior = true
+        }
+      }
+
+      // Registros sin programacion asociada: usar la semana de la fecha de ejecución
+      for (const reg of regsSinProg) {
+        const fechaEj = new Date(reg.fields.fecha_ejecucion)
+        fechaEj.setHours(0, 0, 0, 0)
+        const dow = fechaEj.getDay()
+        const diff = dow === 0 ? -6 : 1 - dow
+        const lunes = new Date(fechaEj)
+        lunes.setDate(fechaEj.getDate() + diff)
+        lunes.setHours(0, 0, 0, 0)
+        const domingo = new Date(lunes)
+        domingo.setDate(lunes.getDate() + 6)
+        domingo.setHours(23, 59, 59, 999)
+        if (hoy >= lunes && hoy <= domingo) {
+          hayEjecucionEnSemanaActual = true
+        } else if (domingo < hoy) {
+          hayEjecucionEnSemanaAnterior = true
+        }
+      }
+
+      if (hayEjecucionEnSemanaActual)     nuevoEstado = 'En ejecución'
+      else if (hayEjecucionEnSemanaAnterior) nuevoEstado = 'Ejecutada'
+      else                                    nuevoEstado = 'Programado'
+    }
   }
 
   // Solo actualizar si cambió, para evitar escrituras innecesarias
-  try {
-    const act = await getRecord<CapActividadFields>(T_ACTIVIDADES, actividadId)
-    if (act.fields.estado_general !== nuevoEstado) {
+  if (act.fields.estado_general !== nuevoEstado) {
+    try {
       await updateRecord<CapActividadFields>(T_ACTIVIDADES, actividadId, { estado_general: nuevoEstado })
-    }
-  } catch { /* actividad no encontrada, continuar */ }
+    } catch { /* continuar */ }
+  }
 }
 
 /**
@@ -362,16 +463,7 @@ export async function crearRegistro(fields: Partial<CapRegistroFields>) {
 
   // Fix 3: no sobreescribir estado si la actividad ya está Completado
   if (fields.actividad_id) {
-    try {
-      const act = await getRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id)
-      if (act.fields.estado_general !== 'Completado') {
-        await updateRecord<CapActividadFields>(T_ACTIVIDADES, fields.actividad_id, {
-          estado_general: 'En ejecución',
-        })
-      }
-    } catch { /* actividad no encontrada, continuar */ }
-
-    // Recalcular estado basado en todas las programaciones
+    // Recalcular estado basado en registros y fechas de programación
     await recalcularEstadoActividad(fields.actividad_id)
   }
 

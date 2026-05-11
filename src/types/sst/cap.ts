@@ -42,13 +42,14 @@ export type CapProveedor =
  * (ver `recalcularEstadoActividad` en lib/sst/cap.ts).
  *
  * Transiciones válidas:
- *   Sin programar → Programado → En ejecución → Completado
+ *   Sin programar → Programado → En ejecución → Ejecutada
  *                               ↘ Cancelado
  */
 export type CapEstadoGeneral =
   | 'Sin programar'
   | 'Programado'
   | 'En ejecución'
+  | 'Ejecutada'
   | 'Completado'
   | 'Cancelado'
 
@@ -356,6 +357,11 @@ export interface CapPlantillaFields {
   qr_token: string
   /** Si la plantilla está disponible para nuevas evaluaciones. */
   activo: boolean
+  /**
+   * FK → sst_cap_registros.id — Vincula la plantilla a la ejecución (registro) específica.
+   * Campo de solo texto en Airtable. Debe agregarse manualmente en la UI de Airtable.
+   */
+  id_capacitacion?: string
 }
 
 /**
@@ -400,4 +406,10 @@ export interface CapEvaluacionFields {
   id_plantilla: string
   /** Estado del ciclo de vida de la evaluación. */
   estado: CapEvaluacionEstado
+  /**
+   * FK → sst_cap_registros.id — permite filtrar evaluaciones por ejecución.
+   * Se copia desde la plantilla al guardar la evaluación.
+   * Debe agregarse manualmente como campo singleLineText en Airtable.
+   */
+  id_capacitacion?: string
 }
