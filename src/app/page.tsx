@@ -133,13 +133,6 @@ export default function LandingPage() {
             <p className="hero-sub">
               La plataforma SG-SST de Guaicaramo: tecnología hecha para que cada trabajador llegue seguro, vuelva a casa sano y todo el equipo crezca con respaldo.
             </p>
-            <div className="hero-stats">
-              <span>Res. <b>0312</b></span>
-              <span className="sep"></span>
-              <span>Decreto <b>1072/15</b></span>
-              <span className="sep"></span>
-              <span><b>ISO</b> 45001</span>
-            </div>
             <div className="hero-ctas">
               <a href="/auth" className="btn btn-primary btn-large">Iniciar sesión <span className="arrow">→</span></a>
             </div>
@@ -216,13 +209,6 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              {/* BRIDGE */}
-              <div className="ps-bridge" aria-hidden="true">
-                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12 H19"/><path d="M13 6 L19 12 L13 18"/>
-                </svg>
               </div>
 
               {/* DESPUÉS */}
@@ -316,110 +302,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ===== KPIs ===== */}
-        <section className="kpis" aria-label="Métricas clave">
-          <div className="container">
-            <div className="kpis-grid">
-              <div className="kpi">
-                <div className="kpi-number" data-count="22">22</div>
-                <div className="kpi-label">Módulos SST activos</div>
-              </div>
-              <div className="kpi">
-                <div className="kpi-number" data-count="100">100</div>
-                <div className="kpi-label">% Trazabilidad completa</div>
-              </div>
-              <div className="kpi">
-                <div className="kpi-number" data-count="68">68</div>
-                <div className="kpi-label">% Menos tiempo en trámites</div>
-              </div>
-              <div className="kpi">
-                <div className="kpi-number" data-count="3">3</div>
-                <div className="kpi-label">× Velocidad cerrando hallazgos</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ===== FEATURE — CAPACITACIONES ===== */}
-        <section className="feature" aria-label="Módulo de capacitaciones">
-          <div className="container">
-            <div className="feature-grid">
-              <div className="scroll-reveal-left">
-                <span className="badge"><span className="dot"></span>Módulo destacado</span>
-                <h2>Capacitaciones que <span className="accent">certifican</span> y trazan.</h2>
-                <p className="lead">
-                  Desde el plan anual hasta la firma digital del trabajador. Todo en un solo flujo, sin papel.
-                </p>
-                <ol className="steps">
-                  {[
-                    'Define el plan de capacitación anual con temas, fechas y responsables.',
-                    'Comparte el código QR: el trabajador firma desde su celular.',
-                    'El sistema registra asistencia, genera el acta y emite el certificado PDF.',
-                    'Los indicadores se actualizan automáticamente en el dashboard.',
-                  ].map((step, i) => (
-                    <li key={i}>
-                      <span className="num">{i + 1}</span>
-                      {step}
-                    </li>
-                  ))}
-                </ol>
-                <a href="/auth" className="btn btn-primary">Explorar capacitaciones <span className="arrow">→</span></a>
-              </div>
-
-              {/* MOCKUP */}
-              <div className="mockup-wrap scroll-reveal-right">
-                <div className="mockup">
-                  <div className="mockup-top">
-                    <div className="dots"><i></i><i></i><i></i></div>
-                    <span className="title">Capacitación · Seguridad en Alturas</span>
-                    <span className="pill-live"><span className="dot"></span>En curso</span>
-                  </div>
-                  <div className="mockup-body">
-                    <div className="progress-row">
-                      {['Creada', 'Convocada', 'En curso', 'Cerrada'].map((step, i) => (
-                        <div key={i} className={`progress-step${i < 2 ? ' done' : i === 2 ? ' current' : ''}`}>
-                          <div className="bar"></div>
-                          <span className="lbl">{step}</span>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                      <span className="cover-pill">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        8 asistentes registrados
-                      </span>
-                      <span style={{ fontSize: 11, color: '#94A3B8', fontFamily: 'monospace' }}>14 may 2026</span>
-                    </div>
-                    <div className="att-list">
-                      {[
-                        { initials: 'JM', cls: 'av-1', name: 'Jorge Medina', role: 'Operario · TUR-A', ok: true },
-                        { initials: 'AL', cls: 'av-2', name: 'Ana López', role: 'Supervisora · TUR-B', ok: true },
-                        { initials: 'CR', cls: 'av-3', name: 'Carlos Ruiz', role: 'Contratista · EXT', ok: false },
-                      ].map((att, i) => (
-                        <div key={i} className="att-row">
-                          <div className={`att-avatar ${att.cls}`}>{att.initials}</div>
-                          <div className="att-name">
-                            {att.name}
-                            <small>{att.role}</small>
-                          </div>
-                          <span className={`pill-status ${att.ok ? 'pill-ok' : 'pill-no'}`}>{att.ok ? 'Firmó' : 'Pendiente'}</span>
-                          <span className="sign-icon">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 6 L9 17 L4 12"/></svg>
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="mockup-foot">
-                    <span>3 / 8 firmados</span>
-                    <span style={{ color: '#22C55E' }}>● Acta en tiempo real</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* ===== PHVA ===== */}
         <section className="phva" id="phva" aria-label="Ciclo PHVA">
           <div className="container">
@@ -507,7 +389,7 @@ export default function LandingPage() {
                   Visión Guaicaramo
                 </p>
                 <h2 style={{ color: 'var(--verde-900)' }}>
-                  Tecnología que cuida.<br/><span style={{ color: 'var(--naranja-600)' }}>Personas</span> que <span style={{ color: 'var(--verde-600)' }}>crecen.</span>
+                  Tecnología que cuida.<br/><span style={{ color: 'var(--verde-300)' }}>Personas</span> que <span style={{ color: 'var(--naranja-600)' }}>crecen.</span>
                 </h2>
                 <p style={{ margin: '16px auto 0', fontSize: 16, color: 'var(--gris-700)', maxWidth: 500 }}>
                   Cada módulo nace de una creencia simple: la mejor inversión de Guaicaramo es su gente. Por eso digitalizamos procesos para liberar tiempo, anticipar riesgos y construir una cultura donde cuidar es parte del trabajo, no un trámite aparte.
@@ -654,6 +536,17 @@ const CSS = `
     box-shadow: 0 6px 20px rgba(34,197,94,0.32), 0 1px 0 rgba(255,255,255,0.5) inset;
   }
   .btn-primary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 14px 36px rgba(34,197,94,0.48), 0 0 0 4px rgba(74,222,128,0.18); }
+
+  .btn-accent {
+    background: linear-gradient(135deg,#FDBA74 0%,#FB923C 50%,#EA580C 100%);
+    color: #FFFFFF;
+    box-shadow: 0 6px 20px rgba(234,88,12,0.38), 0 1px 0 rgba(255,255,255,0.4) inset;
+  }
+  .btn-accent:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 14px 36px rgba(234,88,12,0.55), 0 0 0 4px rgba(253,186,116,0.22);
+    filter: brightness(1.06);
+  }
 
   .btn-secondary {
     border: 1.5px solid rgba(74,222,128,0.5); color: var(--verde-200);
@@ -1111,29 +1004,22 @@ const CSS = `
   @media (max-width:1023px) {
     .modules-grid  { grid-template-columns:repeat(3,1fr); }
     .ps-stage      { grid-template-columns:1fr; }
-    .ps-bridge     { left:50%; top:auto; bottom:-44px; transform:translateX(-50%) rotate(90deg); }
+    .ps-bridge     { left:50%; top:100%; transform:translate(-50%,-50%) rotate(90deg); }
     .ps-panel.before { min-height:auto; }
     .ps-footstats  { grid-template-columns:1fr; }
-    .kpis-grid     { grid-template-columns:repeat(2,1fr); }
-    .kpi:nth-child(3)::before { display:none; }
-    .feature-grid  { grid-template-columns:1fr; gap:48px; }
-    .phva-grid     { grid-template-columns:1fr; gap:48px; }
-    .test-grid     { grid-template-columns:1fr; gap:48px; }
+    .phva-grid, .test-grid { grid-template-columns:1fr; gap:48px; }
     .foot-grid     { grid-template-columns:1fr 1fr; }
-    .nav-links, .nav-cta { display:none; }
-    .nav-toggle    { display:grid; place-items:center; }
   }
   @media (max-width:767px) {
     .container     { padding:0 20px; }
+    .nav-links, .nav-cta { display:none; }
+    .nav-toggle    { display:grid; place-items:center; }
     .hero          { padding:120px 0 100px; min-height:auto; }
     h1             { font-size:38px !important; }
     .modules-grid  { grid-template-columns:repeat(2,1fr); }
-    .kpis-grid     { grid-template-columns:repeat(2,1fr); gap:32px 0; }
-    .kpi::before   { display:none !important; }
-    .mockup        { transform:none !important; }
-    .mockup:hover  { transform:none !important; }
     .norm-cards    { grid-template-columns:1fr; }
-    .problem-solution, .modules, .feature, .phva, .testimonial, .kpis { padding:80px 0; }
+    .foot-grid     { grid-template-columns:1fr; gap:32px; }
+    .problem-solution, .modules, .phva, .testimonial { padding:80px 0; }
     .trust-inner   { gap:24px; }
     .trust-logos   { gap:20px; }
     .quote-text    { font-size:18px; }
