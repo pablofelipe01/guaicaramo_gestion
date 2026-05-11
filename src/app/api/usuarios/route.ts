@@ -11,6 +11,8 @@ interface UserFields {
   Estado?: string | { id: string; name: string; color?: string }
   Rol?: string[] | Array<{ id: string; name?: string }>
   'Fecha Creacion'?: string
+  Documento?: string
+  Telefono?: string
 }
 
 function getEstadoName(estado: UserFields['Estado']): string {
@@ -85,7 +87,7 @@ export async function GET(request: NextRequest) {
     const [{ records }, rolesMap] = await Promise.all([
       listRecords<UserFields>(TABLE(), {
         sort: [{ field: 'Nombre Completo', direction: 'asc' }],
-        fields: ['Email', 'Nombre Completo', 'Estado', 'Rol', 'Fecha Creacion'],
+        fields: ['Email', 'Nombre Completo', 'Estado', 'Rol', 'Fecha Creacion', 'Documento', 'Telefono'],
       }),
       buildRolesMap(),
     ])
@@ -105,6 +107,8 @@ export async function GET(request: NextRequest) {
         rol: getRolName(r.fields.Rol, rolesMap),
         rolId,
         fechaCreacion: r.fields['Fecha Creacion'] ?? '',
+        documento: r.fields.Documento ?? '',
+        telefono: r.fields.Telefono ?? '',
       }
     })
 

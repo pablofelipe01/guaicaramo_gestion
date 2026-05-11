@@ -78,6 +78,45 @@ export function getCategoriaColor(categoria: string): string {
   return colorPorCategoria[categoria] ?? '#64748B'
 }
 
+// ─── Estado derivado (cliente) ────────────────────────────────────────────────
+
+export type EstadoActividadCliente =
+  | 'Sin programar'
+  | 'Programado'
+  | 'En ejecución'
+  | 'Completado'
+  | 'Cancelado'
+
+/**
+ * Deriva el estado visual de una actividad a partir de las programaciones
+ * ya cargadas en el cliente.
+ *
+ * Misma lógica que `derivarEstadoActividad` en cap-estados.ts (server-only),
+ * duplicada aquí para que los Client Components no dependan de código server.
+ *
+ * Reglas:
+ *   Sin programar → sin programaciones
+ *   Cancelado     → todas las programaciones están Canceladas
+ *   Completado    → al menos una Ejecutada y ninguna pendiente
+ *   En ejecución  → al menos una Ejecutada y aún quedan pendientes
+ *   Programado    → hay programaciones, ninguna ejecutada
+ */
+export function derivarEstadoCliente(
+  programaciones: Array<{ estado: string }>
+): EstadoActividadCliente {
+  if (programaciones.length === 0) return 'Sin programar'
+
+  const activas = programaciones.filter(p => p.estado !== 'Cancelado')
+  if (activas.length === 0) return 'Cancelado'
+
+  const ejecutadas = activas.filter(p => p.estado === 'Ejecutado')
+  const pendientes = activas.filter(p => p.estado === 'Programado' || p.estado === 'Reprogramado')
+
+  if (ejecutadas.length > 0 && pendientes.length === 0) return 'Completado'
+  if (ejecutadas.length > 0 && pendientes.length > 0)  return 'En ejecución'
+  return 'Programado'
+}
+
 /**
  * Devuelve el color de fondo (con transparencia) asociado a una categoría.
  * Complementa a `getCategoriaColor` para crear chips y etiquetas con relleno suave.

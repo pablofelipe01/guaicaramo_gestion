@@ -9,7 +9,7 @@ import { EstadoBadge } from '@/components/sst/capacitaciones/EstadoBadge'
 import { RegistroForm } from '@/components/sst/capacitaciones/RegistroForm'
 import { TimelineActividad } from '@/components/sst/capacitaciones/TimelineActividad'
 import { BarraMensual } from '@/components/sst/capacitaciones/BarraMensual'
-import { getCategoriaColor, calcularPct } from '@/lib/sst/cap-client'
+import { getCategoriaColor, calcularPct, derivarEstadoCliente } from '@/lib/sst/cap-client'
 import {
   ArrowLeft, Award, Users, Calendar, ClipboardCheck, BookOpen,
   AlertTriangle, Plus, Target, Pencil, Trash2,
@@ -18,6 +18,7 @@ import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapC
 import type { AirtableRecord } from '@/lib/airtable-client'
 import { getAuthHeaders } from '@/lib/client/authFetch'
 import SeccionAsistentesReportes from '@/components/sst/capacitaciones/SeccionAsistentesReportes'
+import AlertasActividad from '@/components/sst/capacitaciones/AlertasActividad'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog = AirtableRecord<CapProgramacionFields>
@@ -61,6 +62,13 @@ export default function CapacitacionDetallePage() {
       }
       if (progRes.ok) setProgramaciones((await progRes.json()).records ?? [])
       if (regRes.ok)  setRegistros((await regRes.json()).records ?? [])
+
+      // Sincronizar estado en Airtable en background (idempotente, no bloquea la UI)
+      fetch('/api/sst/capacitaciones/sync-estados', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ actividadId: id }),
+      }).catch(() => { /* no crítico */ })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error cargando datos')
     }
@@ -183,6 +191,9 @@ export default function CapacitacionDetallePage() {
   const pctProg = calcularPct(progEjecutadas, programaciones.length)
   const totalAsistentes = registros.reduce((s, r) => s + (r.fields.presentes ?? 0), 0)
 
+  // Estado derivado client-side desde programaciones: siempre correcto aunque Airtable esté desactualizado
+  const estadoEfectivo = derivarEstadoCliente(programaciones.map(p => ({ estado: p.fields.estado })))
+
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
       {/* â”€â”€ Header card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
@@ -221,7 +232,7 @@ export default function CapacitacionDetallePage() {
                   <Award className="w-3 h-3" /> Certificación
                 </span>
               )}
-              <EstadoBadge estado={f.estado_general} size="md" />
+              <EstadoBadge estado={estadoEfectivo} size="md" />
             </div>
 
             <h1 className="text-lg font-bold leading-tight" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>{f.tema}</h1>
@@ -267,6 +278,29 @@ export default function CapacitacionDetallePage() {
         </div>
       </div>
 
+      <AlertasActividad
+        actividad={{
+          id: actividad.id,
+          tema: f.tema,
+          estado_general: estadoEfectivo,
+          alerta_cobertura: f.alerta_cobertura,
+        }}
+        programaciones={programaciones.map(p => ({
+          id: p.id,
+          estado: p.fields.estado,
+          fecha_programada: p.fields.fecha_programada ?? null,
+          mes: p.fields.mes,
+          semana: p.fields.semana,
+        }))}
+        registros={registros.map(r => ({
+          asistentes_presentes: r.fields.presentes ?? 0,
+          asistentes_convocados: r.fields.convocados ?? 0,
+          evaluaciones_aprobadas: r.fields.evaluaciones_aprobadas ?? 0,
+          evaluaciones_realizadas: r.fields.evaluaciones_realizadas ?? 0,
+          fecha_ejecucion: r.fields.fecha_ejecucion ?? null,
+        }))}
+      />
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* â”€â”€ Columna principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div className="lg:col-span-2 flex flex-col gap-4">
@@ -303,10 +337,17 @@ export default function CapacitacionDetallePage() {
           {/* Timeline de ejecuciones */}
           <Card className="p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold mb-4 flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
+              <h2 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
                 <ClipboardCheck className="w-4 h-4" style={{ color: 'var(--sst-cumple)' }} />
                 Historial de ejecución
-                <span className="ml-1 text-xs" style={{ color: 'var(--sst-dark-500)' }}>({registros.length})</span>
+                {registros.length > 0 && (
+                  <span
+                    className="ml-1 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: 'rgba(40,167,69,0.12)', color: '#166534' }}
+                  >
+                    {registros.length}
+                  </span>
+                )}
               </h2>
               <button
                 onClick={() => setModalRegistro(true)}

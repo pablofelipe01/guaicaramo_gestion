@@ -7,6 +7,8 @@ interface UserFields {
   Estado?: string | { id: string; name: string; color?: string }
   Rol?: string[]
   Email?: string
+  Documento?: string
+  Telefono?: string
 }
 
 const T_USUARIOS = () => process.env.AIRTABLE_TABLE_USERS ?? 'Usuarios'
@@ -61,6 +63,23 @@ export async function PUT(
         return NextResponse.json({ success: false, message: 'Estado inválido' }, { status: 400 })
       }
       updates['Estado'] = estado.charAt(0).toUpperCase() + estado.slice(1)
+    }
+
+    if (body.documento !== undefined) {
+      updates['Documento'] = String(body.documento).trim()
+    }
+
+    if (body.telefono !== undefined) {
+      updates['Telefono'] = String(body.telefono).trim()
+    }
+
+    if (body.email !== undefined) {
+      const email = String(body.email).trim().toLowerCase()
+      const EMAIL_RE = /^[^\s@]{1,64}@[^\s@]{1,253}\.[^\s@]{2,}$/
+      if (!EMAIL_RE.test(email)) {
+        return NextResponse.json({ success: false, message: 'Email inválido' }, { status: 400 })
+      }
+      updates['Email'] = email
     }
 
     if (Object.keys(updates).length === 0) {

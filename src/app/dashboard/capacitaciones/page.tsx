@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { Card } from '@/components/ui/Card'
 import { Modal } from '@/components/ui/Modal'
 import { CapacitacionesTable } from '@/components/sst/capacitaciones/CapacitacionesTable'
+import AlertasPanelCap from '@/components/sst/capacitaciones/AlertasPanelCap'
 import { KpiRing } from '@/components/sst/capacitaciones/KpiRing'
 import { ToastContainer, useToast } from '@/components/sst/capacitaciones/Toast'
 import {
@@ -84,7 +85,7 @@ export default function CapacitacionesPage() {
   useEffect(() => { cargar() }, [cargar])
 
   const total       = actividades.length
-  const completadas = actividades.filter(a => a.fields.estado_general === 'Ejecutada' || a.fields.estado_general === 'Completado').length
+  const completadas = actividades.filter(a => a.fields.estado_general === 'Completado').length
   const enEjecucion = actividades.filter(a => a.fields.estado_general === 'En ejecución').length
   const sinProg     = actividades.filter(a => a.fields.estado_general === 'Sin programar').length
   const pctAvance   = calcularPct(completadas + enEjecucion, total)
@@ -254,6 +255,10 @@ export default function CapacitacionesPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {!loading && actividades.length > 0 && (
+        <AlertasPanelCap actividades={actividades} />
       )}
 
       <Card className="p-4">

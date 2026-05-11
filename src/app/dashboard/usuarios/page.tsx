@@ -29,6 +29,8 @@ interface Usuario {
   rol: string
   rolId: string
   fechaCreacion: string
+  documento: string
+  telefono: string
 }
 
 interface RolOpcion {
@@ -128,7 +130,7 @@ export default function UsuariosPage() {
   const [crearLoading, setCrearLoading] = useState(false)
 
   // Formulario editar
-  const [editarForm, setEditarForm] = useState({ name: '', rolId: '' })
+  const [editarForm, setEditarForm] = useState({ name: '', email: '', rolId: '', documento: '', telefono: '' })
   const [editarLoading, setEditarLoading] = useState(false)
 
   // Formulario reset
@@ -244,7 +246,7 @@ export default function UsuariosPage() {
       if (data.success) {
         // Enriquecer con nombre de rol desde el estado local
         const rolNombre = roles.find((r) => r.id === data.user.rolId)?.nombre ?? ''
-        setUsuarios((prev) => [...prev, { ...data.user, rol: rolNombre }])
+        setUsuarios((prev) => [...prev, { ...data.user, rol: rolNombre, documento: crearForm.documento, telefono: crearForm.telefono }])
         setModalTipo(null)
         setCrearForm({ name: '', email: '', password: '', rolId: roles[0]?.id ?? '', documento: '', telefono: '' })
         mostrarAlerta('ok', 'Usuario creado correctamente')
@@ -260,9 +262,8 @@ export default function UsuariosPage() {
 
   const abrirEditar = (u: Usuario) => {
     setUsuarioSeleccionado(u)
-    // Si el usuario no tiene rol asignado, preseleccionar el primero disponible
     const rolId = u.rolId && u.rolId.startsWith('rec') ? u.rolId : (roles[0]?.id ?? '')
-    setEditarForm({ name: u.name, rolId })
+    setEditarForm({ name: u.name, email: u.email, rolId, documento: u.documento, telefono: u.telefono })
     setModalTipo('editar')
   }
 
@@ -278,11 +279,12 @@ export default function UsuariosPage() {
       })
       const data = await res.json()
       if (data.success) {
-        // Enriquecer con nombre de rol desde el estado local de roles
-        const rolNombre = roles.find((r) => r.id === data.user.rolId)?.nombre ?? ''
+        const rolNombre = roles.find((r) => r.id === data.user.rolId)?.nombre ?? usuarioSeleccionado.rol
         setUsuarios((prev) =>
           prev.map((u) =>
-            u.id === data.user.id ? { ...u, ...data.user, rol: rolNombre } : u
+            u.id === usuarioSeleccionado.id
+              ? { ...u, ...data.user, rol: rolNombre, documento: editarForm.documento, telefono: editarForm.telefono }
+              : u
           )
         )
         setModalTipo(null)
@@ -620,7 +622,6 @@ export default function UsuariosPage() {
       {/* ── Modal: Editar usuario ───────────────────────────────────────────── */}
       {modalTipo === 'editar' && usuarioSeleccionado && (
         <Modal title="Editar usuario" onClose={() => setModalTipo(null)}>
-          <p className="text-sm text-gray-500 mb-4">{usuarioSeleccionado.email}</p>
           <form onSubmit={handleEditar} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
@@ -632,6 +633,40 @@ export default function UsuariosPage() {
                 onChange={(e) => setEditarForm((f) => ({ ...f, name: e.target.value }))}
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                required
+                value={editarForm.email}
+                onChange={(e) => setEditarForm((f) => ({ ...f, email: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Documento</label>
+                <input
+                  type="text"
+                  value={editarForm.documento}
+                  onChange={(e) => setEditarForm((f) => ({ ...f, documento: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Cédula / NIT"
+                  maxLength={20}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                <input
+                  type="tel"
+                  value={editarForm.telefono}
+                  onChange={(e) => setEditarForm((f) => ({ ...f, telefono: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="+57 300..."
+                  maxLength={20}
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>

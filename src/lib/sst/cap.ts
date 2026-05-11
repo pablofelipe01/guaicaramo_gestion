@@ -17,6 +17,12 @@
  */
 import 'server-only'
 import { listRecords, createRecords, updateRecord, getRecord, deleteRecord, deleteRecords } from '@/lib/airtable-client'
+import {
+  derivarEstadoActividad,
+  derivarAlertaCobertura,
+  type ProgramacionResumen,
+  type RegistroResumen,
+} from '@/lib/sst/cap-estados'
 import type {
   CapActividadFields,
   CapProgramacionFields,
@@ -193,18 +199,22 @@ export async function listarProgramacion(filtros?: {
  * @returns Registro Airtable recién creado.
  */
 export async function crearProgramacion(fields: Partial<CapProgramacionFields>) {
+  // Excluir campos de solo lectura de Airtable (lookup/formula)
+  const { actividad_tema: _at, esta_vencida: _ev, ...writable } = fields
+  void _at; void _ev
+
   const payload: CapProgramacionFields = {
-    actividad_id: fields.actividad_id ?? '',
-    mes: fields.mes ?? 'Enero',
-    semana: fields.semana ?? 1,
-    estado: fields.estado ?? 'Programado',
-    ...fields,
+    actividad_id: writable.actividad_id ?? '',
+    mes: writable.mes ?? 'Enero',
+    semana: writable.semana ?? 1,
+    estado: writable.estado ?? 'Programado',
+    ...writable,
   }
   const [record] = await createRecords<CapProgramacionFields>(T_PROGRAMACION, [{ fields: payload }])
 
   // Recalcular el estado de la actividad basado en todas sus programaciones
-  if (fields.actividad_id) {
-    await recalcularEstadoActividad(fields.actividad_id)
+  if (writable.actividad_id) {
+    await recalcularEstadoActividad(writable.actividad_id)
   }
   return record
 }
@@ -219,8 +229,9 @@ export async function crearProgramacion(fields: Partial<CapProgramacionFields>) 
  * @returns Registro Airtable actualizado.
  */
 export async function actualizarProgramacion(id: string, fields: Partial<CapProgramacionFields>) {
-  // actividad_tema es lookup de Airtable — no puede escribirse
-  const { actividad_tema: _at, ...writableFields } = fields
+  // Excluir campos de solo lectura de Airtable (lookup/formula)
+  const { actividad_tema: _at, esta_vencida: _ev, ...writableFields } = fields
+  void _at; void _ev
 
   const record = await updateRecord<CapProgramacionFields>(T_PROGRAMACION, id, writableFields)
 
@@ -230,141 +241,58 @@ export async function actualizarProgramacion(id: string, fields: Partial<CapProg
 }
 
 /**
- * Mapa de meses en español a índice de mes JavaScript (0-based).
- */
-const MES_INDEX: Record<string, number> = {
-  Enero: 0, Febrero: 1, Marzo: 2, Abril: 3, Mayo: 4, Junio: 5,
-  Julio: 6, Agosto: 7, Septiembre: 8, Octubre: 9, Noviembre: 10, Diciembre: 11,
-}
-
-/**
- * Calcula el rango de fechas (inicio y fin) para una semana dentro de un mes.
- * Semana 1 = días 1-7, Semana 2 = días 8-14, Semana 3 = días 15-21,
- * Semana 4 = días 22-28, Semana 5 = día 29 hasta fin del mes.
- */
-function getSemanaRange(mes: string, semana: number, anio: number): { inicio: Date; fin: Date } {
-  const mesIdx = MES_INDEX[mes] ?? 0
-  const diaInicio = (semana - 1) * 7 + 1
-  const inicio = new Date(anio, mesIdx, diaInicio)
-  inicio.setHours(0, 0, 0, 0)
-  const ultimoDiaMes = new Date(anio, mesIdx + 1, 0).getDate()
-  const diaFin = Math.min(diaInicio + 6, ultimoDiaMes)
-  const fin = new Date(anio, mesIdx, diaFin)
-  fin.setHours(23, 59, 59, 999)
-  return { inicio, fin }
-}
-
-/**
- * Recalcula y persiste el estado_general de una actividad:
+ * Recalcula y persiste `estado_general` y `alerta_cobertura` de una actividad
+ * delegando en `derivarEstadoActividad()` y `derivarAlertaCobertura()` (única
+ * fuente de verdad). Es idempotente: solo escribe en Airtable si los valores
+ * derivados difieren de los persistidos actualmente.
  *
- *  - Sin programaciones ni registros        → "Sin programar"
- *  - Todas las programaciones canceladas
- *    y sin registros                        → "Cancelado"
- *  - Registros en una semana programada
- *    cuyo período coincide con hoy          → "En ejecución"
- *  - Registros en semanas ya finalizadas    → "Ejecutada"
- *  - Programaciones sin registros todavía  → "Programado"
+ * @returns `{ estado, alerta, changed }` con los valores resultantes.
  */
-async function recalcularEstadoActividad(actividadId: string): Promise<void> {
+export async function recalcularEstadoActividad(actividadId: string): Promise<{
+  estado: import('@/types/sst/cap').CapEstadoGeneral
+  alerta: import('@/types/sst/cap').CapAlertaCobertura
+  changed: boolean
+}> {
   const [programaciones, registros, act] = await Promise.all([
     listarProgramacion({ actividadId }),
     listarRegistros({ actividadId }),
     getRecord<CapActividadFields>(T_ACTIVIDADES, actividadId).catch(() => null),
   ])
 
-  if (!act) return
+  const progResumen: ProgramacionResumen[] = programaciones.map(p => ({
+    id: p.id,
+    estado: p.fields.estado as ProgramacionResumen['estado'],
+    fecha_programada: p.fields.fecha_programada ?? null,
+    fecha_ejecucion: p.fields.fecha_ejecucion ?? null,
+  }))
 
-  const anio: number = act.fields.anio ?? 2026
-  const hoy = new Date()
-  hoy.setHours(0, 0, 0, 0)
+  const regResumen: RegistroResumen[] = registros.map(r => ({
+    id: r.id,
+    asistentes_presentes: r.fields.presentes ?? 0,
+    asistentes_convocados: r.fields.convocados ?? 0,
+    estado_firma: 'pendiente',
+    evaluaciones_aprobadas: r.fields.evaluaciones_aprobadas ?? 0,
+    evaluaciones_realizadas: r.fields.evaluaciones_realizadas ?? 0,
+  }))
 
-  let nuevoEstado: import('@/types/sst/cap').CapEstadoGeneral
+  const nuevoEstado = derivarEstadoActividad(progResumen)
+  const nuevaAlerta = derivarAlertaCobertura(regResumen)
 
-  if (programaciones.length === 0 && registros.length === 0) {
-    nuevoEstado = 'Sin programar'
-  } else {
-    const estados = programaciones.map(p => p.fields.estado)
-    const todasCancelado = estados.length > 0 && estados.every(e => e === 'Cancelado')
+  if (!act) return { estado: nuevoEstado, alerta: nuevaAlerta, changed: false }
 
-    if (todasCancelado && registros.length === 0) {
-      nuevoEstado = 'Cancelado'
-    } else {
-      // Agrupar registros por programacion_id
-      const regPorProg = new Map<string, typeof registros>()
-      const regsSinProg: typeof registros = []
-      for (const reg of registros) {
-        if (reg.fields.programacion_id) {
-          const arr = regPorProg.get(reg.fields.programacion_id) ?? []
-          arr.push(reg)
-          regPorProg.set(reg.fields.programacion_id, arr)
-        } else {
-          regsSinProg.push(reg)
-        }
-      }
+  const cambios: Partial<CapActividadFields> = {}
+  if (act.fields.estado_general !== nuevoEstado) cambios.estado_general = nuevoEstado
+  if (act.fields.alerta_cobertura !== nuevaAlerta) cambios.alerta_cobertura = nuevaAlerta
 
-      let hayEjecucionEnSemanaActual = false
-      let hayEjecucionEnSemanaAnterior = false
-
-      // Evaluar programaciones que tienen registros vinculados
-      for (const prog of programaciones) {
-        if (prog.fields.estado === 'Cancelado') continue
-        const regsVinculados = regPorProg.get(prog.id) ?? []
-        if (regsVinculados.length === 0) continue
-
-        let inicio: Date
-        let fin: Date
-        if (prog.fields.fecha_programada) {
-          // Usar la semana ISO que contiene la fecha programada
-          const base = new Date(prog.fields.fecha_programada)
-          const dow = base.getDay()
-          const diff = dow === 0 ? -6 : 1 - dow // retroceder al lunes
-          inicio = new Date(base)
-          inicio.setDate(base.getDate() + diff)
-          inicio.setHours(0, 0, 0, 0)
-          fin = new Date(inicio)
-          fin.setDate(inicio.getDate() + 6)
-          fin.setHours(23, 59, 59, 999)
-        } else {
-          ;({ inicio, fin } = getSemanaRange(prog.fields.mes, prog.fields.semana, anio))
-        }
-
-        if (hoy >= inicio && hoy <= fin) {
-          hayEjecucionEnSemanaActual = true
-        } else if (fin < hoy) {
-          hayEjecucionEnSemanaAnterior = true
-        }
-      }
-
-      // Registros sin programacion asociada: usar la semana de la fecha de ejecución
-      for (const reg of regsSinProg) {
-        const fechaEj = new Date(reg.fields.fecha_ejecucion)
-        fechaEj.setHours(0, 0, 0, 0)
-        const dow = fechaEj.getDay()
-        const diff = dow === 0 ? -6 : 1 - dow
-        const lunes = new Date(fechaEj)
-        lunes.setDate(fechaEj.getDate() + diff)
-        lunes.setHours(0, 0, 0, 0)
-        const domingo = new Date(lunes)
-        domingo.setDate(lunes.getDate() + 6)
-        domingo.setHours(23, 59, 59, 999)
-        if (hoy >= lunes && hoy <= domingo) {
-          hayEjecucionEnSemanaActual = true
-        } else if (domingo < hoy) {
-          hayEjecucionEnSemanaAnterior = true
-        }
-      }
-
-      if (hayEjecucionEnSemanaActual)     nuevoEstado = 'En ejecución'
-      else if (hayEjecucionEnSemanaAnterior) nuevoEstado = 'Ejecutada'
-      else                                    nuevoEstado = 'Programado'
-    }
+  if (Object.keys(cambios).length === 0) {
+    return { estado: nuevoEstado, alerta: nuevaAlerta, changed: false }
   }
 
-  // Solo actualizar si cambió, para evitar escrituras innecesarias
-  if (act.fields.estado_general !== nuevoEstado) {
-    try {
-      await updateRecord<CapActividadFields>(T_ACTIVIDADES, actividadId, { estado_general: nuevoEstado })
-    } catch { /* continuar */ }
+  try {
+    await updateRecord<CapActividadFields>(T_ACTIVIDADES, actividadId, cambios)
+    return { estado: nuevoEstado, alerta: nuevaAlerta, changed: true }
+  } catch {
+    return { estado: nuevoEstado, alerta: nuevaAlerta, changed: false }
   }
 }
 

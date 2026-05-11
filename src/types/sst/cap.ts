@@ -42,16 +42,24 @@ export type CapProveedor =
  * (ver `recalcularEstadoActividad` en lib/sst/cap.ts).
  *
  * Transiciones válidas:
- *   Sin programar → Programado → En ejecución → Ejecutada
+ *   Sin programar → Programado → En ejecución → Completado
  *                               ↘ Cancelado
  */
 export type CapEstadoGeneral =
   | 'Sin programar'
   | 'Programado'
   | 'En ejecución'
-  | 'Ejecutada'
   | 'Completado'
   | 'Cancelado'
+
+/**
+ * Alerta de cobertura de asistencia (asistentes presentes / convocados).
+ *   ok        ≥ 80%
+ *   riesgo    60–79%
+ *   critico   < 60%
+ *   sin_datos no hay registros con convocados > 0
+ */
+export type CapAlertaCobertura = 'ok' | 'riesgo' | 'critico' | 'sin_datos'
 
 /** Meses del año en español, tal como se almacenan en Airtable. */
 export type CapMes =
@@ -103,6 +111,11 @@ export interface CapActividadFields {
    * No debe modificarse directamente; usar `recalcularEstadoActividad()`.
    */
   estado_general: CapEstadoGeneral
+  /**
+   * Alerta de cobertura derivada de los registros de ejecución.
+   * Calculada automáticamente por `derivarAlertaCobertura()`.
+   */
+  alerta_cobertura?: CapAlertaCobertura
 }
 
 /**
@@ -128,6 +141,18 @@ export interface CapProgramacionFields {
   /** Estado actual de esta sesión en el cronograma. */
   estado: CapEstadoProgramacion
   observaciones?: string
+  /**
+   * Fórmula Airtable (solo lectura): true cuando estado='Programado' y
+   * fecha_programada < TODAY(). Nunca enviar en POST/PATCH.
+   */
+  esta_vencida?: boolean
+  /**
+   * ID Airtable de la programación original cuando ésta es una reprogramación.
+   * Opcional.
+   */
+  programacion_origen_id?: string
+  /** Texto libre con la justificación de la reprogramación. Opcional. */
+  motivo_reprogramacion?: string
 }
 
 /**

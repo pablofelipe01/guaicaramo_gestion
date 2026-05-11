@@ -31,7 +31,6 @@ const ESTADOS: Record<string, EstadoConfig> = {
   'Programado':     { bg: 'rgba(59,130,246,0.08)',                  border: '1px solid rgba(59,130,246,0.3)', text: '#1D4ED8',             dot: 'var(--estado-programado)' },
   'En ejecución':   { bg: 'rgba(245,158,11,0.1)',                   border: '1px solid rgba(245,158,11,0.3)', text: '#92400E',             dot: '#F59E0B', dotAnimate: true },
   'Completado':     { bg: 'var(--sst-cumple-bg)',                   border: '1px solid rgba(22,101,52,0.25)', text: 'var(--sst-cumple)',   dot: 'var(--sst-cumple)' },
-  'Ejecutada':      { bg: 'var(--sst-cumple-bg)',                   border: '1px solid rgba(22,101,52,0.25)', text: 'var(--sst-cumple)',   dot: 'var(--estado-ejecutado)' },
   'Cancelado':      { bg: 'var(--sst-critico-bg)',                  border: '1px solid rgba(220,53,69,0.25)', text: 'var(--sst-critico)',  dot: 'var(--sst-critico)' },
   'Ejecutado':      { bg: 'var(--sst-cumple-bg)',                   border: '1px solid rgba(22,101,52,0.25)', text: 'var(--sst-cumple)',   dot: 'var(--estado-ejecutado)' },
   'Reprogramado':   { bg: 'var(--sst-riesgo-bg)',                   border: '1px solid rgba(217,119,6,0.25)', text: 'var(--sst-riesgo)',   dot: 'var(--estado-reprogramado)' },
@@ -48,10 +47,38 @@ interface Props {
   estado: EstadoUnion | string
   /** Tamaño del badge. 'sm' para tablas y listas, 'md' para tarjetas y encabezados. */
   size?: 'sm' | 'md'
+  /**
+   * Nivel de urgencia opcional, calculado en servidor con `nivelUrgencia()`.
+   * Modula la apariencia del badge cuando `estado === 'Programado'`:
+   *   - 'inmediata' → pulso rojo
+   *   - 'proxima'   → punto naranja animado
+   * Para `estado === 'Vencido'` muestra los días vencidos como sublabel.
+   */
+  urgencia?: NivelUrgenciaCliente
+  /** Días vencida (>=0). Usado solo para 'Vencido'. */
+  diasVencida?: number
 }
 
-export function EstadoBadge({ estado, size = 'sm' }: Props) {
-  const c = ESTADOS[estado] ?? DEFAULT
+/**
+ * Tipo equivalente a `NivelUrgencia` de `cap-estados.ts` pero seguro para
+ * Client Components (el módulo original es `server-only`).
+ */
+export type NivelUrgenciaCliente =
+  | 'inmediata'
+  | 'proxima'
+  | 'normal'
+  | 'lejana'
+  | 'ejecutada'
+  | 'cancelada'
+
+export function EstadoBadge({ estado, size = 'sm', urgencia, diasVencida }: Props) {
+  // Override visual: Programado + inmediata → pulso rojo
+  let c = ESTADOS[estado] ?? DEFAULT
+  if (estado === 'Programado' && urgencia === 'inmediata') {
+    c = { bg: 'rgba(220,53,69,0.1)', border: '1px solid rgba(220,53,69,0.35)', text: '#7F1D1D', dot: '#DC3545', dotAnimate: true }
+  } else if (estado === 'Programado' && urgencia === 'proxima') {
+    c = { ...c, dot: '#FF8C42', dotAnimate: true }
+  }
   const pad = size === 'sm' ? '2px 10px' : '4px 12px'
   const fontSize = size === 'sm' ? '11px' : '12.5px'
   return (
@@ -95,6 +122,11 @@ export function EstadoBadge({ estado, size = 'sm' }: Props) {
         />
       </span>
       {estado}
+      {estado === 'Vencido' && typeof diasVencida === 'number' && diasVencida > 0 && (
+        <span style={{ marginLeft: 4, fontSize: '10px', fontWeight: 500, color: 'var(--sst-dark-500)' }}>
+          hace {diasVencida} {diasVencida === 1 ? 'día' : 'días'}
+        </span>
+      )}
     </span>
   )
 }
