@@ -8,7 +8,7 @@ interface Props {
 }
 
 const C = {
-  azul:       '#2C5F8D',
+  verdeDark:  '#166534',
   verde:      '#28A745',
   verdeClaro: '#5DCAA5',
   bg:         '#0a1628',
@@ -23,7 +23,7 @@ export default function HexBackground({ speed = 1, className = '', children }: P
     const wrap   = wrapRef.current!
     const ctx    = canvas.getContext('2d')!
     const mouse  = { x: -999, y: -999 }
-    const palette = [C.azul, C.verde, C.verdeClaro]
+    const palette = [C.verdeDark, C.verde, C.verdeClaro]
     let W = 0, H = 0, hexes: any[] = [], raf: number
 
     function resize() {

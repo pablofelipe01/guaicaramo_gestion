@@ -34,8 +34,8 @@ const ESTADO_UI = {
   },
   parcial: {
     label:     '1 de 2 firmas',
-    className: 'bg-blue-50 text-blue-700 border border-blue-200',
-    dot:       'bg-blue-400',
+    className: 'bg-green-50 text-green-700 border border-green-200',
+    dot:       'bg-green-400',
   },
   completo: {
     label:     'Completo',

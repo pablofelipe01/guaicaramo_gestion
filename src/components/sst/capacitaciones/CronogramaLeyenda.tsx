@@ -18,7 +18,7 @@ function esVencido(p: Prog): boolean {
 }
 
 const ESTADOS = [
-  { key: 'Programado',   label: 'Programado',   color: '#2563EB', Icon: Clock },
+  { key: 'Programado',   label: 'Programado',   color: '#6C757D', Icon: Clock },
   { key: 'Ejecutado',    label: 'Ejecutado',    color: '#15803D', Icon: CheckCircle2 },
   { key: 'Vencido',      label: 'Vencido',      color: '#DC2626', Icon: AlertCircle },
   { key: 'Reprogramado', label: 'Reprogramado', color: '#7C3AED', Icon: RotateCcw },

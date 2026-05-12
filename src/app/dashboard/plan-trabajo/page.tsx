@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -44,7 +44,7 @@ export default function PlanTrabajoPage() {
   const [guardando, setGuardando] = useState(false)
   const [confirmDeletePlan, setConfirmDeletePlan] = useState<string | null>(null)
   const [confirmDeleteAct, setConfirmDeleteAct] = useState<string | null>(null)
-  const [formPlan, setFormPlan] = useState({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
+  const [formPlan, setFormPlan] = useState({ Titulo: '', 'A�o': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
   const [formEditarPlan, setFormEditarPlan] = useState({ Titulo: '', Descripcion: '', Estado: 'borrador' })
   const [formAct, setFormAct] = useState({
     Descripcion: '', Responsable: '', Mes: '', 'Ciclo PHVA': '', 'Costo Estimado': '', 'Fecha Limite': '',
@@ -90,7 +90,7 @@ export default function PlanTrabajoPage() {
       body: JSON.stringify({ ...formPlan, Responsable: user?.name }),
     })
     setModalPlan(false)
-    setFormPlan({ Titulo: '', 'Año': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
+    setFormPlan({ Titulo: '', 'A�o': new Date().getFullYear(), Descripcion: '', 'Evaluacion ID': '' })
     await cargar()
     setGuardando(false)
   }
@@ -110,7 +110,7 @@ export default function PlanTrabajoPage() {
 
   const cerrarPlan = async () => {
     if (!seleccionado) return
-    if (!confirm('¿Cerrar este plan? Se calculará el cumplimiento final.')) return
+    if (!confirm('�Cerrar este plan? Se calcular� el cumplimiento final.')) return
     setGuardando(true)
     await fetch(`/api/sst/planes/${seleccionado.id}`, {
       method: 'PUT', headers: getAuthHeaders(),
@@ -165,7 +165,7 @@ export default function PlanTrabajoPage() {
       <PageHeader
         icon={ListChecks}
         title="Plan de Trabajo Anual"
-        description="Planificación y seguimiento del SG-SST"
+        description="Planificaci�n y seguimiento del SG-SST"
         actions={
           <button onClick={() => setModalPlan(true)} className="flex items-center gap-2 px-4 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm font-medium">
             <Plus size={16} /> Nuevo plan
@@ -276,7 +276,7 @@ export default function PlanTrabajoPage() {
                             <td className="px-4 py-3">
                               {a.fields['Ciclo PHVA'] && <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{a.fields['Ciclo PHVA']}</span>}
                             </td>
-                            <td className="px-4 py-3 text-gray-500 text-xs">{a.fields.Mes ?? '—'}</td>
+                            <td className="px-4 py-3 text-gray-500 text-xs">{a.fields.Mes ?? '�'}</td>
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-20 bg-gray-200 rounded-full h-1.5">
@@ -362,26 +362,26 @@ export default function PlanTrabajoPage() {
       <Modal open={modalPlan} onClose={() => setModalPlan(false)} title="Nuevo plan de trabajo" size="md">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">T�tulo *</label>
             <input type="text" value={formPlan.Titulo} onChange={e => setFormPlan(f => ({ ...f, Titulo: e.target.value }))}
               className="input-field"
               placeholder="Ej. Plan de trabajo SST 2026" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Año *</label>
-            <input type="number" value={formPlan['Año']} onChange={e => setFormPlan(f => ({ ...f, 'Año': Number(e.target.value) }))}
+            <label className="block text-sm font-medium text-gray-700 mb-1">A�o *</label>
+            <input type="number" value={formPlan['A�o']} onChange={e => setFormPlan(f => ({ ...f, 'A�o': Number(e.target.value) }))}
               className="input-field" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripci�n</label>
             <textarea value={formPlan.Descripcion} onChange={e => setFormPlan(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Vinculado a Evaluación (opcional)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Vinculado a Evaluaci�n (opcional)</label>
             <input type="text" value={formPlan['Evaluacion ID']} onChange={e => setFormPlan(f => ({ ...f, 'Evaluacion ID': e.target.value }))}
-              placeholder="ID de la evaluación inicial"
-              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-xs text-gray-500" />
+              placeholder="ID de la evaluaci�n inicial"
+              className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 text-xs text-gray-500" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalPlan(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -397,14 +397,14 @@ export default function PlanTrabajoPage() {
       <Modal open={modalEditarPlan} onClose={() => setModalEditarPlan(false)} title="Editar plan" size="md">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Título *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">T�tulo *</label>
             <input type="text" value={formEditarPlan.Titulo} onChange={e => setFormEditarPlan(f => ({ ...f, Titulo: e.target.value }))}
               className="input-field" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripci�n</label>
             <textarea value={formEditarPlan.Descripcion} onChange={e => setFormEditarPlan(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Estado</label>
@@ -427,9 +427,9 @@ export default function PlanTrabajoPage() {
       <Modal open={modalActividad} onClose={() => setModalActividad(false)} title="Nueva actividad" size="md">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Descripci�n *</label>
             <textarea value={formAct.Descripcion} onChange={e => setFormAct(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -460,7 +460,7 @@ export default function PlanTrabajoPage() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha l�mite</label>
             <input type="date" value={formAct['Fecha Limite']} onChange={e => setFormAct(f => ({ ...f, 'Fecha Limite': e.target.value }))}
               className="input-field" />
           </div>
@@ -475,8 +475,8 @@ export default function PlanTrabajoPage() {
       </Modal>
 
       {confirmDeletePlan && (
-        <Modal open={!!confirmDeletePlan} onClose={() => setConfirmDeletePlan(null)} title="Confirmar eliminación">
-          <p className="text-sm text-gray-600 mb-4">¿Eliminar este plan y todas sus actividades? Esta acción no se puede deshacer.</p>
+        <Modal open={!!confirmDeletePlan} onClose={() => setConfirmDeletePlan(null)} title="Confirmar eliminaci�n">
+          <p className="text-sm text-gray-600 mb-4">�Eliminar este plan y todas sus actividades? Esta acci�n no se puede deshacer.</p>
           <div className="flex justify-end gap-3">
             <button onClick={() => setConfirmDeletePlan(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button onClick={() => eliminarPlan(confirmDeletePlan)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>
@@ -485,8 +485,8 @@ export default function PlanTrabajoPage() {
       )}
 
       {confirmDeleteAct && (
-        <Modal open={!!confirmDeleteAct} onClose={() => setConfirmDeleteAct(null)} title="Confirmar eliminación">
-          <p className="text-sm text-gray-600 mb-4">¿Eliminar esta actividad? Esta acción no se puede deshacer.</p>
+        <Modal open={!!confirmDeleteAct} onClose={() => setConfirmDeleteAct(null)} title="Confirmar eliminaci�n">
+          <p className="text-sm text-gray-600 mb-4">�Eliminar esta actividad? Esta acci�n no se puede deshacer.</p>
           <div className="flex justify-end gap-3">
             <button onClick={() => setConfirmDeleteAct(null)} className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-50">Cancelar</button>
             <button onClick={() => eliminarActividad(confirmDeleteAct)} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700">Eliminar</button>

@@ -172,3 +172,91 @@ export function getObservacionesProg(fields: Record<string, unknown>): string {
   }
   return ''
 }
+
+// ─── Tipos y constantes de color para el rediseño visual ─────────────────────
+
+/** Estado visual de actividad extendido (incluye 'Vencida' para la UI). */
+export type EstadoActividad =
+  | 'Sin programar'
+  | 'Programado'
+  | 'En ejecución'
+  | 'Completado'
+  | 'Cancelado'
+  | 'Vencida'
+
+/** Alerta de cobertura de asistencia (alias explícito para la UI). */
+export type AlertaCobertura = 'ok' | 'riesgo' | 'critico' | 'sin_datos'
+
+/** Paleta de colores oficial del módulo Capacitaciones SST. */
+export const CAP_COLORS = {
+  // ── Triada principal ──────────────────────────────────────────────
+  verde:        '#28A745',   // Principal — acciones, éxito, marca
+  blanco:       '#FFFFFF',   // Cards, superficies
+  carbon:       '#2B2D42',   // Textos, headers, íconos
+
+  // ── Semánticos ───────────────────────────────────────────────────
+  naranja:      '#FF8C42',
+  rojo:         '#DC3545',
+  gris:         '#6C757D',
+
+  // ── Suaves ───────────────────────────────────────────────────────
+  verdeLight:   '#e8f5eb',
+  naranjaLight: '#fff3eb',
+  rojoLight:    '#fdecea',
+  grisLight:    '#f0f0f5',
+  carbonLight:  '#f0f0f5',
+
+  // ── Backward compat (deprecated) ─────────────────────────────────
+  azul:         '#28A745',   // → usar verde
+  azulLight:    '#e8f5eb',   // → usar verdeLight
+} as const
+
+/** Colores del sistema de capas de fondo. */
+export const CAP_BG = {
+  pagina:   '#DFE9DC',
+  seccion:  'rgba(255,255,255,0.45)',
+  card:     '#FFFFFF',
+  tabInact: 'rgba(255,255,255,0.8)',
+} as const
+
+/** Mapa de color de borde/acento por estado de actividad. */
+export const ESTADO_COLOR: Record<EstadoActividad, string> = {
+  'Sin programar': '#6C757D',
+  'Programado':    '#6C757D',
+  'En ejecución':  '#FF8C42',
+  'Completado':    '#28A745',
+  'Cancelado':     '#6C757D',
+  'Vencida':       '#DC3545',
+}
+
+/** Mapa de color de barra de progreso por alerta de cobertura. */
+export const ALERTA_COLOR: Record<AlertaCobertura, string> = {
+  ok:        '#28A745',
+  riesgo:    '#FF8C42',
+  critico:   '#DC3545',
+  sin_datos: '#6C757D',
+}
+
+/** Fondos de alerta contextual. */
+export const ALERTA_BG: Record<string, string> = {
+  ok:        '#e8f5eb',
+  riesgo:    '#fff3eb',
+  critico:   '#fdecea',
+  sin_datos: '#f0f0f5',
+}
+
+/** Bordes de alerta contextual. */
+export const ALERTA_BORDER: Record<string, string> = {
+  ok:        '#b7dfbf',
+  riesgo:    '#ffd6b3',
+  critico:   '#f5c6cb',
+  sin_datos: '#d0d0da',
+}
+
+/** Textos de alerta contextual. */
+export const ALERTA_TEXT: Record<string, string> = {
+  ok:        '#155724',
+  riesgo:    '#7a3e00',
+  critico:   '#721c24',
+  sin_datos: '#2B2D42',
+}

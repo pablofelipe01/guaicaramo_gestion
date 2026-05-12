@@ -115,7 +115,7 @@ export function CronogramaContainer({ actividades, programaciones, onUpdate }: P
       {/* Tira de KPIs rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KpiTile icon={Hash} label="Actividades" value={kpis.actividades} color="var(--sst-dark-700)" bg="var(--sst-dark-100)" />
-        <KpiTile icon={CircleDashed} label="Programaciones" value={kpis.total} color="#2563EB" bg="rgba(37,99,235,0.08)" />
+        <KpiTile icon={CircleDashed} label="Programaciones" value={kpis.total} color="#6C757D" bg="rgba(108,117,125,0.08)" />
         <KpiTile icon={CheckCircle2} label="Ejecutadas" value={kpis.ejecutadas} color="#166534" bg="rgba(22,101,52,0.08)" />
         <KpiTile icon={AlertCircle} label="Vencidas" value={kpis.vencidas} color="#DC3545" bg="rgba(220,53,69,0.08)" />
       </div>

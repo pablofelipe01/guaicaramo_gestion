@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -304,7 +304,7 @@ export default function EvaluacionInicialPage() {
               type="text"
               value={form.Titulo}
               onChange={e => setForm(f => ({ ...f, Titulo: e.target.value }))}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               placeholder="Ej. Evaluación inicial 2026"
             />
           </div>
@@ -314,7 +314,7 @@ export default function EvaluacionInicialPage() {
               value={form.Descripcion}
               onChange={e => setForm(f => ({ ...f, Descripcion: e.target.value }))}
               rows={3}
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none resize-none"
             />
           </div>
           <div className="flex justify-end gap-3 pt-2">

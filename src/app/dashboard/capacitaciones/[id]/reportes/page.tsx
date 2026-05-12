@@ -29,13 +29,13 @@ const TAB_LABELS: Record<EstadoReporte | 'todos', string> = {
 
 const ESTADO_STYLES: Record<EstadoReporte, { bg: string; text: string; border: string; dot: string }> = {
   pendiente: { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200', dot: 'bg-amber-400'  },
-  parcial:   { bg: 'bg-blue-50',   text: 'text-blue-700',   border: 'border-blue-200',  dot: 'bg-blue-400'   },
+  parcial:   { bg: 'bg-green-50',  text: 'text-green-700', border: 'border-green-200', dot: 'bg-green-400'  },
   completo:  { bg: 'bg-green-50',  text: 'text-green-700',  border: 'border-green-200', dot: 'bg-green-500'  },
 }
 
 const ACENTO: Record<EstadoReporte, string> = {
   pendiente: 'border-l-amber-400',
-  parcial:   'border-l-blue-400',
+  parcial:   'border-l-green-400',
   completo:  'border-l-green-500',
 }
 

@@ -514,7 +514,7 @@ export default function EvaluacionesAdminPage() {
           { label: 'Total evaluaciones', value: totalEval,    color: 'var(--sst-dark-700)', bg: 'var(--sst-dark-100)' },
           { label: 'Aprobadas',          value: aprobadas,    color: VERDE,                  bg: '#f0fdf4' },
           { label: '% Aprobación',       value: `${pctAprobados}%`, color: pctAprobados >= 80 ? VERDE : pctAprobados >= 60 ? '#F59E0B' : '#DC3545', bg: 'var(--sst-dark-100)' },
-          { label: 'Promedio puntaje',   value: promedioPts,  color: '#2563EB',              bg: '#eff6ff' },
+          { label: 'Promedio puntaje',   value: promedioPts,  color: '#28A745',              bg: '#e8f5eb' },
         ].map(k => (
           <Card key={k.label} className="p-4">
             <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: 'var(--sst-dark-500)' }}>{k.label}</p>

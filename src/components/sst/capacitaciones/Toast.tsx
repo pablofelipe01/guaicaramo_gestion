@@ -33,14 +33,14 @@ const STYLES: Record<ToastType, string> = {
   success: 'bg-green-50 border-green-200 text-green-800',
   error:   'bg-red-50 border-red-200 text-red-800',
   warning: 'bg-orange-50 border-orange-200 text-orange-800',
-  info:    'bg-blue-50 border-blue-200 text-blue-800',
+  info:    'bg-green-50 border-green-200 text-green-800',
 }
 
 const ICON_STYLES: Record<ToastType, string> = {
   success: 'text-green-500',
   error:   'text-red-500',
   warning: 'text-orange-500',
-  info:    'text-blue-500',
+  info:    'text-green-500',
 }
 
 interface ToastContainerProps {

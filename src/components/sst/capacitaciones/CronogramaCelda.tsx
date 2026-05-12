@@ -44,7 +44,7 @@ interface EstadoCfg {
 }
 
 const ESTADO_CONFIG: Record<EstadoVisual, EstadoCfg> = {
-  Programado:   { bg: 'rgba(37,99,235,0.08)',  border: 'rgba(37,99,235,0.3)',  color: '#2563EB', label: 'Programado',   symbol: 'P' },
+  Programado:   { bg: 'rgba(108,117,125,0.08)', border: 'rgba(108,117,125,0.3)', color: '#6C757D', label: 'Programado',   symbol: 'P' },
   Ejecutado:    { bg: 'rgba(22,101,52,0.1)',   border: 'rgba(22,101,52,0.35)',  color: '#166534', label: 'Ejecutado',    symbol: '✓' },
   Vencido:      { bg: 'rgba(220,53,69,0.08)',  border: 'rgba(220,53,69,0.35)', color: '#DC3545', label: 'Vencido',      symbol: '!' },
   Reprogramado: { bg: 'rgba(124,58,237,0.08)', border: 'rgba(124,58,237,0.3)', color: '#7C3AED', label: 'Reprogramado', symbol: '↻' },

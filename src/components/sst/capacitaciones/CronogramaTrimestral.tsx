@@ -123,9 +123,9 @@ export function CronogramaTrimestral({ actividades, programaciones, catFiltro }:
     <div className="flex flex-col gap-6">
       {/* KPI banner */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3 text-center">
-          <p className="text-2xl font-bold text-blue-700">{totalTri}</p>
-          <p className="text-xs text-blue-500 mt-0.5">Programadas</p>
+        <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-center">
+          <p className="text-2xl font-bold text-green-700">{totalTri}</p>
+          <p className="text-xs text-green-500 mt-0.5">Programadas</p>
         </div>
         <div className="rounded-xl bg-green-50 border border-green-200 px-4 py-3 text-center">
           <p className="text-2xl font-bold text-green-700">{ejecutadasTri}</p>
@@ -159,15 +159,15 @@ export function CronogramaTrimestral({ actividades, programaciones, catFiltro }:
             <div
               key={mes}
               className={`rounded-xl border p-4 flex flex-col gap-3 ${
-                esMesActual ? 'border-blue-300 shadow-md' : 'border-gray-200'
+                esMesActual ? 'border-green-300 shadow-md' : 'border-gray-200'
               }`}
             >
               {/* Header mes */}
               <div className="flex items-center justify-between">
-                <h3 className={`font-bold text-sm ${esMesActual ? 'text-blue-700' : 'text-gray-700'}`}>
+                <h3 className={`font-bold text-sm ${esMesActual ? 'text-green-700' : 'text-gray-700'}`}>
                   {mes}
                   {esMesActual && (
-                    <span className="ml-2 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">Actual</span>
+                    <span className="ml-2 text-[10px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded-full">Actual</span>
                   )}
                 </h3>
                 <span className="text-xs font-bold" style={{

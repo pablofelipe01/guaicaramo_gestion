@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import {
@@ -19,7 +19,7 @@ import {
 import { useRouter } from 'next/navigation'
 import { usePermissions } from '@/hooks/usePermissions'
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+// --- Tipos --------------------------------------------------------------------
 
 interface Usuario {
   id: string
@@ -40,7 +40,7 @@ interface RolOpcion {
 
 type ModalTipo = 'crear' | 'editar' | 'reset' | 'eliminar' | null
 
-// ─── Helpers UI ───────────────────────────────────────────────────────────────
+// --- Helpers UI ---------------------------------------------------------------
 
 function EstadoBadge({ estado }: { estado: string }) {
   const activo = estado === 'activo'
@@ -75,7 +75,7 @@ function RolBadge({ rol }: { rol: string }) {
   )
 }
 
-// ─── Modal genérico ───────────────────────────────────────────────────────────
+// --- Modal genérico -----------------------------------------------------------
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
@@ -93,7 +93,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   )
 }
 
-// ─── Alerta ───────────────────────────────────────────────────────────────────
+// --- Alerta -------------------------------------------------------------------
 
 function Alerta({ tipo, mensaje }: { tipo: 'ok' | 'error'; mensaje: string }) {
   return (
@@ -109,7 +109,7 @@ function Alerta({ tipo, mensaje }: { tipo: 'ok' | 'error'; mensaje: string }) {
   )
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
+// --- Página principal ---------------------------------------------------------
 
 export default function UsuariosPage() {
   const router = useRouter()
@@ -227,7 +227,7 @@ export default function UsuariosPage() {
     return matchBusqueda && matchRol && matchEstado
   })
 
-  // ─── Acciones ───────────────────────────────────────────────────────────────
+  // --- Acciones ---------------------------------------------------------------
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -377,7 +377,7 @@ export default function UsuariosPage() {
     }
   }
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // --- Render -----------------------------------------------------------------
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -413,7 +413,7 @@ export default function UsuariosPage() {
             placeholder="Buscar por nombre o email..."
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
           />
         </div>
         <select
@@ -429,7 +429,7 @@ export default function UsuariosPage() {
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
-          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           <option value="">Todos los estados</option>
           <option value="activo">Activo</option>
@@ -520,7 +520,7 @@ export default function UsuariosPage() {
         </p>
       )}
 
-      {/* ── Modal: Crear usuario ────────────────────────────────────────────── */}
+      {/* -- Modal: Crear usuario ---------------------------------------------- */}
       {modalTipo === 'crear' && (
         <Modal title="Nuevo usuario" onClose={() => setModalTipo(null)}>
           <form onSubmit={handleCrear} className="space-y-4">
@@ -532,7 +532,7 @@ export default function UsuariosPage() {
                 minLength={3}
                 value={crearForm.name}
                 onChange={(e) => setCrearForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Ej. María López"
               />
             </div>
@@ -543,7 +543,7 @@ export default function UsuariosPage() {
                   type="text"
                   value={crearForm.documento}
                   onChange={(e) => setCrearForm((f) => ({ ...f, documento: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Cédula / NIT"
                   maxLength={20}
                 />
@@ -554,7 +554,7 @@ export default function UsuariosPage() {
                   type="tel"
                   value={crearForm.telefono}
                   onChange={(e) => setCrearForm((f) => ({ ...f, telefono: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="+57 300..."
                   maxLength={20}
                 />
@@ -567,7 +567,7 @@ export default function UsuariosPage() {
                 required
                 value={crearForm.email}
                 onChange={(e) => setCrearForm((f) => ({ ...f, email: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="usuario@guaicaramo.com"
               />
             </div>
@@ -579,7 +579,7 @@ export default function UsuariosPage() {
                 minLength={8}
                 value={crearForm.password}
                 onChange={(e) => setCrearForm((f) => ({ ...f, password: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Mínimo 8 caracteres"
               />
             </div>
@@ -619,7 +619,7 @@ export default function UsuariosPage() {
         </Modal>
       )}
 
-      {/* ── Modal: Editar usuario ───────────────────────────────────────────── */}
+      {/* -- Modal: Editar usuario --------------------------------------------- */}
       {modalTipo === 'editar' && usuarioSeleccionado && (
         <Modal title="Editar usuario" onClose={() => setModalTipo(null)}>
           <form onSubmit={handleEditar} className="space-y-4">
@@ -631,7 +631,7 @@ export default function UsuariosPage() {
                 minLength={3}
                 value={editarForm.name}
                 onChange={(e) => setEditarForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
             <div>
@@ -641,7 +641,7 @@ export default function UsuariosPage() {
                 required
                 value={editarForm.email}
                 onChange={(e) => setEditarForm((f) => ({ ...f, email: e.target.value }))}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -651,7 +651,7 @@ export default function UsuariosPage() {
                   type="text"
                   value={editarForm.documento}
                   onChange={(e) => setEditarForm((f) => ({ ...f, documento: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Cédula / NIT"
                   maxLength={20}
                 />
@@ -662,7 +662,7 @@ export default function UsuariosPage() {
                   type="tel"
                   value={editarForm.telefono}
                   onChange={(e) => setEditarForm((f) => ({ ...f, telefono: e.target.value }))}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="+57 300..."
                   maxLength={20}
                 />
@@ -704,7 +704,7 @@ export default function UsuariosPage() {
         </Modal>
       )}
 
-      {/* ── Modal: Reset contraseña ─────────────────────────────────────────── */}
+      {/* -- Modal: Reset contraseña ------------------------------------------- */}
       {modalTipo === 'reset' && usuarioSeleccionado && (
         <Modal title="Cambiar contraseña" onClose={() => setModalTipo(null)}>
           <p className="text-sm text-gray-500 mb-4">
@@ -719,7 +719,7 @@ export default function UsuariosPage() {
                 minLength={8}
                 value={resetPassword}
                 onChange={(e) => setResetPassword(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Mínimo 8 caracteres"
               />
             </div>

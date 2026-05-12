@@ -266,10 +266,10 @@ export default function LandingPage() {
             </div>
             <div className="modules-grid">
               {[
-                { phase: 'p', label: 'Planear', stroke: '#4A86BE', title: 'Evaluación Inicial', desc: 'Diagnóstico Res. 0312 con puntaje y plan de cierre.', delay: 0,
-                  icon: <svg className="mod-icon" viewBox="0 0 32 32" fill="none" stroke="#4A86BE" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="20" height="24" rx="2"/><path d="M11 4 V2 H21 V4"/><line x1="11" y1="12" x2="22" y2="12"/><line x1="11" y1="17" x2="22" y2="17"/><line x1="11" y1="22" x2="18" y2="22"/></svg> },
-                { phase: 'p', label: 'Planear', stroke: '#4A86BE', title: 'Matriz IPVR', desc: 'Identificación de peligros y valoración de riesgos.', delay: 80,
-                  icon: <svg className="mod-icon" viewBox="0 0 32 32" fill="none" stroke="#4A86BE" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 26 H28"/><rect x="6" y="14" width="4" height="12"/><rect x="14" y="8" width="4" height="18"/><rect x="22" y="18" width="4" height="8"/></svg> },
+                { phase: 'p', label: 'Planear', stroke: '#28A745', title: 'Evaluación Inicial', desc: 'Diagnóstico Res. 0312 con puntaje y plan de cierre.', delay: 0,
+                  icon: <svg className="mod-icon" viewBox="0 0 32 32" fill="none" stroke="#28A745" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="20" height="24" rx="2"/><path d="M11 4 V2 H21 V4"/><line x1="11" y1="12" x2="22" y2="12"/><line x1="11" y1="17" x2="22" y2="17"/><line x1="11" y1="22" x2="18" y2="22"/></svg> },
+                { phase: 'p', label: 'Planear', stroke: '#28A745', title: 'Matriz IPVR', desc: 'Identificación de peligros y valoración de riesgos.', delay: 80,
+                  icon: <svg className="mod-icon" viewBox="0 0 32 32" fill="none" stroke="#28A745" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 26 H28"/><rect x="6" y="14" width="4" height="12"/><rect x="14" y="8" width="4" height="18"/><rect x="22" y="18" width="4" height="8"/></svg> },
                 { phase: 'h', label: 'Hacer', stroke: '#22C55E', title: 'Gestión de Incidentes', desc: 'Reporte, investigación y trazabilidad completa.', delay: 160,
                   icon: <svg className="mod-icon" viewBox="0 0 32 32" fill="none" stroke="#22C55E" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4 L28 26 H4 Z"/><line x1="16" y1="13" x2="16" y2="19"/><circle cx="16" cy="22.5" r="1" fill="currentColor"/></svg> },
                 { phase: 'h', label: 'Hacer', stroke: '#22C55E', title: 'Capacitaciones', desc: 'Plan anual, QR de asistencia y certificados PDF.', delay: 240,
@@ -322,7 +322,7 @@ export default function LandingPage() {
                     </filter>
                   </defs>
                   <g className="quad">
-                    <path d="M 200 200 L 200 50 A 150 150 0 0 1 350 200 Z" fill="#2C5F8D" opacity="0.85"/>
+                    <path d="M 200 200 L 200 50 A 150 150 0 0 1 350 200 Z" fill="#28A745" opacity="0.85"/>
                     <text x="275" y="135" fill="#fff" fontFamily="Sora, sans-serif" fontWeight="800" fontSize="22" textAnchor="middle" letterSpacing="-1">P</text>
                     <text x="275" y="155" fill="#fff" fontFamily="Sora, sans-serif" fontWeight="600" fontSize="9" textAnchor="middle" letterSpacing="2">PLANEAR</text>
                   </g>
@@ -480,7 +480,7 @@ const CSS = `
     --blanco:#FFFFFF; --superficie:#F8FAFB;
     --gris-100:#F1F5F9; --gris-200:#E2E8F0; --gris-400:#94A3B8;
     --gris-700:#334155; --gris-900:#0F172A;
-    --azul:#2C5F8D; --azul-claro:#4A86BE;
+    --azul:#28A745; --azul-claro:#4ADE80;
     --naranja-700:#C2410C; --naranja-600:#EA580C; --naranja-500:#FF8C42;
     --naranja-400:#FB923C; --naranja-300:#FDBA74; --naranja-100:#FFEDD5;
     --naranja:#FF8C42; --rojo:#DC3545;
@@ -848,7 +848,7 @@ const CSS = `
     font-size:9px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase;
     padding:3px 8px; border-radius:4px;
   }
-  .mod-phase.p { background:rgba(44,95,141,0.2); color:var(--azul-claro); }
+  .mod-phase.p { background:rgba(40,167,69,0.2); color:var(--azul-claro); }
   .mod-phase.h { background:rgba(22,101,52,0.4); color:var(--verde-300); }
   .mod-phase.v { background:rgba(255,140,66,0.18); color:var(--naranja); }
   .mod-phase.a { background:rgba(34,197,94,0.2); color:var(--verde-300); }
@@ -916,7 +916,7 @@ const CSS = `
   .att-row { display:grid; grid-template-columns:36px 1fr auto auto; gap:12px; align-items:center; padding:10px 12px; border-radius:8px; background:var(--gris-100); border:1px solid var(--gris-200); }
   .att-avatar { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-size:11px; font-weight:700; color:var(--blanco); font-family:'Sora',sans-serif; }
   .av-1 { background:linear-gradient(135deg,#166534,#22C55E); }
-  .av-2 { background:linear-gradient(135deg,#2C5F8D,#4A86BE); }
+  .av-2 { background:linear-gradient(135deg,#166534,#22C55E); }
   .av-3 { background:linear-gradient(135deg,#FF8C42,#DC3545); }
   .att-name { font-size:13px; font-weight:600; color:var(--gris-900); }
   .att-name small { display:block; font-size:11px; font-weight:400; color:var(--gris-400); font-family:'JetBrains Mono',monospace; }

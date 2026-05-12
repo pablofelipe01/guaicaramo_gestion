@@ -138,3 +138,19 @@ export function nivelUrgencia(prog: ProgramacionResumen): NivelUrgencia {
   if (dias <= 30) return 'normal'
   return 'lejana'
 }
+
+/**
+ * Determina el trimestre colombiano (Q1-Q4) para una fecha dada.
+ * Usado para agrupar indicadores por periodo en el módulo Capacitaciones.
+ *
+ * @param fecha - Fecha de referencia. Por defecto la fecha actual.
+ * @returns Identificador del trimestre con año, p.ej. "Q2 2026".
+ */
+export function obtenerTrimestreActual(fecha: Date = new Date()): string {
+  const mes = fecha.getMonth() + 1 // 1-12
+  const anio = fecha.getFullYear()
+  if (mes <= 3) return `Q1 ${anio}`
+  if (mes <= 6) return `Q2 ${anio}`
+  if (mes <= 9) return `Q3 ${anio}`
+  return `Q4 ${anio}`
+}

@@ -221,6 +221,19 @@ export function ModalGenerarPDF({
         throw new Error(errBody.error ?? `HTTP ${response.status}`)
       }
 
+      // Disparar descarga del PDF en el navegador
+      const blob     = await response.blob()
+      const blobUrl  = URL.createObjectURL(blob)
+      const anchor   = document.createElement('a')
+      const fechaSlug = (payload.fecha.replace(/\//g, '-') || 'sin-fecha')
+      const temaSlug  = payload.tema_principal.slice(0, 30).toLowerCase().replace(/[^a-z0-9]/g, '_')
+      anchor.href     = blobUrl
+      anchor.download = `control_asistencia_${fechaSlug}_${temaSlug}.pdf`
+      document.body.appendChild(anchor)
+      anchor.click()
+      document.body.removeChild(anchor)
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10_000)
+
       const fechaDisplay = payload.fecha.includes('/') ? payload.fecha : isoToDisplay(payload.fecha)
 
       setExito(true)

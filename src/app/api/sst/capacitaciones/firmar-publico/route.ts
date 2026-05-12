@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verificarTokenFirmaCapacitacion } from '@/lib/sst/cap-firma-token'
-import { crearAsistenciaRegistro } from '@/lib/sst/cap'
+import { crearAsistenciaRegistro, obtenerActividad } from '@/lib/sst/cap'
 import { encriptarFirma } from '@/lib/crypto-firma'
+import { getRecord } from '@/lib/airtable-client'
+import type { CapRegistroFields } from '@/types/sst/cap'
 
 /**
  * GET /api/sst/capacitaciones/firmar-publico?token=XXX
  *
  * Endpoint público (sin autenticación).
  * Valida el token y devuelve el contexto mínimo del registro para mostrar en la
- * página de firma (actividad, fecha).
+ * página de firma (actividad, fecha, unidad objetivo).
  */
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token')
@@ -17,10 +19,21 @@ export async function GET(request: NextRequest) {
   const payload = await verificarTokenFirmaCapacitacion(token)
   if (!payload) return NextResponse.json({ message: 'Token inválido o expirado' }, { status: 401 })
 
+  // Obtener dirigido_a de la actividad para validar la unidad en el cliente
+  let dirigidoA: string | null = null
+  try {
+    const registro = await getRecord<CapRegistroFields>('sst_cap_registros', payload.registroId)
+    if (registro.fields.actividad_id) {
+      const actividad = await obtenerActividad(registro.fields.actividad_id)
+      dirigidoA = actividad.fields.dirigido_a ?? null
+    }
+  } catch { /* no crítico — el formulario funciona sin este dato */ }
+
   return NextResponse.json({
     registroId:     payload.registroId,
     actividadTema:  payload.actividadTema ?? null,
     fechaEjecucion: payload.fechaEjecucion ?? null,
+    dirigidoA,
   })
 }
 

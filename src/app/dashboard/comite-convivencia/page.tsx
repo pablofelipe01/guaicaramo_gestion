@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -215,7 +215,7 @@ export default function ComiteConvivenciaPage() {
               <div>
                 <h2 className="font-semibold text-gray-900">{comite.fields.Nombre}</h2>
                 <div className="text-sm text-gray-500 mt-1">
-                  Vigencia: {comite.fields['Fecha Inicio']} → {comite.fields['Fecha Fin']}
+                  Vigencia: {comite.fields['Fecha Inicio']} ? {comite.fields['Fecha Fin']}
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -461,7 +461,7 @@ export default function ComiteConvivenciaPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
             <textarea value={formComp.Descripcion} onChange={e => setFormComp(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
               placeholder="Descripción del compromiso" />
           </div>
           <div className="grid grid-cols-2 gap-3">

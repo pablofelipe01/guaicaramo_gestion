@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { BarChart2, Plus, X, Loader2, CheckCircle2, AlertCircle, ClipboardList, Pencil, Trash2 } from 'lucide-react'
@@ -195,27 +195,27 @@ export default function AuditoriasPage() {
             )}
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
                   placeholder="Título *" value={form.Titulo ?? ''}
                   onChange={e => setForm(f => ({ ...f, Titulo: e.target.value }))} />
               </div>
-              <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              <select className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
                 value={form.Tipo} onChange={e => setForm(f => ({ ...f, Tipo: e.target.value as 'interna' | 'externa' }))}>
                 <option value="interna">Interna</option>
                 <option value="externa">Externa</option>
               </select>
-              <input className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              <input className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Nombre auditor *" value={form['Auditor Nombre'] ?? ''}
                 onChange={e => setForm(f => ({ ...f, 'Auditor Nombre': e.target.value }))} />
-              <input type="date" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              <input type="date" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
                 value={form['Fecha Inicio'] ?? ''}
                 onChange={e => setForm(f => ({ ...f, 'Fecha Inicio': e.target.value }))} />
-              <input type="date" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              <input type="date" className="border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500"
                 placeholder="Fecha fin"
                 value={form['Fecha Fin'] ?? ''}
                 onChange={e => setForm(f => ({ ...f, 'Fecha Fin': e.target.value }))} />
               <div className="col-span-2">
-                <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                <textarea className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none"
                   rows={3} placeholder="Alcance *" value={form.Alcance ?? ''}
                   onChange={e => setForm(f => ({ ...f, Alcance: e.target.value }))} />
               </div>

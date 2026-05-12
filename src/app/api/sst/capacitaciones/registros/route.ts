@@ -6,7 +6,7 @@
  * Gestión de los registros de ejecución de sesiones de capacitación.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { listarRegistros, crearRegistro } from '@/lib/sst/cap'
+import { listarRegistros, crearRegistro, recalcularEstadoActividad } from '@/lib/sst/cap'
 import { requireRole } from '@/lib/auth/middleware'
 
 /** Roles con acceso al submódulo de registros de capacitación. */
@@ -65,5 +65,19 @@ export async function POST(request: NextRequest) {
   const { actividad_tema: _at, registrado_por: _rp, ...camposRegistro } = body
 
   const record = await crearRegistro(camposRegistro)
-  return NextResponse.json({ record }, { status: 201 })
+
+  // Automatización 1: exponer el estado derivado en la respuesta para que la UI lo refleje
+  // (crearRegistro ya llama recalcularEstadoActividad internamente; aquí solo leemos el resultado)
+  let estadoActividad: string | null = null
+  try {
+    if (camposRegistro.actividad_id) {
+      const { estado } = await recalcularEstadoActividad(camposRegistro.actividad_id)
+      estadoActividad = estado
+    }
+  } catch (e) {
+    // No bloquear la respuesta si falla la lectura del estado derivado
+    console.error('[Auto1 estadoActividad]', e)
+  }
+
+  return NextResponse.json({ record, estadoActividad }, { status: 201 })
 }

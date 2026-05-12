@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -368,7 +368,7 @@ export default function MatrizLegalPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
             <textarea value={formReq.Descripcion} onChange={e => setFormReq(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de vigencia</label>
@@ -421,7 +421,7 @@ export default function MatrizLegalPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
             <textarea value={formCumpl.Observaciones} onChange={e => setFormCumpl(f => ({ ...f, Observaciones: e.target.value }))}
-              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">URL de evidencia</label>

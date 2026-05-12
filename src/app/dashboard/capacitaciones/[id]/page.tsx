@@ -1,618 +1,352 @@
-'use client'
+﻿'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/Card'
-import { Modal } from '@/components/ui/Modal'
-import { ConfirmModal } from '@/components/ui/ConfirmModal'
-import { EstadoBadge } from '@/components/sst/capacitaciones/EstadoBadge'
-import { RegistroForm } from '@/components/sst/capacitaciones/RegistroForm'
-import { TimelineActividad } from '@/components/sst/capacitaciones/TimelineActividad'
-import { BarraMensual } from '@/components/sst/capacitaciones/BarraMensual'
-import { getCategoriaColor, calcularPct, derivarEstadoCliente } from '@/lib/sst/cap-client'
-import {
-  ArrowLeft, Award, Users, Calendar, ClipboardCheck, BookOpen,
-  AlertTriangle, Plus, Target, Pencil, Trash2,
-} from 'lucide-react'
-import type { CapActividadFields, CapProgramacionFields, CapRegistroFields, CapCategoria, CapProveedor } from '@/types/sst/cap'
-import type { AirtableRecord } from '@/lib/airtable-client'
+import { use, useEffect, useState, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { ToastContainer, useToast } from '@/components/sst/capacitaciones/Toast'
+import { PanelDerecho } from '@/components/sst/capacitaciones/PanelDerecho'
+import { TabProgramacion } from '@/components/sst/capacitaciones/TabProgramacion'
+import { TabEjecuciones } from '@/components/sst/capacitaciones/TabEjecuciones'
 import { getAuthHeaders } from '@/lib/client/authFetch'
-import SeccionAsistentesReportes from '@/components/sst/capacitaciones/SeccionAsistentesReportes'
-import AlertasActividad from '@/components/sst/capacitaciones/AlertasActividad'
+import {
+  derivarEstadoCliente,
+  CAP_COLORS, ALERTA_COLOR,
+} from '@/lib/sst/cap-client'
+import type { EstadoActividad, AlertaCobertura } from '@/lib/sst/cap-client'
+import type { CapActividadFields, CapProgramacionFields, CapRegistroFields } from '@/types/sst/cap'
+import type { AirtableRecord } from '@/lib/airtable-client'
+import {
+  ChevronLeft, AlertCircle, CheckCircle, AlertTriangle,
+  BookOpen, Calendar, PlayCircle,
+} from 'lucide-react'
+
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
 type Actividad = AirtableRecord<CapActividadFields>
-type Prog = AirtableRecord<CapProgramacionFields>
-type Registro = AirtableRecord<CapRegistroFields>
+type Prog      = AirtableRecord<CapProgramacionFields>
+type Registro  = AirtableRecord<CapRegistroFields>
 
-const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+interface FaltanteItem {
+  nombre_empleado: string
+  descripcion_cargo: string | null
+  numero_documento: string
+  iniciales: string
+}
 
-export default function CapacitacionDetallePage() {
-  const { id } = useParams<{ id: string }>()
+interface FaltantesData {
+  dirigido_a:    string | null
+  total_unidad:  number
+  asistidos:     number
+  pct_cobertura: number
+  faltantes:     FaltanteItem[]
+  warning?:      string
+}
+
+type TabDetalle = 'programacion' | 'ejecuciones'
+
+// ─── Alerta contextual ────────────────────────────────────────────────────────
+
+type AlertBoxType = 'ok' | 'warn' | 'error' | 'info'
+
+function AlertaContextual({
+  tipo,
+  mensaje,
+}: {
+  tipo: AlertBoxType
+  mensaje: string
+}) {
+  const bg:     Record<AlertBoxType, string> = {
+    ok:    CAP_COLORS.verdeLight,
+    warn:  CAP_COLORS.naranjaLight,
+    error: CAP_COLORS.rojoLight,
+    info:  CAP_COLORS.verdeLight,
+  }
+  const border: Record<AlertBoxType, string> = {
+    ok:    '#b7dfbf',
+    warn:  '#ffd6b3',
+    error: '#f5c6cb',
+    info:  '#b7dfbf',
+  }
+  const txt: Record<AlertBoxType, string> = {
+    ok:    '#155724',
+    warn:  '#7a3e00',
+    error: '#721c24',
+    info:  '#155724',
+  }
+  const IconMap: Record<AlertBoxType, React.ElementType> = {
+    ok:    CheckCircle,
+    warn:  AlertTriangle,
+    error: AlertCircle,
+    info:  BookOpen,
+  }
+  const Icon = IconMap[tipo]
+
+  return (
+    <div
+      className="flex items-start gap-3 rounded-xl px-4 py-3 border text-sm"
+      style={{ background: bg[tipo], borderColor: border[tipo], color: txt[tipo] }}
+    >
+      <Icon className="w-4 h-4 mt-0.5 shrink-0" />
+      {mensaje}
+    </div>
+  )
+}
+
+// ─── Skeleton de carga ────────────────────────────────────────────────────────
+
+function SkeletonDetalle() {
+  return (
+    <div className="p-4 md:p-6 flex flex-col gap-4 animate-pulse">
+      <div className="h-5 bg-gray-200 rounded w-56" />
+      <div className="h-4 bg-gray-100 rounded w-72" />
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 mt-2">
+        <div className="flex flex-col gap-4">
+          <div className="h-10 bg-gray-200 rounded-xl" />
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-28 bg-gray-100 rounded-xl" />
+          ))}
+        </div>
+        <div className="flex flex-col gap-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-36 bg-gray-100 rounded-xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Página principal ─────────────────────────────────────────────────────────
+
+export default function CapacitacionDetallePage({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}) {
+  const { id } = use(params)
+  useAuth()
   const router = useRouter()
-  const [actividad, setActividad] = useState<Actividad | null>(null)
-  const [programaciones, setProgramaciones] = useState<Prog[]>([])
-  const [registros, setRegistros] = useState<Registro[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [modalRegistro, setModalRegistro] = useState(false)
-  const [modalProg, setModalProg] = useState(false)
-  const [formProg, setFormProg] = useState({ mes: 'Enero', semana: '1', fecha_programada: '' })
-  const [guardandoProg, setGuardandoProg] = useState(false)
-  // Editar actividad
-  const [modalEditar, setModalEditar] = useState(false)
-  const [formEdit, setFormEdit] = useState<Partial<CapActividadFields>>({})
-  const [guardandoEdit, setGuardandoEdit] = useState(false)
-  // Eliminar actividad
-  const [confirmEliminar, setConfirmEliminar] = useState(false)
-  const [eliminando, setEliminando] = useState(false)
+  const { toasts, toast, remove } = useToast()
 
+  // ── Estado ─────────────────────────────────────────────────────────────────
+  const [actividad,      setActividad]      = useState<Actividad | null>(null)
+  const [programaciones, setProgramaciones] = useState<Prog[]>([])
+  const [registros,      setRegistros]      = useState<Registro[]>([])
+  const [faltantesData,  setFaltantesData]  = useState<FaltantesData | null>(null)
+  const [loading,        setLoading]        = useState(true)
+  const [loadingFalt,    setLoadingFalt]    = useState(false)
+  const [tabActiva,      setTabActiva]      = useState<TabDetalle>('programacion')
+
+  // ── Carga de datos ─────────────────────────────────────────────────────────
   const cargar = useCallback(async () => {
     setLoading(true)
     try {
-      const [actRes, progRes, regRes] = await Promise.all([
-        fetch(`/api/sst/capacitaciones/${id}`, { headers: getAuthHeaders() }),
-        fetch(`/api/sst/capacitaciones/programacion?actividad_id=${id}`, { headers: getAuthHeaders() }),
-        fetch(`/api/sst/capacitaciones/registros?actividad_id=${id}`, { headers: getAuthHeaders() }),
+      const [aRes, pRes, rRes] = await Promise.all([
+        fetch(`/api/sst/capacitaciones/${id}`,                              { headers: getAuthHeaders() }),
+        fetch(`/api/sst/capacitaciones/programacion?actividad_id=${id}`,    { headers: getAuthHeaders() }),
+        fetch(`/api/sst/capacitaciones/registros?actividad_id=${id}`,       { headers: getAuthHeaders() }),
       ])
-      if (actRes.ok) {
-        const d = await actRes.json()
-        setActividad(d.record)
-      } else {
-        setError('Actividad no encontrada')
-      }
-      if (progRes.ok) setProgramaciones((await progRes.json()).records ?? [])
-      if (regRes.ok)  setRegistros((await regRes.json()).records ?? [])
-
-      // Sincronizar estado en Airtable en background (idempotente, no bloquea la UI)
-      fetch('/api/sst/capacitaciones/sync-estados', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ actividadId: id }),
-      }).catch(() => { /* no crítico */ })
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Error cargando datos')
-    }
+      if (aRes.ok) setActividad((await aRes.json()).record)
+      if (pRes.ok) setProgramaciones((await pRes.json()).records ?? [])
+      if (rRes.ok) setRegistros((await rRes.json()).records ?? [])
+    } catch { /* silencioso */ }
     setLoading(false)
   }, [id])
 
-  useEffect(() => { cargar() }, [cargar])
-
-  const crearProgramacion = async () => {
-    setGuardandoProg(true)
+  const cargarFaltantes = useCallback(async () => {
+    setLoadingFalt(true)
     try {
-      await fetch('/api/sst/capacitaciones/programacion', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          actividad_id: id,
-          mes: formProg.mes,
-          semana: Number(formProg.semana),
-          fecha_programada: formProg.fecha_programada || undefined,
-        }),
-      })
-      setModalProg(false)
-      await cargar()
-    } catch (e) {
-      console.error(e)
-    }
-    setGuardandoProg(false)
-  }
+      const res = await fetch(`/api/sst/capacitaciones/${id}/faltantes`, { headers: getAuthHeaders() })
+      if (res.ok) setFaltantesData(await res.json())
+    } catch { /* silencioso */ }
+    setLoadingFalt(false)
+  }, [id])
 
-  const guardarRegistro = async (data: Record<string, unknown>) => {
-    const res = await fetch('/api/sst/capacitaciones/registros', {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    })
-    if (!res.ok) {
-      const err = await res.json()
-      throw new Error(err.message ?? 'Error al guardar')
-    }
-    setModalRegistro(false)
+  useEffect(() => {
+    cargar()
+    cargarFaltantes()
+  }, [cargar, cargarFaltantes])
+
+  const refresh = useCallback(async () => {
     await cargar()
-  }
+    await cargarFaltantes()
+  }, [cargar, cargarFaltantes])
 
-  const eliminarRegistro = async (registroId: string) => {
-    const res = await fetch(`/api/sst/capacitaciones/registros/${registroId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    })
-    if (!res.ok && res.status !== 204) {
-      const err = await res.json().catch(() => ({}))
-      console.error('[eliminarRegistro]', err.message ?? res.status)
-    }
-    await cargar()
-  }
+  // ── Derivados ──────────────────────────────────────────────────────────────
+  if (loading) return <SkeletonDetalle />
 
-  const abrirEditar = () => {
-    if (!actividad) return
-    setFormEdit({ ...actividad.fields })
-    setModalEditar(true)
-  }
-
-  const guardarEditar = async () => {
-    setGuardandoEdit(true)
-    try {
-      const res = await fetch(`/api/sst/capacitaciones/${id}`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(formEdit),
-      })
-      if (!res.ok) throw new Error('Error al guardar')
-      setModalEditar(false)
-      await cargar()
-    } catch (e) {
-      console.error('[guardarEditar]', e)
-    }
-    setGuardandoEdit(false)
-  }
-
-  const confirmarEliminar = async () => {
-    setEliminando(true)
-    try {
-      const res = await fetch(`/api/sst/capacitaciones/${id}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-      })
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      router.push('/dashboard/capacitaciones')
-    } catch (e) {
-      console.error('[confirmarEliminar]', e)
-      setEliminando(false)
-      setConfirmEliminar(false)
-    }
-  }
-
-  /* â”€â”€ Loading / Error â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin w-8 h-8 border-2 border-t-transparent rounded-full" style={{ borderColor: 'var(--sst-green-700)', borderTopColor: 'transparent' }} />
-      </div>
-    )
-  }
-
-  if (error || !actividad) {
+  if (!actividad) {
     return (
       <div className="p-6">
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="w-4 h-4" /> Volver
+        <button
+          onClick={() => router.push('/dashboard/capacitaciones')}
+          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4"
+        >
+          <ChevronLeft className="w-4 h-4" /> Volver al plan
         </button>
-        <p className="text-red-600">{error ?? 'No encontrado'}</p>
+        <p className="text-red-600">Actividad no encontrada.</p>
       </div>
     )
   }
 
-  const f = actividad.fields
-  const catColor = getCategoriaColor(f.categoria)
+  const f              = actividad.fields
+  const estadoActividad = derivarEstadoCliente(
+    programaciones.map(p => ({ estado: p.fields.estado })),
+  ) as EstadoActividad
+  const alerta         = (f.alerta_cobertura ?? 'sin_datos') as AlertaCobertura
+  const alertaColor    = ALERTA_COLOR[alerta]
+  const cobPct         = faltantesData?.pct_cobertura ?? 0
+  const tieneRegistros = registros.some(r => (r.fields.presentes ?? 0) > 0)
+  const completado     = estadoActividad === 'Completado'
 
-  /* Stats rápidas */
-  const progEjecutadas = programaciones.filter(p => p.fields.estado === 'Ejecutado').length
-  const pctProg = calcularPct(progEjecutadas, programaciones.length)
-  const totalAsistentes = registros.reduce((s, r) => s + (r.fields.presentes ?? 0), 0)
+  // Mensaje de alerta contextual
+  let alertTipo: AlertBoxType = 'info'
+  let alertMsg  = ''
+  if (completado) {
+    alertTipo = 'ok'
+    alertMsg  = 'Actividad completada. Todos los documentos disponibles.'
+  } else if (estadoActividad === 'Vencida') {
+    alertTipo = 'error'
+    alertMsg  = 'Actividad vencida. Fecha límite superada. Reprogramar urgente.'
+  } else if (alerta === 'critico') {
+    alertTipo = 'error'
+    alertMsg  = faltantesData
+      ? `${faltantesData.faltantes.length} personas de ${f.dirigido_a ?? 'la unidad'} no han asistido. Meta: 80%.`
+      : `Cobertura crítica en ${f.dirigido_a ?? 'la unidad'}. Meta: 80%.`
+  } else if (alerta === 'riesgo') {
+    alertTipo = 'warn'
+    alertMsg  = faltantesData
+      ? `${faltantesData.faltantes.length} personas de ${f.dirigido_a ?? 'la unidad'} no han asistido. Meta: 80%.`
+      : 'Cobertura en riesgo. Meta: 80%.'
+  } else if (alerta === 'ok') {
+    alertTipo = 'ok'
+    alertMsg  = 'Actividad en buen estado de cobertura.'
+  } else {
+    alertTipo = 'info'
+    alertMsg  = 'Sin datos de asistencia aún. Registra la primera sesión.'
+  }
 
-  // Estado derivado client-side desde programaciones: siempre correcto aunque Airtable esté desactualizado
-  const estadoEfectivo = derivarEstadoCliente(programaciones.map(p => ({ estado: p.fields.estado })))
+  const TABS_DETALLE: { id: TabDetalle; label: string; Icon: React.ElementType }[] = [
+    { id: 'programacion', label: 'Programación', Icon: Calendar    },
+    { id: 'ejecuciones',  label: 'Ejecuciones',  Icon: PlayCircle  },
+  ]
+
+  void alertaColor
 
   return (
-    <div className="flex flex-col gap-6 p-4 md:p-6">
-      {/* â”€â”€ Header card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div
-        className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm"
-        style={{ borderLeft: `4px solid ${catColor}` }}
-      >
-        <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
+    <>
+      <ToastContainer toasts={toasts} onRemove={remove} />
+
+<div className="flex flex-col gap-4 p-4 md:p-6 max-w-7xl mx-auto min-h-screen">
+
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1 text-sm">
           <button
             onClick={() => router.push('/dashboard/capacitaciones')}
-            className="mt-0.5 p-1.5 rounded-lg transition-colors shrink-0"
-            style={{ color: 'var(--sst-dark-500)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)'; e.currentTarget.style.color = 'var(--sst-dark-900)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--sst-dark-500)' }}
+            className="flex items-center gap-1 hover:opacity-80 transition-opacity font-medium"
+            style={{ color: '#6C757D' }}
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
+            Plan de Capacitaciones
           </button>
+          <span className="mx-1 text-gray-400">/</span>
+          <span className="font-medium truncate max-w-xs text-gray-900">{f.tema}</span>
+        </nav>
 
-          <div className="flex-1 min-w-0 w-full sm:w-auto">
-            {/* Fila 1: ítem + categoría + certificación */}
-            <div className="flex flex-wrap items-center gap-2 mb-2">
-              <span
-                className="text-xs font-bold px-2.5 py-0.5 rounded-full text-white"
-                style={{ backgroundColor: catColor }}
-              >
-                Ítem #{f.item_numero}
-              </span>
-              <span
-                className="text-xs px-2 py-0.5 rounded-full font-semibold"
-                style={{ backgroundColor: catColor, color: '#fff', opacity: 0.75 }}
-              >
-                {f.categoria}
-              </span>
-              {f.requiere_certificacion && (
-                <span className="flex items-center gap-1 text-xs text-amber-600 font-medium bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                  <Award className="w-3 h-3" /> Certificación
-                </span>
-              )}
-              <EstadoBadge estado={estadoEfectivo} size="md" />
-            </div>
-
-            <h1 className="text-lg font-bold leading-tight" style={{ color: 'var(--sst-dark-900)', fontFamily: 'var(--font-poppins)' }}>{f.tema}</h1>
-            {f.objetivo && (
-              <p className="text-sm mt-1 line-clamp-2" style={{ color: 'var(--sst-dark-500)' }}>{f.objetivo}</p>
-            )}
-
-            {/* Mini stats */}
-            <div className="flex flex-wrap gap-4 mt-3 text-xs" style={{ color: 'var(--sst-dark-500)' }}>
-              {f.proveedor && (
-                <span className="flex items-center gap-1">
-                  <Target className="w-3.5 h-3.5" style={{ color: 'var(--sst-dark-300)' }} /> {f.proveedor}
-                </span>
-              )}
-              {f.responsable && (
-                <span className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5" style={{ color: 'var(--sst-dark-300)' }} /> {f.responsable}
-                </span>
-              )}
-              {totalAsistentes > 0 && (
-                <span className="flex items-center gap-1 font-medium" style={{ color: 'var(--sst-cumple)' }}>
-                  <ClipboardCheck className="w-3.5 h-3.5" /> {totalAsistentes} asistentes acumulados
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Botones editar / eliminar */}
-          <div className="flex items-center gap-1.5 shrink-0 mt-0.5 ml-8 sm:ml-0">
-            <button
-              onClick={abrirEditar}
-              className="btn btn-secondary text-xs"
-            >
-              <Pencil className="w-3.5 h-3.5" /> Editar
-            </button>
-            <button
-              onClick={() => setConfirmEliminar(true)}
-              className="btn btn-danger text-xs"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Eliminar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <AlertasActividad
-        actividad={{
-          id: actividad.id,
-          tema: f.tema,
-          estado_general: estadoEfectivo,
-          alerta_cobertura: f.alerta_cobertura,
-        }}
-        programaciones={programaciones.map(p => ({
-          id: p.id,
-          estado: p.fields.estado,
-          fecha_programada: p.fields.fecha_programada ?? null,
-          mes: p.fields.mes,
-          semana: p.fields.semana,
-        }))}
-        registros={registros.map(r => ({
-          asistentes_presentes: r.fields.presentes ?? 0,
-          asistentes_convocados: r.fields.convocados ?? 0,
-          evaluaciones_aprobadas: r.fields.evaluaciones_aprobadas ?? 0,
-          evaluaciones_realizadas: r.fields.evaluaciones_realizadas ?? 0,
-          fecha_ejecucion: r.fields.fecha_ejecucion ?? null,
-        }))}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* â”€â”€ Columna principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
-          {/* Información detallada */}
-          <Card className="p-4">
-            <h2 className="text-sm font-semibold mb-3 flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
-              <BookOpen className="w-4 h-4" style={{ color: 'var(--phase-planear)' }} /> Información
-            </h2>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Proveedor</span>
-                <p className="font-medium mt-0.5" style={{ color: 'var(--sst-dark-700)' }}>{f.proveedor || '—'}</p>
-              </div>
-              <div>
-                <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Responsable</span>
-                <p className="font-medium mt-0.5" style={{ color: 'var(--sst-dark-700)' }}>{f.responsable || '—'}</p>
-              </div>
-              <div className="col-span-2">
-                <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Dirigido a</span>
-                <p className="font-medium mt-0.5" style={{ color: 'var(--sst-dark-700)' }}>{f.dirigido_a || '—'}</p>
-              </div>
-              {f.normativa_aplicable && (
-                <div className="col-span-2">
-                  <span className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: 'var(--sst-dark-500)' }}>Normativa</span>
-                  <p
-                    className="font-medium mt-0.5 text-xs rounded-lg px-2.5 py-1 inline-block"
-                    style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', color: 'var(--phase-planear)' }}
-                  >{f.normativa_aplicable}</p>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Timeline de ejecuciones */}
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
-                <ClipboardCheck className="w-4 h-4" style={{ color: 'var(--sst-cumple)' }} />
-                Historial de ejecución
-                {registros.length > 0 && (
-                  <span
-                    className="ml-1 text-[11px] font-bold px-1.5 py-0.5 rounded-full"
-                    style={{ background: 'rgba(40,167,69,0.12)', color: '#166534' }}
-                  >
-                    {registros.length}
-                  </span>
-                )}
-              </h2>
-              <button
-                onClick={() => setModalRegistro(true)}
-                className="btn btn-primary text-xs"
-              >
-                <Plus className="w-3.5 h-3.5" /> Registrar ejecución
-              </button>
-            </div>
-            <TimelineActividad
-              registros={registros}
-              onDelete={eliminarRegistro}
-              emptyText="Sin registros de ejecución aún. Haz clic en 'Registrar ejecución' para agregar el primero."
-            />
-          </Card>
-
-          {/* ── Asistencias individuales + Reportes ─────────────────────── */}
-          {registros.length > 0 && (
-            <SeccionAsistentesReportes
-              registros={registros}
-              actividadId={id}
-              actividadFields={{
-                tema:        f.tema,
-                objetivo:    f.objetivo,
-                responsable: f.responsable,
+        {/* Encabezado de la actividad */}
+        <div>
+          <h1 className="text-xl leading-tight text-gray-900 font-medium">{f.tema}</h1>
+          <div className="flex flex-wrap items-center gap-3 mt-1.5">
+            <span
+              className="text-xs font-semibold px-2.5 py-1 rounded-full"
+              style={{
+                background: (ALERTA_COLOR[alerta] ?? CAP_COLORS.gris) + '22',
+                color:      ALERTA_COLOR[alerta] ?? CAP_COLORS.gris,
               }}
-            />
-          )}
-
+            >
+              {estadoActividad}
+            </span>
+            {f.categoria && (
+              <span className="text-xs text-gray-500">{f.categoria}</span>
+            )}
+            {f.responsable && (
+              <span className="text-xs text-gray-400">Responsable: {f.responsable}</span>
+            )}
+          </div>
         </div>
 
-        {/* â”€â”€ Columna lateral: programaciÃ³n â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <div className="flex flex-col gap-4">
-          <Card className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--sst-dark-800)' }}>
-                <Calendar className="w-4 h-4" style={{ color: 'var(--phase-planear)' }} />
-                Programación
-                <span className="text-xs" style={{ color: 'var(--sst-dark-500)' }}>({programaciones.length})</span>
-              </h2>
-              <button
-                onClick={() => setModalProg(true)}
-                className="btn btn-secondary text-xs"
-              >
-                <Plus className="w-3.5 h-3.5" /> Agregar
-              </button>
+        {/* Layout de dos columnas */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 items-start">
+
+          {/* ── Columna izquierda ───────────────────────────────────────── */}
+          <div className="flex flex-col gap-4">
+
+            {/* Alerta contextual */}
+            <AlertaContextual tipo={alertTipo} mensaje={alertMsg} />
+
+            {/* Pestañas */}
+            <div
+              className="flex gap-1 p-1 rounded-xl w-fit"
+              style={{ background: 'rgba(22,101,52,0.08)' }}
+            >
+              {TABS_DETALLE.map(tab => {
+                const active = tabActiva === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setTabActiva(tab.id)}
+                    className="flex items-center gap-1.5 text-sm px-4 py-1.5 rounded-lg font-medium transition-all"
+                    style={
+                      active
+                        ? { background: '#FFFFFF', color: CAP_COLORS.verde, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+                        : { color: '#6C757D' }
+                    }
+                  >
+                    <tab.Icon className="w-3.5 h-3.5" />
+                    {tab.label}
+                  </button>
+                )
+              })}
             </div>
 
-            {/* Barra de progreso de programación */}
-            {programaciones.length > 0 && (
-              <div className="mb-3">
-                <BarraMensual value={pctProg} meta={80} height="sm" showLabel showMeta />
-                <p className="text-[10px] mt-1" style={{ color: 'var(--sst-dark-500)' }}>{progEjecutadas}/{programaciones.length} sesiones ejecutadas</p>
-              </div>
+            {/* Contenido del tab activo */}
+            {tabActiva === 'programacion' && (
+              <TabProgramacion
+                actividadId={id}
+                programaciones={programaciones}
+                onRefresh={refresh}
+                toastSuccess={toast.success}
+                toastError={toast.error}
+              />
             )}
 
-            {programaciones.length === 0 ? (
-              <div className="text-center py-6">
-                <AlertTriangle className="w-6 h-6 text-orange-400 mx-auto mb-1" />
-                <p className="text-xs text-gray-400 mb-2">Sin fechas programadas</p>
-                <button
-                  onClick={() => setModalProg(true)}
-                  className="btn btn-ghost text-xs mt-1"
-                >
-                  Programar ahora
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                {programaciones.map(p => (
-                  <div
-                    key={p.id}
-                    className="flex items-center justify-between text-sm rounded-xl px-3 py-2 transition-colors"
-                    style={{ border: '1px solid var(--border)' }}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--sst-dark-100)' }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '' }}
-                  >
-                    <div>
-                      <span className="font-semibold" style={{ color: 'var(--sst-dark-800)' }}>{p.fields.mes}</span>
-                      <span className="ml-1 text-xs" style={{ color: 'var(--sst-dark-500)' }}>Sem. {p.fields.semana}</span>
-                      {p.fields.fecha_programada && (
-                        <p className="text-[10px]" style={{ color: 'var(--sst-dark-500)' }}>{p.fields.fecha_programada}</p>
-                      )}
-                    </div>
-                    <EstadoBadge estado={p.fields.estado} />
-                  </div>
-                ))}
-              </div>
+            {tabActiva === 'ejecuciones' && (
+              <TabEjecuciones
+                actividadId={id}
+                actividad={actividad}
+                programaciones={programaciones}
+                registros={registros}
+                onRefresh={refresh}
+                toastSuccess={toast.success}
+                toastError={toast.error}
+              />
             )}
-          </Card>
+          </div>
+
+          {/* ── Columna derecha: Panel lateral ──────────────────────────── */}
+          <PanelDerecho
+            actividadId={id}
+            estadoActividad={estadoActividad}
+            alertaCobertura={alerta}
+            pctCobertura={cobPct}
+            asistidos={faltantesData?.asistidos ?? 0}
+            faltantes={faltantesData?.faltantes ?? []}
+            loadingFaltantes={loadingFalt}
+            dirigidoA={f.dirigido_a}
+            tieneRegistros={tieneRegistros}
+          />
         </div>
       </div>
-
-      {/* â”€â”€ Modales â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <Modal open={modalRegistro} onClose={() => setModalRegistro(false)} title="Registrar ejecución">
-        <RegistroForm
-          actividades={actividad ? [actividad] : []}
-          programaciones={programaciones}
-          actividadPreseleccionada={id}
-          onGuardar={guardarRegistro}
-          onCancelar={() => setModalRegistro(false)}
-        />
-      </Modal>
-
-      <Modal open={modalProg} onClose={() => setModalProg(false)} title="Agregar programación">
-        <div className="flex flex-col gap-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Mes</label>
-              <select
-                value={formProg.mes}
-                onChange={e => setFormProg(p => ({ ...p, mes: e.target.value }))}
-                className="input-field"
-              >
-                {MESES.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Semana</label>
-              <select
-                value={formProg.semana}
-                onChange={e => setFormProg(p => ({ ...p, semana: e.target.value }))}
-                className="input-field"
-              >
-                {[1, 2, 3, 4, 5].map(s => <option key={s} value={s}>Semana {s}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Fecha programada (opcional)</label>
-            <input
-              type="date"
-              value={formProg.fecha_programada}
-              onChange={e => setFormProg(p => ({ ...p, fecha_programada: e.target.value }))}
-              className="input-field"
-            />
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button onClick={() => setModalProg(false)} className="btn btn-secondary flex-1">
-              Cancelar
-            </button>
-            <button
-              onClick={crearProgramacion}
-              disabled={guardandoProg}
-              className="btn btn-primary flex-1 disabled:opacity-60"
-            >
-              {guardandoProg ? 'Guardando…' : 'Agregar'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ── Modal editar actividad ─────────────────────────────────────────── */}
-      <Modal open={modalEditar} onClose={() => setModalEditar(false)} title="Editar actividad" size="md">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Tema *</label>
-            <input
-              type="text"
-              value={formEdit.tema ?? ''}
-              onChange={e => setFormEdit(p => ({ ...p, tema: e.target.value }))}
-              className="input-field"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Objetivo</label>
-            <textarea
-              rows={2}
-              value={formEdit.objetivo ?? ''}
-              onChange={e => setFormEdit(p => ({ ...p, objetivo: e.target.value }))}
-              className="input-field resize-none"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Categoría</label>
-              <select
-                value={formEdit.categoria ?? ''}
-                onChange={e => setFormEdit(p => ({ ...p, categoria: e.target.value as CapCategoria }))}
-                className="input-field"
-              >
-                {(['Alturas y espacios confinados','Seguridad vial y emergencias','Salud y riesgo biológico','Riesgos físicos y químicos','Psicosocial y bienestar','Ergonomía, mecánica y EPI'] as CapCategoria[]).map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Proveedor</label>
-              <select
-                value={formEdit.proveedor ?? ''}
-                onChange={e => setFormEdit(p => ({ ...p, proveedor: e.target.value as CapProveedor }))}
-                className="input-field"
-              >
-                {(['Proveedor externo','ARL SURA','SENA','SST','Enfermería','Bienestar Social'] as CapProveedor[]).map(v => (
-                  <option key={v} value={v}>{v}</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Responsable</label>
-              <input
-                type="text"
-                value={formEdit.responsable ?? ''}
-                onChange={e => setFormEdit(p => ({ ...p, responsable: e.target.value }))}
-                className="input-field"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-gray-600">Dirigido a</label>
-              <input
-                type="text"
-                value={formEdit.dirigido_a ?? ''}
-                onChange={e => setFormEdit(p => ({ ...p, dirigido_a: e.target.value }))}
-                className="input-field"
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-gray-600">Normativa aplicable</label>
-            <input
-              type="text"
-              value={formEdit.normativa_aplicable ?? ''}
-              onChange={e => setFormEdit(p => ({ ...p, normativa_aplicable: e.target.value }))}
-                className="input-field"
-              />
-          </div>
-          <div className="flex items-center gap-2 py-1">
-            <input
-              id="req-cert"
-              type="checkbox"
-              checked={formEdit.requiere_certificacion ?? false}
-              onChange={e => setFormEdit(p => ({ ...p, requiere_certificacion: e.target.checked }))}
-              className="w-4 h-4 rounded"
-              style={{ accentColor: 'var(--sst-green-700)' }}
-            />
-            <label htmlFor="req-cert" className="text-sm text-gray-700">Requiere certificación</label>
-          </div>
-          <div className="flex gap-2 pt-1">
-            <button
-              onClick={() => setModalEditar(false)}
-              className="btn btn-secondary flex-1"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={guardarEditar}
-              disabled={guardandoEdit || !formEdit.tema}
-              className="btn btn-primary flex-1 disabled:opacity-60"
-            >
-              {guardandoEdit ? 'Guardando…' : 'Guardar cambios'}
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* ── Confirmar eliminar actividad ──────────────────────────────────── */}
-      <ConfirmModal
-        open={confirmEliminar}
-        title="Eliminar actividad"
-        description={`¿Seguro que deseas eliminar "${f.tema}"? Esta acción es permanente y no se puede deshacer.`}
-        confirmLabel="Sí, eliminar actividad"
-        loading={eliminando}
-        onCancel={() => setConfirmEliminar(false)}
-        onConfirm={confirmarEliminar}
-      />
-
-    </div>
+    </>
   )
 }

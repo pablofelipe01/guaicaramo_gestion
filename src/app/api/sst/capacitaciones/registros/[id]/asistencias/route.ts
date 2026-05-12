@@ -9,7 +9,14 @@
  * El GET la omite y agrega el campo `tiene_firma: boolean`.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { listarAsistenciasRegistro, crearAsistenciaRegistro } from '@/lib/sst/cap'
+import {
+  listarAsistenciasRegistro,
+  crearAsistenciaRegistro,
+  obtenerRegistro,
+  recalcularEstadoActividad,
+  listarRegistros,
+  calcularPct,
+} from '@/lib/sst/cap'
 import { requireRole } from '@/lib/auth/middleware'
 
 type Ctx = { params: Promise<{ id: string }> }
@@ -30,13 +37,21 @@ export async function GET(request: NextRequest, ctx: Ctx) {
   if ('error' in auth) return auth.error
 
   const { id } = await ctx.params
-  const records = await listarAsistenciasRegistro(id)
-  // Nunca exponer firma_encriptada al cliente — solo indicar si existe firma
-  const recordsSeguros = records.map(r => {
-    const { firma_encriptada, ...campos } = r.fields
-    return { ...r, fields: { ...campos, tiene_firma: !!firma_encriptada } }
-  })
-  return NextResponse.json({ records: recordsSeguros })
+  try {
+    const records = await listarAsistenciasRegistro(id)
+    // Nunca exponer firma_encriptada al cliente — solo indicar si existe firma
+    const recordsSeguros = records.map(r => {
+      const { firma_encriptada, ...campos } = r.fields
+      return { ...r, fields: { ...campos, tiene_firma: !!firma_encriptada } }
+    })
+    return NextResponse.json({ records: recordsSeguros })
+  } catch (error) {
+    console.error('[GET asistencias]', error)
+    return NextResponse.json(
+      { message: 'Error al obtener asistencias', error: String(error) },
+      { status: 500 }
+    )
+  }
 }
 
 /**
@@ -69,7 +84,28 @@ export async function POST(request: NextRequest, ctx: Ctx) {
       asistio: body.asistio !== false,
       nota_evaluacion: body.nota_evaluacion != null ? Number(body.nota_evaluacion) : undefined,
     })
-    return NextResponse.json({ record }, { status: 201 })
+
+    // Automatización 2: recalcular alerta_cobertura en sst_cap_actividades tras nueva asistencia
+    let alertaCobertura: string | null = null
+    let pctCobertura: number | null = null
+    try {
+      const registro = await obtenerRegistro(id)
+      const actividadId = registro.fields.actividad_id
+      if (actividadId) {
+        const { alerta } = await recalcularEstadoActividad(actividadId)
+        alertaCobertura = alerta
+        // Calcular pct_cobertura desde registros (convocados/presentes) para devolver al cliente
+        const registros = await listarRegistros({ actividadId })
+        const totalPresentes  = registros.reduce((s, r) => s + (r.fields.presentes  ?? 0), 0)
+        const totalConvocados = registros.reduce((s, r) => s + (r.fields.convocados ?? 0), 0)
+        pctCobertura = calcularPct(totalPresentes, totalConvocados)
+      }
+    } catch (e) {
+      // No bloquear la respuesta principal si falla el recálculo de cobertura
+      console.error('[Auto2 alerta_cobertura]', e)
+    }
+
+    return NextResponse.json({ record, alertaCobertura, pctCobertura }, { status: 201 })
   } catch (error) {
     console.error('[asistencias POST]', error)
     const msg = error instanceof Error ? error.message : 'Error al registrar asistencia'

@@ -17,6 +17,7 @@
  */
 import 'server-only'
 import { listRecords, createRecords, updateRecord, getRecord, deleteRecord, deleteRecords } from '@/lib/airtable-client'
+import type { AirtableRecord } from '@/lib/airtable-client'
 import {
   derivarEstadoActividad,
   derivarAlertaCobertura,
@@ -537,8 +538,8 @@ export async function calcularIndicadoresTrimestre(trimestre: string) {
     trabajadores_objetivo:    totalConvocados,
     evaluaciones_realizadas:  evalRealizadas,
     evaluaciones_aprobadas:   evalAprobadas,
-    inducciones_realizadas:   0,
-    ingresos_periodo:         0,
+    inducciones_realizadas:   0, // TODO: requiere campo fecha_ingreso en sst_personal para contar inducciones del período
+    ingresos_periodo:         0, // TODO: requiere campo fecha_ingreso en sst_personal para contar ingresos del período
     pct_cumplimiento,
     pct_cobertura,
     pct_eficacia,
@@ -611,7 +612,7 @@ export function getColorEstadoMeta(
  */
 export function getCategoriaColor(categoria: string): string {
   const colores: Record<string, string> = {
-    'Alturas y espacios confinados': '#2C5F8D',
+    'Alturas y espacios confinados': '#28A745',
     'Seguridad vial y emergencias':  '#FF8C42',
     'Salud y riesgo biológico':       '#28A745',
     'Riesgos físicos y químicos':    '#DC3545',
@@ -909,4 +910,37 @@ export async function actualizarAsistenciaRegistro(
   fields: Partial<CapAsistenciaRegistroFields>
 ) {
   return updateRecord<CapAsistenciaRegistroFields>(T_ASISTENCIAS, id, fields)
+}
+
+// =============================================================================
+// PERSONAL — Acceso a tabla sst_personal para cálculo de cobertura
+// =============================================================================
+
+interface PersonalSSTFields {
+  nombre_empleado?: string
+  descripcion_cargo?: string
+  numero_documento?: string
+  descripcion_unidad_negocio?: string
+  estado?: string
+}
+
+/**
+ * Lista el personal activo de una unidad de negocio específica.
+ * Usado por el endpoint /faltantes para calcular la cobertura real de asistencia.
+ *
+ * Campos seleccionados: nombre_empleado, descripcion_cargo, numero_documento,
+ * descripcion_unidad_negocio — se omiten lookup fields que pueden romper el POST.
+ *
+ * @param unidad - Nombre exacto de la unidad de negocio (ej. "Operaciones").
+ * @returns Array de registros AirtableRecord con PersonalSSTFields.
+ */
+export async function listarPersonalPorUnidad(
+  unidad: string
+): Promise<AirtableRecord<PersonalSSTFields>[]> {
+  const u = unidad.replace(/"/g, '') // sanitizar comillas dobles
+  const { records } = await listRecords<PersonalSSTFields>('sst_personal', {
+    filterByFormula: `AND({descripcion_unidad_negocio}="${u}",{estado}="Activo")`,
+    fields: ['nombre_empleado', 'descripcion_cargo', 'numero_documento', 'descripcion_unidad_negocio'],
+  })
+  return records
 }

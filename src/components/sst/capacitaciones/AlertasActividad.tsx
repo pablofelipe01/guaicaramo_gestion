@@ -16,7 +16,7 @@ import { AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 const COLORS = {
   rojo:    { bg: 'rgba(220,53,69,0.10)', border: '#DC3545', text: '#7F1D1D' },
   naranja: { bg: 'rgba(255,140,66,0.10)', border: '#FF8C42', text: '#7C2D12' },
-  azul:    { bg: 'rgba(44,95,141,0.10)',  border: '#2C5F8D', text: '#1E3A5F' },
+  azul:    { bg: 'rgba(40,167,69,0.10)',  border: '#28A745', text: '#14532D' },
   verde:   { bg: 'rgba(40,167,69,0.10)',  border: '#28A745', text: '#14532D' },
 } as const
 

@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -176,7 +176,7 @@ export default function GestionCambioPage() {
                             <span className="text-xs bg-gray-100 px-1.5 py-0.5 rounded capitalize">{c.fields.Tipo}</span>
                           </div>
                           {c.fields['Requiere Analisis Riesgo'] && (
-                            <div className="text-xs text-orange-600 mt-1">⚠ Requiere análisis de riesgo</div>
+                            <div className="text-xs text-orange-600 mt-1">? Requiere análisis de riesgo</div>
                           )}
                           <div className="text-xs text-gray-400 mt-1">{c.fields.Solicitante}</div>
                         </button>
@@ -319,12 +319,12 @@ export default function GestionCambioPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
             <textarea value={formCambio.Descripcion} onChange={e => setFormCambio(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Justificación</label>
             <textarea value={formCambio.Justificacion} onChange={e => setFormCambio(f => ({ ...f, Justificacion: e.target.value }))}
-              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div className="flex items-center gap-2">
             <input type="checkbox" id="analisis" checked={formCambio['Requiere Analisis Riesgo']}
@@ -376,7 +376,7 @@ export default function GestionCambioPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
             <textarea value={formAprob.Observaciones} onChange={e => setFormAprob(f => ({ ...f, Observaciones: e.target.value }))}
-              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={3} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button onClick={() => setModalAprobacion(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
@@ -393,7 +393,7 @@ export default function GestionCambioPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
             <textarea value={formControl.Descripcion} onChange={e => setFormControl(f => ({ ...f, Descripcion: e.target.value }))}
-              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500 resize-none" />
+              rows={2} className="w-full border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-500 resize-none" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>

@@ -2,12 +2,21 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle2, AlertTriangle, PenLine, RotateCcw, Shield, CalendarDays } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, PenLine, RotateCcw, Shield, CalendarDays, UserCheck, UserX, Building2 } from 'lucide-react'
 
 interface RegistroInfo {
   registroId: string
   actividadTema: string | null
   fechaEjecucion: string | null
+  dirigidoA: string | null
+}
+
+interface PersonalInfo {
+  encontrado: boolean
+  nombre?: string
+  cargo?: string
+  descripcion_unidad_negocio?: string
+  numero_documento?: string
 }
 
 type Estado = 'cargando' | 'formulario' | 'enviando' | 'exito' | 'error_token' | 'error_envio'
@@ -38,6 +47,11 @@ function FirmarCapacitacionContent() {
   const [cargoEmpresa, setCargoEmpresa]  = useState('')
   const [correoExterno, setCorreoExterno] = useState('')
 
+  // Validación de cédula contra sst_personal
+  const [personalInfo, setPersonalInfo]       = useState<PersonalInfo | null>(null)
+  const [buscandoCedula, setBuscandoCedula]   = useState(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Canvas de firma
   const canvasRef   = useRef<HTMLCanvasElement>(null)
   const pintando    = useRef(false)
@@ -53,7 +67,31 @@ function FirmarCapacitacionContent() {
       .catch((msg: string) => { setEstado('error_token'); setErrorMsg(typeof msg === 'string' ? msg : 'Token inválido o expirado.') })
   }, [token])
 
-  // ── Lógica del canvas de firma ────────────────────────────────────────────
+  // ── Lookup de cédula con debounce ─────────────────────────────────────────
+  useEffect(() => {
+    const cedula = numDocumento.replace(/\D/g, '')
+    if (cedula.length < 6) {
+      setPersonalInfo(null)
+      return
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(async () => {
+      setBuscandoCedula(true)
+      try {
+        const res = await fetch(`/api/sst/personal/verificar?cedula=${encodeURIComponent(cedula)}`)
+        if (res.ok) {
+          const data: PersonalInfo = await res.json()
+          setPersonalInfo(data)
+          // Pre-llenar nombre y cargo si se encuentra en el sistema
+          if (data.encontrado && data.nombre) {
+            setNombre(data.nombre)
+            if (data.cargo) setCargoEmpresa(data.cargo)
+          }
+        }
+      } catch { /* silencioso */ }
+      setBuscandoCedula(false)
+    }, 600)
+  }, [numDocumento])
   // Escala las coordenadas del evento al espacio interno del canvas,
   // compensando diferencias entre tamaño CSS y tamaño de píxeles internos
   // (incluye pantallas de alta densidad / retina / móvil).
@@ -256,23 +294,71 @@ function FirmarCapacitacionContent() {
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
                 Número de documento
               </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={numDocumento}
-                onChange={e => setNumDocumento(e.target.value)}
-                placeholder="Ej. 1234567890"
-                autoComplete="off"
-                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
-                  focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
-                  transition-colors bg-gray-50 focus:bg-white"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={numDocumento}
+                  onChange={e => { setNumDocumento(e.target.value); setPersonalInfo(null) }}
+                  placeholder="Ej. 1234567890"
+                  autoComplete="off"
+                  className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                    focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
+                    transition-colors bg-gray-50 focus:bg-white w-full pr-10"
+                />
+                {buscandoCedula && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <span className="w-4 h-4 border-2 border-gray-300 border-t-green-600 rounded-full animate-spin inline-block" />
+                  </span>
+                )}
+                {!buscandoCedula && personalInfo?.encontrado && (
+                  <UserCheck className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-600" />
+                )}
+                {!buscandoCedula && personalInfo && !personalInfo.encontrado && (
+                  <UserX className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-500" />
+                )}
+              </div>
+
+              {/* Badge resultado de búsqueda */}
+              {personalInfo?.encontrado && (
+                <div className="rounded-xl px-3 py-2 flex flex-col gap-0.5"
+                  style={{ background: 'rgba(22,101,52,0.08)', border: '1px solid rgba(22,101,52,0.2)' }}>
+                  <div className="flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-green-700 shrink-0" />
+                    <span className="text-[12px] font-semibold text-green-800">{personalInfo.nombre}</span>
+                  </div>
+                  {personalInfo.cargo && (
+                    <p className="text-[11px] text-green-700 pl-5">{personalInfo.cargo}</p>
+                  )}
+                  {personalInfo.descripcion_unidad_negocio && (
+                    <div className="flex items-center gap-1 pl-5">
+                      <Building2 className="w-3 h-3 text-green-600" />
+                      <p className="text-[11px] text-green-700">{personalInfo.descripcion_unidad_negocio}</p>
+                      {/* Indicar si pertenece a la unidad objetivo */}
+                      {info?.dirigidoA && info.dirigidoA !== 'Todo el personal' && (
+                        personalInfo.descripcion_unidad_negocio === info.dirigidoA
+                          ? <span className="ml-1 text-[10px] font-bold text-green-700 bg-green-100 border border-green-300 px-1.5 py-0.5 rounded-full">✓ Unidad objetivo</span>
+                          : <span className="ml-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-300 px-1.5 py-0.5 rounded-full">Otra unidad</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              {personalInfo && !personalInfo.encontrado && (
+                <p className="text-[11px] text-amber-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  Cédula no encontrada en el sistema. Ingresa tu nombre manualmente.
+                </p>
+              )}
             </div>
 
             {/* Nombre de asistente */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
                 Nombre de asistente <span className="text-red-400">*</span>
+                {personalInfo?.encontrado && (
+                  <span className="normal-case font-normal text-green-600 ml-1">(autocompletado)</span>
+                )}
               </label>
               <input
                 type="text"
@@ -281,9 +367,13 @@ function FirmarCapacitacionContent() {
                 placeholder="Ej. Juan Carlos Gómez"
                 required
                 autoComplete="name"
-                className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-gray-900 placeholder-gray-300
+                readOnly={!!personalInfo?.encontrado}
+                className={`border rounded-xl px-3 py-2.5 text-sm placeholder-gray-300
                   focus:outline-none focus:ring-2 focus:ring-green-600/30 focus:border-green-600
-                  transition-colors bg-gray-50 focus:bg-white"
+                  transition-colors
+                  ${personalInfo?.encontrado
+                    ? 'border-green-200 bg-green-50 text-green-900 cursor-default'
+                    : 'border-gray-200 bg-gray-50 focus:bg-white text-gray-900'}`}
               />
             </div>
 

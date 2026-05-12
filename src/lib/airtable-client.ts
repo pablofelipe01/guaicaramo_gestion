@@ -11,6 +11,7 @@ export interface ListParams {
   sort?: { field: string; direction?: 'asc' | 'desc' }[]
   fields?: string[]
   maxRecords?: number
+  pageSize?: number
   offset?: string
   view?: string
 }
@@ -66,6 +67,8 @@ export async function listRecords<T = Record<string, unknown>>(
     url.searchParams.set('filterByFormula', params.filterByFormula)
   if (params?.maxRecords)
     url.searchParams.set('maxRecords', String(params.maxRecords))
+  if (params?.pageSize)
+    url.searchParams.set('pageSize', String(params.pageSize))
   if (params?.offset) url.searchParams.set('offset', params.offset)
   if (params?.view) url.searchParams.set('view', params.view)
   if (params?.fields)
@@ -78,7 +81,7 @@ export async function listRecords<T = Record<string, unknown>>(
     })
   }
 
-  const res = await fetch(url.toString(), { method: 'GET', headers })
+  const res = await fetch(url.toString(), { method: 'GET', headers, cache: 'no-store' })
   return handleResponse<ListResponse<T>>(res)
 }
 
@@ -89,7 +92,7 @@ export async function getRecord<T = Record<string, unknown>>(
   const { baseUrl, headers } = getConfig()
   const res = await fetch(
     `${baseUrl}/${encodeURIComponent(table)}/${id}`,
-    { method: 'GET', headers }
+    { method: 'GET', headers, cache: 'no-store' }
   )
   return handleResponse<AirtableRecord<T>>(res)
 }

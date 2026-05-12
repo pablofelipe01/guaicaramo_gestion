@@ -31,7 +31,7 @@ interface ReporteDetalle {
 const ESTADO_LABELS: Record<EstadoReporte, string>   = { pendiente: 'Sin firmas', parcial: 'Incompleto', completo: 'Completo' }
 const ESTADO_COLORS: Record<EstadoReporte, string>   = {
   pendiente: 'bg-amber-100 text-amber-700 border-amber-200',
-  parcial:   'bg-blue-100  text-blue-700  border-blue-200',
+  parcial:   'bg-green-100 text-green-700 border-green-200',
   completo:  'bg-green-100 text-green-700 border-green-200',
 }
 

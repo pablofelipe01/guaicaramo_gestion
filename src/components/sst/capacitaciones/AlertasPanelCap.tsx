@@ -135,7 +135,7 @@ export default function AlertasPanelCap({ actividades, onVerTodas }: AlertasPane
                 type="button"
                 onClick={onVerTodas}
                 className="text-xs font-semibold hover:underline"
-                style={{ color: '#2C5F8D' }}
+                style={{ color: '#28A745' }}
               >
                 Ver todas ({alertas.length})
               </button>

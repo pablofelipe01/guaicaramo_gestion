@@ -190,7 +190,7 @@ export default function IncidentesPage() {
       {activeTab === 'estadisticas' && stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { label: 'Total eventos', value: stats.total, color: 'blue' },
+            { label: 'Total eventos', value: stats.total, color: 'green' },
             { label: 'Accidentes de trabajo', value: stats.accidentesTrabajo, color: 'red' },
             { label: 'Enfermedades laborales', value: stats.enfermedadesLaborales, color: 'orange' },
             { label: 'Días perdidos', value: stats.diasPerdidos, color: 'purple' },

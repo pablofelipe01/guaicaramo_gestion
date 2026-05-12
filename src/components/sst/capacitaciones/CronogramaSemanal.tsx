@@ -27,7 +27,7 @@ function cellColor(estado: Prog['fields']['estado'], fechaProg?: string): string
   if (estado === 'Reprogramado') return 'bg-yellow-400'
   // Programado: verificar si está vencido
   if (fechaProg && fechaProg < HOY) return 'bg-red-400'
-  return 'bg-blue-400'
+  return 'bg-gray-400'
 }
 
 export function CronogramaSemanal({ actividades, programaciones, categoriaFiltro }: Props) {
@@ -65,7 +65,7 @@ export function CronogramaSemanal({ actividades, programaciones, categoriaFiltro
       {/* Leyenda */}
       <div className="flex flex-wrap gap-3 text-xs">
         {[
-          { color: 'bg-blue-400',   label: 'Programado' },
+          { color: 'bg-gray-400',   label: 'Programado' },
           { color: 'bg-green-500',  label: 'Ejecutado' },
           { color: 'bg-red-400',    label: 'Vencido' },
           { color: 'bg-yellow-400', label: 'Reprogramado' },
