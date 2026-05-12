@@ -46,6 +46,12 @@ interface PlantillaPayload {
   pregunta_4_opciones: string
   pregunta_4_correcta: string
   activo: boolean
+  id_capacitacion?: string
+}
+
+interface ActividadOpcion {
+  id: string
+  tema: string
 }
 
 const PREGUNTA_VACIA = (): PreguntaSeleccion => ({ texto: '', opciones: ['', '', ''], correcta: '' })
@@ -69,10 +75,23 @@ function NuevaPlantillaForm({
   onGuardar: (data: PlantillaPayload) => Promise<void>
   onCancelar: () => void
 }) {
-  const [form, setForm]   = useState<PlantillaFormState>(FORM_INICIAL)
-  const [error, setError] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [openQ, setOpenQ]   = useState<number>(0)  // 0=pregunta1, 1/2/3=preguntas[0..2]
+  const [form, setForm]       = useState<PlantillaFormState>(FORM_INICIAL)
+  const [error, setError]     = useState('')
+  const [saving, setSaving]   = useState(false)
+  const [openQ, setOpenQ]     = useState<number>(0)
+  const [actividades, setActividades] = useState<ActividadOpcion[]>([])
+  const [actividadId, setActividadId] = useState('')
+
+  // Cargar actividades al montar
+  useEffect(() => {
+    fetch('/api/sst/capacitaciones', { headers: getAuthHeaders() })
+      .then(r => r.json())
+      .then((data: { records?: Array<{ id: string; fields: { tema: string } }> }) => {
+        const opts = (data.records ?? []).map(r => ({ id: r.id, tema: r.fields.tema ?? r.id }))
+        setActividades(opts)
+      })
+      .catch(() => { /* ignorar — el selector queda vacío */ })
+  }, [])
 
   const setNombre = (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, nombre_capacitacion: e.target.value }))
@@ -157,6 +176,7 @@ function NuevaPlantillaForm({
         pregunta_4_opciones:  p4.opciones,
         pregunta_4_correcta:  p4.correcta,
         activo:               true,
+        ...(actividadId ? { id_capacitacion: actividadId } : {}),
       })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar')
@@ -168,6 +188,37 @@ function NuevaPlantillaForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5" style={{ maxHeight: '74vh', overflowY: 'auto', paddingRight: 2, overflowX: 'visible' }}>
+
+      {/* Actividad asociada */}
+      <div>
+        <label className="block text-xs font-semibold mb-2" style={{ color: '#495057' }}>
+          Actividad del plan anual
+          <span className="ml-1 font-normal" style={{ color: '#6C757D' }}>(opcional — para vincular evaluaciones automáticamente)</span>
+        </label>
+        <div className="relative">
+          <select
+            value={actividadId}
+            onChange={e => {
+              const sel = actividades.find(a => a.id === e.target.value)
+              setActividadId(e.target.value)
+              // Rellenar nombre si aún está vacío
+              if (sel && !form.nombre_capacitacion.trim()) {
+                setForm(prev => ({ ...prev, nombre_capacitacion: sel.tema }))
+              }
+            }}
+            className={inputCls}
+            style={{ ...inputStyle(), paddingRight: '2rem', appearance: 'none' }}
+            onFocus={e => { e.target.style.borderColor = VERDE; e.target.style.boxShadow = `0 0 0 3px ${VERDE}20` }}
+            onBlur={e  => { e.target.style.borderColor = '#dee2e6'; e.target.style.boxShadow = 'none' }}
+          >
+            <option value="">— Sin vincular —</option>
+            {actividades.map(a => (
+              <option key={a.id} value={a.id}>{a.tema}</option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" style={{ color: '#6C757D' }} />
+        </div>
+      </div>
 
       {/* Nombre */}
       <div>

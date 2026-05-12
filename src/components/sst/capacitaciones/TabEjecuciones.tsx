@@ -576,9 +576,10 @@ export function TabEjecuciones({
     try {
       const res  = await fetch('/api/sst/cap/plantillas', { headers: getAuthHeaders() })
       const data = await res.json() as { records?: { id: string; fields: { qr_token: string; id_capacitacion?: string; nombre_capacitacion: string } }[] }
-      const plantilla = (data.records ?? []).find(p => p.fields.id_capacitacion === regId)
+      // id_capacitacion en la plantilla almacena el actividadId, no el regId
+      const plantilla = (data.records ?? []).find(p => p.fields.id_capacitacion === actividadId)
       if (!plantilla) {
-        alert('No hay plantilla de evaluación vinculada a esta sesión. Créala en Capacitaciones → Evaluaciones.')
+        alert('No hay plantilla de evaluación vinculada a esta actividad. Créala en Capacitaciones → Evaluaciones y vincúlala a esta actividad.')
       } else {
         const origin = typeof window !== 'undefined' ? window.location.origin : ''
         setQrEvalUrl(`${origin}/evaluacion/${plantilla.fields.qr_token}`)
@@ -587,7 +588,7 @@ export function TabEjecuciones({
       alert('Error al buscar la plantilla de evaluación.')
     }
     setLoadingQrEval(null)
-  }, [])
+  }, [actividadId])
 
   // Mapa programacion_id → registro
   const regByProg = new Map<string, Registro>()
