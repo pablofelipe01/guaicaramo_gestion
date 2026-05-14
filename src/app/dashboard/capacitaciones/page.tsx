@@ -23,6 +23,8 @@ import type {
 } from '@/types/sst/cap'
 import type { AirtableRecord } from '@/lib/airtable-client'
 import { getAuthHeaders } from '@/lib/client/authFetch'
+import { SelectorDirigidoA } from '@/components/sst/capacitaciones/SelectorDirigidoA'
+import type { UnidadConPersonas } from '@/components/sst/capacitaciones/SelectorDirigidoA'
 
 type Actividad = AirtableRecord<CapActividadFields>
 type Prog      = AirtableRecord<CapProgramacionFields>
@@ -95,7 +97,7 @@ export default function CapacitacionesPage() {
   const [guardando,       setGuardando]       = useState(false)
   const [formError,       setFormError]       = useState<string | null>(null)
   const [form,            setForm]            = useState<typeof FORM_INICIAL>(FORM_INICIAL)
-  const [unidades,        setUnidades]        = useState<{ nombre: string; total: number }[]>([])
+  const [unidades,        setUnidades]        = useState<UnidadConPersonas[]>([])
   const [loadingUnidades, setLoadingUnidades] = useState(false)
   const [activeTab,       setActiveTab]       = useState<TabId>('tablero')
 
@@ -116,7 +118,7 @@ export default function CapacitacionesPage() {
     if (unidades.length > 0) return
     setLoadingUnidades(true)
     try {
-      const res = await fetch('/api/sst/personal/unidades', { headers: getAuthHeaders(), cache: 'no-store' })
+      const res = await fetch('/api/sst/personal/por-unidad', { headers: getAuthHeaders(), cache: 'no-store' })
       if (res.ok) setUnidades((await res.json()).unidades ?? [])
     } catch { /* silencioso */ }
     setLoadingUnidades(false)
@@ -249,11 +251,11 @@ export default function CapacitacionesPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-gray-600">Dirigido a</label>
-              <select value={form.dirigido_a} onChange={e => set('dirigido_a', e.target.value)} className="input-field" disabled={loadingUnidades}>
-                <option value="">{loadingUnidades ? 'Cargando unidades...' : 'Seleccionar unidad...'}</option>
-                <option value="Todo el personal">Todo el personal{unidades.length > 0 ? ` (${unidades.reduce((s, u) => s + u.total, 0)} personas)` : ''}</option>
-                {unidades.map(u => <option key={u.nombre} value={u.nombre}>{u.nombre} ({u.total} {u.total === 1 ? 'persona' : 'personas'})</option>)}
-              </select>
+              <SelectorDirigidoA
+                unidades={unidades}
+                loading={loadingUnidades}
+                onChange={(label) => setForm(prev => ({ ...prev, dirigido_a: label }))}
+              />
             </div>
             <div className="flex flex-col gap-1"><label className="text-xs font-semibold text-gray-600">Normativa aplicable</label><input type="text" value={form.normativa_aplicable} onChange={e => set('normativa_aplicable', e.target.value)} placeholder="Ej: Res. 0312 Art. 11" className="input-field" /></div>
           </div>

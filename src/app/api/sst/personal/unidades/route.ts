@@ -20,8 +20,8 @@ export const dynamic = 'force-dynamic'
 const SST_ROLES = ['coordinador_sst', 'jefe_area', 'gerencia', 'auditor', 'medico', 'administrador'] as const
 
 interface PersonalFields {
-  descripcion_unidad_negocio?: string
-  estado?: string
+  nombre_completo?: string
+  area?: string
 }
 
 export async function GET(request: NextRequest) {
@@ -38,15 +38,14 @@ export async function GET(request: NextRequest) {
       const { records, offset: nextOffset } = await listRecords<PersonalFields>(
         'sst_personal',
         {
-          fields: ['descripcion_unidad_negocio', 'estado'],
-          filterByFormula: "{estado}='Activo'",
+          fields: ['nombre_completo', 'area'],
           pageSize: 100,
           offset,
         }
       )
 
       for (const r of records) {
-        const unidad = r.fields.descripcion_unidad_negocio?.trim()
+        const unidad = r.fields.area?.trim()
         if (unidad) {
           conteo[unidad] = (conteo[unidad] ?? 0) + 1
           totalPersonal++

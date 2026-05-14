@@ -12,10 +12,10 @@ interface ModalProps {
 }
 
 const SIZES = {
-  sm: 'max-w-sm',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
+  sm: 'max-w-md',
+  md: 'max-w-xl',
+  lg: 'max-w-3xl',
+  xl: 'max-w-5xl',
 }
 
 export function Modal({ open, onClose, title, children, size = 'md' }: ModalProps) {
